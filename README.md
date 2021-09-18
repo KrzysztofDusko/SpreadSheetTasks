@@ -1,8 +1,16 @@
 # SpreadSheetTasks
  The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)
  
+ ## Installation
+ https://www.nuget.org/packages/SpreadSheetTasks/
  
- ##Usage
+ ```Install-Package SpreadSheetTasks -Version 0.0.1```
+ 
+ ```dotnet add package SpreadSheetTasks --version 0.0.1```
+
+ 
+
+ ## Usage
  
  ```c#
  using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
