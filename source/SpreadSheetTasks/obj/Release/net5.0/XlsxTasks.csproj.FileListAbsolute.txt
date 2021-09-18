@@ -1,0 +1,11 @@
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\bin\Release\net5.0\XlsxTasks.deps.json
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\bin\Release\net5.0\XlsxTasks.dll
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\bin\Release\net5.0\ref\XlsxTasks.dll
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\bin\Release\net5.0\XlsxTasks.pdb
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\XlsxTasks.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\XlsxTasks.AssemblyInfoInputs.cache
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\XlsxTasks.AssemblyInfo.cs
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\XlsxTasks.csproj.CoreCompileInputs.cache
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\XlsxTasks.dll
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\ref\XlsxTasks.dll
+C:\Users\dusko\source\repos\NZ-SQL-IDE\XlsxTasks\obj\Release\net5.0\XlsxTasks.pdb
