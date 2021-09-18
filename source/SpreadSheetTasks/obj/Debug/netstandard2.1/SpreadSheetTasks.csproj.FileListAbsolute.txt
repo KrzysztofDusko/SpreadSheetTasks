@@ -17,4 +17,3 @@ C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Debug\n
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Debug\netstandard2.1\SpreadSheetTasks.csproj.CoreCompileInputs.cache
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Debug\netstandard2.1\SpreadSheetTasks.dll
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Debug\netstandard2.1\SpreadSheetTasks.pdb
-C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Debug\netstandard2.1\SpreadSheetTasks.csproj.AssemblyReference.cache

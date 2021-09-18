@@ -10,7 +10,6 @@ C:\Users\dusko\source\repos\SpreadSheetTasks\SpreadSheetTasks\obj\Release\netsta
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release\netstandard2.1\SpreadSheetTasks.deps.json
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release\netstandard2.1\SpreadSheetTasks.dll
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release\netstandard2.1\SpreadSheetTasks.pdb
-C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\netstandard2.1\SpreadSheetTasks.csproj.AssemblyReference.cache
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\netstandard2.1\SpreadSheetTasks.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\netstandard2.1\SpreadSheetTasks.AssemblyInfoInputs.cache
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\netstandard2.1\SpreadSheetTasks.AssemblyInfo.cs

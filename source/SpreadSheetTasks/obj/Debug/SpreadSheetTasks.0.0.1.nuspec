@@ -6,8 +6,11 @@
     <authors>Krzysztof Duśko</authors>
     <license type="expression">MIT</license>
     <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
-    <description>Library for fast reading and writing Excel files (.xlsx, .xlsb)</description>
+    <projectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</projectUrl>
+    <description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</description>
+    <releaseNotes>First Release</releaseNotes>
     <tags>xlsx xlsb excel</tags>
+    <repository url="https://github.com/KrzysztofDusko/SpreadSheetTasks" />
     <dependencies>
       <group targetFramework="net5.0" />
       <group targetFramework=".NETStandard2.1" />

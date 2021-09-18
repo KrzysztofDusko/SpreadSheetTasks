@@ -25,7 +25,6 @@ C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release\net5.0\SpreadSheetTasks.dll
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release\net5.0\ref\SpreadSheetTasks.dll
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\bin\Release\net5.0\SpreadSheetTasks.pdb
-C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\net5.0\SpreadSheetTasks.csproj.AssemblyReference.cache
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\net5.0\SpreadSheetTasks.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\net5.0\SpreadSheetTasks.AssemblyInfoInputs.cache
 C:\Users\dusko\source\repos\SpreadSheetTasks\source\SpreadSheetTasks\obj\Release\net5.0\SpreadSheetTasks.AssemblyInfo.cs
