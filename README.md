@@ -39,11 +39,17 @@ Intel Core i5-7500 CPU 3.40GHz (Kaby Lake), 1 CPU, 4 logical and 4 physical core
   DefaultJob : .NET 5.0.10 (5.0.1021.41214), X64 RyuJIT
 ```
 ### Read
+## Xlsx
 
 |   Method |      FileName |     Mean |   Error |  StdDev |      Gen 0 |     Gen 1 |     Gen 2 | Allocated |
 |--------- |-------------- |---------:|--------:|--------:|-----------:|----------:|----------:|----------:|
-| **ReadFile** | **200kFile.xlsb** | **270.4 ms** | **0.83 ms** | **0.78 ms** | **17000.0000** | **7000.0000** | **3000.0000** |    **105 MB** |
 | **ReadFile** | **200kFile.xlsx** | **797.0 ms** | **5.08 ms** | **4.24 ms** |  **8000.0000** | **4000.0000** | **2000.0000** |     **38 MB** |
+
+## Xlsb
+|   Method |      FileName | UseMemoryStreamInXlsb |     Mean |   Error |  StdDev |     Gen 0 |     Gen 1 |     Gen 2 | Allocated |
+|--------- |-------------- |---------------------- |---------:|--------:|--------:|----------:|----------:|----------:|----------:|
+| ReadFile | 200kFile.xlsb |                 False | 281.7 ms | 3.10 ms | 2.90 ms | 8000.0000 | 4000.0000 | 2000.0000 |     38 MB |
+| ReadFile | 200kFile.xlsb |                  True | 207.9 ms | 0.69 ms | 0.61 ms | 8000.0000 | 4666.6667 | 1666.6667 |     72 MB |
 
 ### Write
 to do
