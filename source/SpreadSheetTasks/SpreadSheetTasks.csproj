@@ -10,7 +10,7 @@
     <PackageReleaseNotes>First Release</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel</PackageTags>
     <Company>Krzysztof Duśko</Company>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>
