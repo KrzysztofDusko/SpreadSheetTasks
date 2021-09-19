@@ -25,6 +25,7 @@ namespace SpreadSheetTasks
         private string[] _sharedStringArray;
         private StyleInfo[] _stylesCellXfsArray;
 
+        //from https://github.com/ExcelDataReader/ExcelDataReader
         internal readonly static Dictionary<int, Type> _numberFormatsTypeDic = new Dictionary<int, Type>()
         {
             // to do
@@ -223,7 +224,12 @@ namespace SpreadSheetTasks
             }
 
         }
-
+        /// <summary>
+        /// Initialize file to read (detection xlsx/xlsb by extension)
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="readSharedStrings"></param>
+        /// <param name="updateMode"></param>
         public override void Open(string path, bool readSharedStrings = true, bool updateMode = false)
         {
             if (path.EndsWith("xlsb", StringComparison.OrdinalIgnoreCase))
@@ -285,14 +291,16 @@ namespace SpreadSheetTasks
             }
         }
 
+        /// <summary>
+        /// xlsb read strategy, true = More RAM needed but faster
+        /// </summary>
         public bool UseMemoryStreamInXlsb = true;
-        private const int bufferSize = 256 * 256;
         public static MemoryStream GetMemoryStream(Stream streamToRead, long length)
         {
             byte[] byteArray = new byte[length];
             int pos = 0;
             int bytesRead = 0;
-            int toRead = bufferSize;
+            int toRead = 65_536;
             while (true)
             {
                 if (length - bytesRead < toRead)
@@ -301,7 +309,7 @@ namespace SpreadSheetTasks
                 }
 
                 pos = streamToRead.Read(byteArray, bytesRead, toRead);
-                bytesRead += pos; // pos = 4096 in most cases
+                bytesRead += pos;
                 if (pos == 0)
                 {
                     break;
@@ -599,7 +607,9 @@ namespace SpreadSheetTasks
         private string _actualSheetDimensions = null;
 
         private object[] _blankRow;
-        private readonly char[] _buffer = new char[64];
+
+        //inspired by https://github.com/MarkPflug/Sylvan.Data.Excel
+        private readonly static char[] _buffer = new char[64];
         public IEnumerable<object[]> GetRowsOfXlsx(string sheetName)
         {
             bool firstRowX = true;
@@ -978,34 +988,46 @@ namespace SpreadSheetTasks
                         {
                             maxColNum = colNum;
                         }
+
                         object valueX = null;
-                        object rawValue = reader.cellValue;
-                        if (reader.isSharedStringVal)
-                        {
-                            valueX = _sharedStringArray[(int)rawValue];
-                        }
-                        else
-                        {
-                            var styleIndex = (int)reader.xfIndex;
 
-                            if (styleIndex == 0) // general
-                            {
-                                valueX = GetTypedValue(rawValue);
-                            }
-                            else
-                            {
-                                int numFormatId = _stylesCellXfsArray[styleIndex].NumFmtId;
-
-                                if (rawValue != null && _numberFormatsTypeDic.TryGetValue(numFormatId, out Type type) && type == typeof(DateTime?))
+                        switch (reader.cellType)
+                        {
+                            case CellType.sharedString:
+                                valueX = _sharedStringArray[reader.intValue];
+                                break;
+                            case CellType.boolVal:
+                                valueX = reader.boolValue;
+                                break;
+                            case CellType.stringVal:
+                                valueX = reader.stringValue;
+                                break;
+                            case CellType.doubleVal:
                                 {
-                                    valueX = DateTime.FromOADate((double)rawValue);
+                                    double doubleVal = reader.doubleVal;
+                                    var styleIndex = reader.xfIndex;
+                                    if (styleIndex == 0) // general
+                                    {
+                                        valueX = GetTypedValueForXlsb(doubleVal);
+                                    }
+                                    else
+                                    {
+                                        int numFormatId = _stylesCellXfsArray[styleIndex].NumFmtId;
+                                        if (_numberFormatsTypeDic.TryGetValue(numFormatId, out Type type) && type == typeof(DateTime?))
+                                        {
+                                            valueX = DateTime.FromOADate((double)doubleVal);
+                                        }
+                                        else
+                                        {
+                                            valueX = GetTypedValueForXlsb(doubleVal);
+                                        }
+                                    }
+                                    break;
                                 }
-                                else if (rawValue != null)
-                                {
-                                    valueX = GetTypedValue(rawValue);
-                                }
-                            }
+                            default:
+                                break;
                         }
+
 
                         if (column == 0)
                         {
@@ -1083,6 +1105,14 @@ namespace SpreadSheetTasks
             int colNumFromAdress = _letterToColumnNum[letters] + 1;
             return (rowNumFromAdress - 1, colNumFromAdress - 1);
         }
+
+        /// <summary>
+        /// clear and fill existing tab with dataReader
+        /// </summary>
+        /// <param name="sheetName"></param>
+        /// <param name="reader"></param>
+        /// <param name="startingCellAdress"></param>
+        /// <returns></returns>
         public string ReplaceSheetData(string sheetName, IDataReader reader, string startingCellAdress = "A1")
         {
             if (!_worksheetNameToId.TryGetValue(sheetName, out string id))
@@ -1166,6 +1196,13 @@ namespace SpreadSheetTasks
 
             return cacheId;
         }
+
+        /// <summary>
+        /// changes data reference for pivot table, use with ReplaceSheetData
+        /// </summary>
+        /// <param name="pivotTableName">name of pivot table</param>
+        /// <param name="referention">new reference</param>
+        /// <param name="doRefreshOnLoad">refresh pivot table on open</param>
         public void ReplacePivotTableDim(string pivotTableName, string referention, bool doRefreshOnLoad = true)
         {
             var pivotTableList = GetPivotTableList();
@@ -1263,6 +1300,9 @@ namespace SpreadSheetTasks
 
         private int _rowCount = -2;
 
+        /// <summary>
+        /// row count (not always available)
+        /// </summary>
         public override int RowCount { get => _rowCount != -2 ? _rowCount : PrepareRowCnt(); }
 
         private int PrepareRowCnt()
@@ -1288,6 +1328,10 @@ namespace SpreadSheetTasks
             return _rowCount;
         }
 
+        /// <summary>
+        /// read next row
+        /// </summary>
+        /// <returns></returns>
         public override bool Read()
         {
             if (_enumerator == null)
@@ -1301,19 +1345,37 @@ namespace SpreadSheetTasks
             }
             return true;
         }
-
+        /// <summary>
+        /// use only after read first row  = GetValue + ToString
+        /// </summary>
+        /// <param name="i">column number</param>
+        /// <returns></returns>
         public override string GetName(int i)
         {
             return GetValue(i).ToString();
         }
+        /// <summary>
+        /// get value of column
+        /// </summary>
+        /// <param name="i">column number</param>
+        /// <returns></returns>
         public override object GetValue(int i)
         {
             return _enumerator.Current[i];
         }
+        /// <summary>
+        /// get type of column, may differ for each row
+        /// </summary>
+        /// <param name="i">column number</param>
+        /// <returns></returns>
         public override Type GetFieldType(int i)
         {
             return _enumerator.Current[i]?.GetType();
         }
+        /// <summary>
+        /// fill provided row array with row values from xlsx/xlsb file
+        /// </summary>
+        /// <param name="row">array to fill</param>
         public override void GetValues(object[] row)
         {
             var arr = _enumerator.Current;
@@ -1323,22 +1385,23 @@ namespace SpreadSheetTasks
             }
         }
 
-        private static object GetTypedValue(object rawValue)
+        private static object GetTypedValueForXlsb(/*object*/double rawValue)
         {
-            if (rawValue is string || rawValue is bool)
+            //if (rawValue is string || rawValue is bool)
+            //{
+            //    return rawValue;
+            //}
+            //else
+            //{
+            long l1 = Convert.ToInt64(rawValue);
+            double res = l1 - /*(double)*/rawValue;
+            if (res < 3 * double.Epsilon && res > -3 * double.Epsilon)
             {
-                return rawValue;
+                return Convert.ToInt64(rawValue);
             }
-            else
-            {
-                long l1 = Convert.ToInt64(rawValue);
-                double res = l1 - (double)rawValue;
-                if (res < 3 * double.Epsilon && res > -3 * double.Epsilon)
-                {
-                    return Convert.ToInt64(rawValue);
-                }
-            }
+            //}
             return rawValue;
         }
+
     }
 }

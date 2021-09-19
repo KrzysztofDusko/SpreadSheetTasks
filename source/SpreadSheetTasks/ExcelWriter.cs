@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -592,10 +593,16 @@ namespace SpreadSheetTasks
             return true;
         }
 
-        public object cellValue;
+        //public object cellValue;
+        public CellType cellType;
+        public int intValue;
+        public double doubleVal;
+        public bool boolValue;
+        public string stringValue;
+
         public int columnNum = -1;
         public uint xfIndex;
-        public bool isSharedStringVal = false;
+        //public bool isSharedStringVal = false;
         public bool readCell = false;
         public int rowIndex = -1;
 
@@ -611,7 +618,7 @@ namespace SpreadSheetTasks
 
             readCell = false;
             columnNum = -1;
-            isSharedStringVal = false;
+            //isSharedStringVal = false;
 
             switch (recordId)
             {
@@ -731,25 +738,32 @@ namespace SpreadSheetTasks
                 case BoolError:
                 case FormulaError: // BrtFmlaError (11 = 0x000B)
                     //return ReadCell(null, (CellError)buffer[8]);
-                    cellValue = null;
+                    //cellValue = null;
                     readCell = true;
+                    cellType = CellType.nullValue;
                     break;
                 case Number:
                     //return ReadCell(GetRkNumber(buffer, 8));
-                    cellValue = GetRkNumber(buffer, 8);
+                    //cellValue = GetRkNumber(buffer, 8);
+                    doubleVal = GetRkNumber(buffer, 8);
                     readCell = true;
+                    cellType = CellType.doubleVal;
                     break;
                 case Bool:
                 case FormulaBool:
                     //return ReadCell(buffer[8] == 1);
-                    cellValue = (buffer[8] == 1);
+                    //cellValue = (buffer[8] == 1);
+                    boolValue = (buffer[8] == 1);
                     readCell = true;
+                    cellType = CellType.boolVal;
                     break;
                 case FormulaNumber:
                 case Float:
                     //return ReadCell(GetDouble(buffer, 8));
-                    cellValue = GetDouble(buffer, 8);
+                    //cellValue = GetDouble(buffer, 8);
+                    doubleVal = GetDouble(buffer, 8);
                     readCell = true;
+                    cellType = CellType.doubleVal;
                     break;
                 case String:
                 case FormulaString:
@@ -757,16 +771,19 @@ namespace SpreadSheetTasks
                         // Must be less than 32768 characters
                         var length = GetDWord(buffer, 8);
                         //return ReadCell(GetString(buffer, 8 + 4, length));
-                        cellValue = GetString(buffer, 8 + 4, length);
+                        //cellValue = GetString(buffer, 8 + 4, length);
+                        stringValue = GetString(buffer, 8 + 4, length);
                         readCell = true;
+                        cellType = CellType.stringVal;
                         break;
                     }
-
                 case SharedString:
                     //return ReadCell((int)GetDWord(buffer, 8));
-                    cellValue = (int)GetDWord(buffer, 8);
+                    //cellValue = (int)GetDWord(buffer, 8);
+                    intValue = (int)GetDWord(buffer, 8);
                     readCell = true;
-                    isSharedStringVal = true;
+                    //isSharedStringVal = true;
+                    cellType = CellType.sharedString;
                     break;
             }
 
@@ -831,15 +848,34 @@ namespace SpreadSheetTasks
             return sb.ToString();
         }*/
 
+
         public static string GetString(byte[] buffer, uint offset, uint length)
         {
-            char[] array = new char[length];
+            ////https://docs.microsoft.com/en-US/dotnet/api/system.string.create?view=net-5.0
+            //return string.Create((int) length, (buffer,offset), (chars, state) => {
+            //    int l = 0;
+            //    byte[] buff = state.buffer;
+            //    for (uint i = offset; i < offset + 2 * length; i += 2)
+            //        chars[l++] = (char)GetWord(buff, i);
+            //});
+
+            //Span<char> array = stackalloc char[(int)length];
+            //int l = 0;
+            //for (uint i = offset; i < offset + 2 * length; i += 2)
+            //    array[l++] = (char)GetWord(buffer, i);
+
+            //return new string(array);
+
+            char[] array = ArrayPool<char>.Shared.Rent((int)length);
             int l = 0;
             for (uint i = offset; i < offset + 2 * length; i += 2)
                 array[l++] = (char)GetWord(buffer, i);
-            return new string(array);
+            string s1 = new string(array.AsSpan().Slice(0, (int)length));
+            ArrayPool<char>.Shared.Return(array);
+            return s1;
         }
 
+        //https://github.com/ExcelDataReader/ExcelDataReader
         static string GetNullableString(byte[] buffer, ref uint offset)
         {
             var length = GetDWord(buffer, offset);
@@ -939,6 +975,15 @@ namespace SpreadSheetTasks
         {
             Stream.Dispose();
         }
+    }
+
+    enum CellType
+    {
+        doubleVal,
+        boolVal,
+        stringVal,
+        sharedString,
+        nullValue
     }
 
 }
