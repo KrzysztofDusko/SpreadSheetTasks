@@ -295,7 +295,7 @@ namespace SpreadSheetTasks
         /// xlsb read strategy, true = More RAM needed but faster
         /// </summary>
         public bool UseMemoryStreamInXlsb = true;
-        public static MemoryStream GetMemoryStream(Stream streamToRead, long length)
+        private static MemoryStream GetMemoryStream(Stream streamToRead, long length)
         {
             byte[] byteArray = new byte[length];
             int pos = 0;
@@ -863,7 +863,7 @@ namespace SpreadSheetTasks
             }
         }
 
-        static int ParseToUnsignedIntFromBuffer(char[] buff, int len)
+        private static int ParseToUnsignedIntFromBuffer(char[] buff, int len)
         {
             int res = 0;
             for (int i = 0; i < len; i++)
@@ -873,7 +873,7 @@ namespace SpreadSheetTasks
             return res;
         }
 
-        static Int64 ParseToInt64FromBuffer(char[] buff, int len)
+        private static Int64 ParseToInt64FromBuffer(char[] buff, int len)
         {
             Int64 res = 0;
             int start = buff[0] == '-' ? 1 : 0;
@@ -884,7 +884,7 @@ namespace SpreadSheetTasks
             return start == 1 ? -res : res;
         }
 
-        static bool ContainsDoubleMarks(char[] buff, int len)
+        private static bool ContainsDoubleMarks(char[] buff, int len)
         {
             for (int i = 0; i < len; i++)
             {

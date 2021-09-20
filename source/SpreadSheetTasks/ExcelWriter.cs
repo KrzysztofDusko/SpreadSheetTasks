@@ -12,12 +12,10 @@ namespace SpreadSheetTasks
 {
     public abstract class ExcelWriter : IDisposable
     {
-        public static readonly string[] _stringDb = { "nvarchar", "varchar", "char" };
-        public static readonly Type[] _stringTypes = { typeof(String), typeof(Char), typeof(Boolean) };
+        internal static readonly string[] _stringDb = { "nvarchar", "varchar", "char" };
+        internal static readonly Type[] _stringTypes = { typeof(String), typeof(Char), typeof(Boolean) };
 
-        public string DocPopertyProgramName { get; set; }
-
-        public static readonly Type[] _numberTypes = 
+        internal static readonly Type[] _numberTypes = 
         {
             typeof(sbyte), typeof(byte)
             , typeof(Int16), typeof(UInt16)
@@ -27,7 +25,7 @@ namespace SpreadSheetTasks
             , typeof(Decimal)
         };
 
-        public static readonly string[] _DbNumbers = new string[]
+        private static readonly string[] _DbNumbers = 
         {
             "integer", "bigint"
             , "numeric", "Decimal"
@@ -37,6 +35,8 @@ namespace SpreadSheetTasks
             , "Int64", "UInt16"
             , "UInt32", "UInt64"
         };
+
+        public string DocPopertyProgramName { get; set; }
 
         internal static void SetTypes(DataColReader _dataColReader, int[] typesArray, int ColumnCount, bool detectBoolenaType = false)
         {
@@ -178,19 +178,20 @@ namespace SpreadSheetTasks
         public abstract void Dispose();
         public bool SuppressSomeDate { get; set; }
     }
-    public class DataColReader
+
+    internal class DataColReader
     {
-        public IDataReader dataReader;
-        public DataTable DataTable;
+        internal IDataReader dataReader;
+        internal DataTable DataTable;
         private readonly object[,] daneTabelaryczne;
         private readonly bool _isDataReader;
         private readonly bool _isDataTable;
-        public int DataTableRowsCount;
+        internal int DataTableRowsCount;
 
         private readonly bool _headers;
         private int _rowNum = 0;
 
-        public string[] DatabaseTypes;
+        internal string[] DatabaseTypes;
 
         public DataColReader(IDataReader reader, Boolean headers = false, int overLimit = -1)
         {
@@ -470,12 +471,12 @@ namespace SpreadSheetTasks
             VeryHidden = 0x2
         }
 
-        public uint workbookId;
-        public string recId;
-        public string workbookName;
-        public bool isSheet;
+        internal uint workbookId;
+        internal string recId;
+        internal string workbookName;
+        internal bool isSheet;
 
-        public bool ReadWorkbook()
+        internal bool ReadWorkbook()
         {
             if (!TryReadVariableValue(out var recordId) ||
                 !TryReadVariableValue(out var recordLength))
@@ -500,16 +501,16 @@ namespace SpreadSheetTasks
             return true;
         }
 
-        public bool _inCellXf;
-        public bool _inCellStyleXf;
-        public bool _inNumberFormat;
+        internal bool _inCellXf;
+        internal bool _inCellStyleXf;
+        internal bool _inNumberFormat;
 
-        public ushort ParentCellStyleXf;
-        public ushort NumberFormatIndex;
+        internal ushort ParentCellStyleXf;
+        internal ushort NumberFormatIndex;
         //public ushort FontIndex;
 
-        public int format;
-        public string formatString;
+        internal int format;
+        internal string formatString;
 
         public bool ReadStyles()
         {
@@ -568,7 +569,7 @@ namespace SpreadSheetTasks
 
         }
 
-        public string sharedStringValue;
+        internal string sharedStringValue;
 
         public bool ReadSharedStrings()
         {
@@ -594,19 +595,19 @@ namespace SpreadSheetTasks
         }
 
         //public object cellValue;
-        public CellType cellType;
-        public int intValue;
-        public double doubleVal;
-        public bool boolValue;
-        public string stringValue;
+        internal CellType cellType;
+        internal int intValue;
+        internal double doubleVal;
+        internal bool boolValue;
+        internal string stringValue;
 
-        public int columnNum = -1;
-        public uint xfIndex;
+        internal int columnNum = -1;
+        internal uint xfIndex;
         //public bool isSharedStringVal = false;
-        public bool readCell = false;
-        public int rowIndex = -1;
+        internal bool readCell = false;
+        internal int rowIndex = -1;
 
-        public bool ReadWorksheet()
+        internal bool ReadWorksheet()
         {
             if (!TryReadVariableValue(out var recordId) ||
                 !TryReadVariableValue(out var recordLength))
@@ -849,7 +850,7 @@ namespace SpreadSheetTasks
         }*/
 
 
-        public static string GetString(byte[] buffer, uint offset, uint length)
+        private static string GetString(byte[] buffer, uint offset, uint length)
         {
             ////https://docs.microsoft.com/en-US/dotnet/api/system.string.create?view=net-5.0
             //return string.Create((int) length, (buffer,offset), (chars, state) => {
@@ -977,7 +978,7 @@ namespace SpreadSheetTasks
         }
     }
 
-    enum CellType
+    internal enum CellType
     {
         doubleVal,
         boolVal,

@@ -14,7 +14,7 @@ namespace SpreadSheetTasks
     {
         private readonly bool _inMemoryMode;
         private readonly int _bufferSize;
-        public static readonly string[] _letters;
+        internal static readonly string[] _letters;
         private readonly bool _useScharedStrings;
 
         private readonly CompressionLevel clvl;

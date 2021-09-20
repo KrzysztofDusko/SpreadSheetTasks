@@ -13,17 +13,17 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
-            var summary = BenchmarkRunner.Run<WriteBench>();
+            //var summary = BenchmarkRunner.Run<WriteBench>();
 #endif
 #if DEBUG
-            var xlsb = new ReadBenchXlsb();
-            xlsb.FileName = "200kFile.xlsb";
             Stopwatch st = new Stopwatch();
             st.Start();
-            xlsb.ReadFile();
-            Console.WriteLine("ReadBenchXlsb: " + st.ElapsedMilliseconds + " ms");
+            //var xlsb = new ReadBenchXlsb();
+            //xlsb.FileName = "200kFile.xlsb";
+            //xlsb.ReadFile();
+            //Console.WriteLine("ReadBenchXlsb: " + st.ElapsedMilliseconds + " ms");
 
             var xlsx = new ReadBenchXlsx();
             xlsx.FileName = "200kFile.xlsx";
@@ -31,22 +31,22 @@ namespace Benchmark
             xlsx.ReadFile();
             Console.WriteLine("ReadBenchXlsx: " + st.ElapsedMilliseconds + " ms");
 
-            //write
-            var readerXlsx = new WriteBench();
-            readerXlsx.Rows = 200_000;
-            readerXlsx.setup();
+            ////write
+            //var readerXlsx = new WriteBench();
+            //readerXlsx.Rows = 200_000;
+            //readerXlsx.setup();
 
-            st.Restart();
-            readerXlsx.XlsxTestDefault();
-            Console.WriteLine("XlsxTestDefault: " + st.ElapsedMilliseconds + " ms");
+            //st.Restart();
+            //readerXlsx.XlsxTestDefault();
+            //Console.WriteLine("XlsxTestDefault: " + st.ElapsedMilliseconds + " ms");
 
-            st.Restart();
-            readerXlsx.XlsxTestLowMemory();
-            Console.WriteLine("XlsxTestLowMemory: " + st.ElapsedMilliseconds + " ms");
+            //st.Restart();
+            //readerXlsx.XlsxTestLowMemory();
+            //Console.WriteLine("XlsxTestLowMemory: " + st.ElapsedMilliseconds + " ms");
 
-            st.Restart();
-            readerXlsx.XlsbTestDefault();
-            Console.WriteLine("XlsbTestDefault: " + st.ElapsedMilliseconds + " ms");
+            //st.Restart();
+            //readerXlsx.XlsbTestDefault();
+            //Console.WriteLine("XlsbTestDefault: " + st.ElapsedMilliseconds + " ms");
 #endif
 
         }

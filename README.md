@@ -4,9 +4,9 @@
  ## Installation
  https://www.nuget.org/packages/SpreadSheetTasks/
  
- ```Install-Package SpreadSheetTasks -Version 0.0.1```
+ ```Install-Package SpreadSheetTasks```
  
- ```dotnet add package SpreadSheetTasks --version 0.0.1```
+ ```dotnet add package SpreadSheetTasks```
 
  
 
