@@ -13,23 +13,23 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
-            //var summary = BenchmarkRunner.Run<WriteBench>();
+            var summary = BenchmarkRunner.Run<WriteBench>();
 #endif
 #if DEBUG
             Stopwatch st = new Stopwatch();
             st.Start();
-            //var xlsb = new ReadBenchXlsb();
-            //xlsb.FileName = "200kFile.xlsb";
-            //xlsb.ReadFile();
-            //Console.WriteLine("ReadBenchXlsb: " + st.ElapsedMilliseconds + " ms");
+            var xlsb = new ReadBenchXlsb();
+            xlsb.FileName = "200kFile.xlsb";
+            xlsb.ReadFile();
+            Console.WriteLine("ReadBenchXlsb: " + st.ElapsedMilliseconds + " ms");
 
-            var xlsx = new ReadBenchXlsx();
-            xlsx.FileName = "200kFile.xlsx";
-            st.Restart();
-            xlsx.ReadFile();
-            Console.WriteLine("ReadBenchXlsx: " + st.ElapsedMilliseconds + " ms");
+            //var xlsx = new ReadBenchXlsx();
+            //xlsx.FileName = "200kFile.xlsx";
+            //st.Restart();
+            //xlsx.ReadFile();
+            //Console.WriteLine("ReadBenchXlsx: " + st.ElapsedMilliseconds + " ms");
 
             ////write
             //var readerXlsx = new WriteBench();

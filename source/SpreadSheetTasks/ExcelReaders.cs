@@ -421,8 +421,6 @@ namespace SpreadSheetTasks
         private void FillStyles()
         {
             var _stylesCellXfs = new List<StyleInfo>();
-            //var _styleCellStyleXfs = new List<StyleInfo>();
-            //_customNumberFormatsDic = new Dictionary<int, NumberFormatInfo>();
 
             var e = _xlsxArchive.GetEntry($"xl/{_stylesLocation}");
             using (var str = e.Open())
@@ -440,12 +438,6 @@ namespace SpreadSheetTasks
                             {
                                 int.TryParse(reader.GetAttribute("xfId"), out var xfId);
                                 int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
-
-                                /*if (!int.TryParse(reader.GetAttribute("applyNumberFormat"), out var applyNumberFormat))
-                                {
-                                    applyNumberFormat = -1;
-                                }*/
-
                                 _stylesCellXfs.Add(new StyleInfo() { XfId = xfId, NumFmtId = numFmtId/*, ApplyNumberFormat = applyNumberFormat*/ });
                                 reader.Skip();
                             }
@@ -455,31 +447,6 @@ namespace SpreadSheetTasks
                             }
                         }
                     }
-
-                    //else if (reader.IsStartElement("cellStyleXfs"))
-                    //{
-                    //    reader.Read();
-                    //    while (!reader.EOF)
-                    //    {
-                    //        if (reader.IsStartElement("xf"))
-                    //        {
-                    //            int.TryParse(reader.GetAttribute("xfId"), out var xfId);
-                    //            int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
-
-                    //            if (!int.TryParse(reader.GetAttribute("applyNumberFormat"), out var applyNumberFormat))
-                    //            {
-                    //                applyNumberFormat = -1;
-                    //            }
-                    //            _styleCellStyleXfs.Add(new StyleInfo() { XfId = xfId, NumFmtId = numFmtId, ApplyNumberFormat = applyNumberFormat });
-                    //            reader.Skip();
-                    //        }
-                    //        else
-                    //        {
-                    //            break;
-                    //        }
-                    //    }
-                    //}
-
                     else if (reader.IsStartElement("numFmts"))
                     {
                         reader.Read();
@@ -506,17 +473,6 @@ namespace SpreadSheetTasks
                                 {
                                     _numberFormatsTypeDic[numFmtId] = type;
                                 }
-                                //_customNumberFormatsDic[numFmtId] = new NumberFormatInfo
-                                //{
-                                //    Name = formatCode,
-                                //    proposedType = type
-                                //};
-
-                                //if (!_numberFormatsTypeDic.ContainsKey(numFmtId))
-                                //{
-                                //    _numberFormatsTypeDic[numFmtId] = type;
-                                //}
-
                                 reader.Skip();
                             }
                             else
@@ -536,14 +492,11 @@ namespace SpreadSheetTasks
                 }
             }
             _stylesCellXfsArray = _stylesCellXfs.ToArray();
-            //_stylesCellStyleXfsArray = _styleCellStyleXfs.ToArray();
         }
 
         private void FillBinStyles()
         {
             var _stylesCellXfs = new List<StyleInfo>();
-            //var _styleCellStyleXfs = new List<StyleInfo>();
-            //_customNumberFormatsDic = new Dictionary<int, NumberFormatInfo>();
 
             var e = _xlsxArchive.GetEntry($"xl/{_stylesLocation}");
             using (var str = e.Open())
@@ -594,7 +547,6 @@ namespace SpreadSheetTasks
                 }
             }
             _stylesCellXfsArray = _stylesCellXfs.ToArray();
-            //_stylesCellStyleXfsArray = _styleCellStyleXfs.ToArray();
         }
 
         public override string[] GetScheetNames()
@@ -665,15 +617,15 @@ namespace SpreadSheetTasks
                                 reader.MoveToAttribute("r");
                                 len = reader.ReadValueChunk(_buffer, 0, _buffer.Length);
                                 colNum = -1;
-                                char c;
+
                                 for (int j = 0; j < len; j++)
                                 {
-                                    c = _buffer[j];
+                                    char c = _buffer[j];
                                     if (c < 'A' || c > 'Z')
                                     {
                                         break;
                                     }
-                                    int v = _buffer[j] - 'A';
+                                    int v = c - 'A';
                                     if ((uint)v < 26u)
                                     {
                                         colNum = ((colNum + 1) * 26) + v;
@@ -1378,28 +1330,17 @@ namespace SpreadSheetTasks
         /// <param name="row">array to fill</param>
         public override void GetValues(object[] row)
         {
-            var arr = _enumerator.Current;
-            for (int i = 0; i < row.Length; i++)
-            {
-                row[i] = arr[i];
-            }
+            Array.Copy(_enumerator.Current, row, row.Length);
         }
 
-        private static object GetTypedValueForXlsb(/*object*/double rawValue)
+        private static object GetTypedValueForXlsb(double rawValue)
         {
-            //if (rawValue is string || rawValue is bool)
-            //{
-            //    return rawValue;
-            //}
-            //else
-            //{
             long l1 = Convert.ToInt64(rawValue);
             double res = l1 - /*(double)*/rawValue;
             if (res < 3 * double.Epsilon && res > -3 * double.Epsilon)
             {
                 return Convert.ToInt64(rawValue);
             }
-            //}
             return rawValue;
         }
 
