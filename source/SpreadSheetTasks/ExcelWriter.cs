@@ -852,13 +852,15 @@ namespace SpreadSheetTasks
 
         private static string GetString(byte[] buffer, uint offset, uint length)
         {
-            ////https://docs.microsoft.com/en-US/dotnet/api/system.string.create?view=net-5.0
-            //return string.Create((int) length, (buffer,offset), (chars, state) => {
-            //    int l = 0;
-            //    byte[] buff = state.buffer;
-            //    for (uint i = offset; i < offset + 2 * length; i += 2)
-            //        chars[l++] = (char)GetWord(buff, i);
-            //});
+            //https://docs.microsoft.com/en-US/dotnet/api/system.string.create?view=net-5.0
+            return string.Create((int)length, (buffer, offset, length), (chars, state) =>
+            {
+                int l = 0;
+                byte[] buff = state.buffer;
+                for (uint i = state.offset; i < state.offset + 2 * state.length; i += 2)
+                    chars[l++] = (char)GetWord(buff, i);
+            });
+
 
             //Span<char> array = stackalloc char[(int)length];
             //int l = 0;
@@ -867,13 +869,14 @@ namespace SpreadSheetTasks
 
             //return new string(array);
 
-            char[] array = ArrayPool<char>.Shared.Rent((int)length);
-            int l = 0;
-            for (uint i = offset; i < offset + 2 * length; i += 2)
-                array[l++] = (char)GetWord(buffer, i);
-            string s1 = new string(array.AsSpan().Slice(0, (int)length));
-            ArrayPool<char>.Shared.Return(array);
-            return s1;
+            //char[] array = ArrayPool<char>.Shared.Rent((int)length);
+            //int l = 0;
+            //for (uint i = offset; i < offset + 2 * length; i += 2)
+            //    array[l++] = (char)GetWord(buffer, i);
+            //string s1 = new string(array.AsSpan().Slice(0, (int)length));
+            //ArrayPool<char>.Shared.Return(array);
+            //return s1;
+
         }
 
         //https://github.com/ExcelDataReader/ExcelDataReader

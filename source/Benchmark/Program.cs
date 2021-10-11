@@ -14,24 +14,24 @@ namespace Benchmark
         {
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            //var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
-            var summary = BenchmarkRunner.Run<WriteBench>();
+            var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary = BenchmarkRunner.Run<WriteBench>();
 #endif
 #if DEBUG
             Stopwatch st = new Stopwatch();
             st.Start();
-            var xlsb = new ReadBenchXlsb();
-            xlsb.FileName = "200kFile.xlsb";
-            xlsb.ReadFile();
-            Console.WriteLine("ReadBenchXlsb: " + st.ElapsedMilliseconds + " ms");
+            //var xlsb = new ReadBenchXlsb();
+            //xlsb.FileName = "200kFile.xlsb";
+            //xlsb.ReadFile();
+            //Console.WriteLine("ReadBenchXlsb: " + st.ElapsedMilliseconds + " ms");
 
-            //var xlsx = new ReadBenchXlsx();
-            //xlsx.FileName = "200kFile.xlsx";
-            //st.Restart();
-            //xlsx.ReadFile();
-            //Console.WriteLine("ReadBenchXlsx: " + st.ElapsedMilliseconds + " ms");
+            var xlsx = new ReadBenchXlsx();
+            xlsx.FileName = "200kFile.xlsx";
+            st.Restart();
+            xlsx.ReadFile();
+            Console.WriteLine("ReadBenchXlsx: " + st.ElapsedMilliseconds + " ms");
 
-            ////write
+            //write
             //var readerXlsx = new WriteBench();
             //readerXlsx.Rows = 200_000;
             //readerXlsx.setup();
@@ -95,7 +95,7 @@ namespace Benchmark
     public class ReadBenchXlsb
     {
 
-        [Params("200kFile.xlsb")]
+        [Params("200kFileB.xlsb")]
         public string FileName { get; set; }
 
         [Params(false,true)]
@@ -175,7 +175,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void XlsxTestLowMemory()
         {
             using (XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false))
@@ -185,7 +185,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void XlsbTestDefault()
         {
             using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))

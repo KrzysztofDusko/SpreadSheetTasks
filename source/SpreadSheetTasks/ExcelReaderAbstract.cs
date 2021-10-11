@@ -49,12 +49,42 @@ namespace SpreadSheetTasks
             }
             return innerRow[i];
         }
+
         public virtual void GetValues(object[] row)
         {
             for (int i = 0; i < row.Length; i++)
             {
                 row[i] = GetValue(i);
             }
+        }
+
+        public string GetString(int i)
+        {
+            return GetValue(i).ToString();
+        }
+
+        public DateTime GetDateTime(int i)
+        {
+            var val = GetValue(i);
+            return (DateTime)val;
+        }
+
+        public Int64 GetInt64(int i)
+        {
+            var val = GetValue(i);
+            return (Int64) val;
+        }
+
+        public double GetDouble(int i)
+        {
+            var val = GetValue(i);
+            return (double) val;
+        }
+
+        public T GetQueryString<T>(int i)
+        {
+            var val = GetValue(i);
+            return (T)val;
         }
 
         public abstract string[] GetScheetNames();
