@@ -1,18 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net5.0;netstandard2.1</TargetFrameworks>
+	  <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <RootNamespace>SpreadSheetTasks</RootNamespace>
     <Authors>Krzysztof Duśko</Authors>
     <Description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <PackageReleaseNotes>First Release</PackageReleaseNotes>
-    <PackageTags>xlsx;xlsb;excel</PackageTags>
+    <PackageReleaseNotes>Performance improvements, bug fixes</PackageReleaseNotes>
+    <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>
     <Company>Krzysztof Duśko</Company>
-    <Version>0.0.2</Version>
+    <Version>0.0.3</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 </Project>

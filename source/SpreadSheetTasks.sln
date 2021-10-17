@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31702.278
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31808.319
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpreadSheetTasks", "SpreadSheetTasks\SpreadSheetTasks.csproj", "{403EE89F-17AF-49BD-8F39-BC4E949953BC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{C928668B-F4A8-4993-92AD-CFDC913E08B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsvReaderTest", "CsvReaderTest\CsvReaderTest.csproj", "{8A56B293-C627-49E6-9558-ADB733254504}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CsvReader", "CsvReaderTest\CsvReader.csproj", "{8A56B293-C627-49E6-9558-ADB733254504}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

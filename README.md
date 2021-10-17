@@ -1,6 +1,10 @@
 # SpreadSheetTasks
- The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)
- 
+ The .NET library for fast reading and writing Excel files (.xlsx, .xlsb). 
+ Some methods/ideas based on great libraries : 
+ * https://github.com/MarkPflug/Sylvan.Data.Excel
+ * https://github.com/MarkPflug/Sylvan
+ * https://github.com/ExcelDataReader/ExcelDataReader
+
  ## Installation
  https://www.nuget.org/packages/SpreadSheetTasks/
  
@@ -9,7 +13,6 @@
  ```dotnet add package SpreadSheetTasks```
 
  
-
  ## Usage
  
  ### Read
@@ -43,30 +46,38 @@ using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
  https://github.com/KrzysztofDusko/SpreadSheetTasks/tree/main/source/Benchmark
  
  ``` ini
-
-BenchmarkDotNet=v0.13.1, OS=Windows 10.0.19043.1237 (21H1/May2021Update)
+BenchmarkDotNet=v0.13.1, OS=Windows 10.0.22000
 Intel Core i5-7500 CPU 3.40GHz (Kaby Lake), 1 CPU, 4 logical and 4 physical cores
-.NET SDK=5.0.401
-  [Host]     : .NET 5.0.10 (5.0.1021.41214), X64 RyuJIT
-  DefaultJob : .NET 5.0.10 (5.0.1021.41214), X64 RyuJIT
+.NET SDK=6.0.100-rc.2.21505.57
+  [Host]   : .NET 6.0.0 (6.0.21.48005), X64 RyuJIT
+  .NET 5.0 : .NET 5.0.11 (5.0.1121.47308), X64 RyuJIT
+  .NET 6.0 : .NET 6.0.0 (6.0.21.48005), X64 RyuJIT
 ```
 ### Read
 Xlsx
 
-|   Method |      FileName |     Mean |   Error |  StdDev |      Gen 0 |     Gen 1 |     Gen 2 | Allocated |
-|--------- |-------------- |---------:|--------:|--------:|-----------:|----------:|----------:|----------:|
-| ReadFile | 200kFile.xlsx | 797.0 ms | 5.08 ms | 4.24 ms |  8000.0000 | 4000.0000 | 2000.0000 |     38 MB |
+|               Method |  Runtime |     Mean |   Error |  StdDev |     Gen 0 |     Gen 1 |     Gen 2 | Allocated |
+|--------------------- |--------- |---------:|--------:|--------:|----------:|----------:|----------:|----------:|
+| SpreadSheetTasks200K | .NET 5.0 | 731.0 ms | 2.88 ms | 2.25 ms | 6000.0000 | 2000.0000 | 1000.0000 |     34 MB |
+| SpreadSheetTasks200K | .NET 6.0 | 662.9 ms | 5.80 ms | 5.14 ms | 6000.0000 | 2000.0000 | 1000.0000 |     34 MB |
+
 
 Xlsb
-|   Method |      FileName | UseMemoryStreamInXlsb |     Mean |   Error |  StdDev |     Gen 0 |     Gen 1 |     Gen 2 | Allocated |
-|--------- |-------------- |---------------------- |---------:|--------:|--------:|----------:|----------:|----------:|----------:|
-| ReadFile | 200kFile.xlsb |                 False | 281.7 ms | 3.10 ms | 2.90 ms | 8000.0000 | 4000.0000 | 2000.0000 |     38 MB |
-| ReadFile | 200kFile.xlsb |                  True | 207.9 ms | 0.69 ms | 0.61 ms | 8000.0000 | 4666.6667 | 1666.6667 |     72 MB |
+|   Method |  Runtime |      FileName | InMemory |     Mean |   Error |  StdDev |     Gen 0 |     Gen 1 |     Gen 2 | Allocated |
+|--------- |--------- |-------------- |--------- |---------:|--------:|--------:|----------:|----------:|----------:|----------:|
+| ReadFile | .NET 5.0 | 200kFile.xlsb |    False | 290.8 ms | 1.98 ms | 1.75 ms | 6000.0000 | 2000.0000 | 1000.0000 |     34 MB |
+| ReadFile | .NET 6.0 | 200kFile.xlsb |    False | 249.7 ms | 1.05 ms | 0.98 ms | 6000.0000 | 2000.0000 | 1000.0000 |     34 MB |
+| ReadFile | .NET 5.0 | 200kFile.xlsb |     True | 214.7 ms | 2.57 ms | 2.41 ms | 8000.0000 | 4333.3333 | 1333.3333 |     68 MB |
+| ReadFile | .NET 6.0 | 200kFile.xlsb |     True | 195.6 ms | 0.54 ms | 0.48 ms | 8000.0000 | 4333.3333 | 1333.3333 |     68 MB |
+
 
 ### Write
 
-|            Method |   Rows |       Mean |    Error |   StdDev |      Gen 0 | Allocated |
-|------------------ |------- |-----------:|---------:|---------:|-----------:|----------:|
-|   XlsxTestDefault | 200000 | 1,244.4 ms | 17.87 ms | 16.72 ms | 28000.0000 |    102 MB |
-| XlsxTestLowMemory | 200000 | 1,211.9 ms | 15.61 ms | 13.03 ms | 26000.0000 |     78 MB |
-|   XlsbTestDefault | 200000 |   665.7 ms |  2.67 ms |  2.50 ms |  4000.0000 |     31 MB |
+|             Method |  Runtime |   Rows |       Mean |    Error |   StdDev |      Gen 0 | Allocated |
+|------------------- |--------- |------- |-----------:|---------:|---------:|-----------:|----------:|
+|   XlsxWriteDefault | .NET 5.0 | 200000 | 1,235.0 ms |  8.08 ms |  7.55 ms | 28000.0000 |    102 MB |
+| XlsxWriteLowMemory | .NET 5.0 | 200000 | 1,203.6 ms | 12.46 ms | 11.65 ms | 26000.0000 |     78 MB |
+|   XlsbWriteDefault | .NET 5.0 | 200000 |   690.3 ms | 13.32 ms | 13.08 ms |  4000.0000 |     31 MB |
+|   XlsxWriteDefault | .NET 6.0 | 200000 | 1,224.5 ms |  5.53 ms |  4.90 ms | 28000.0000 |    102 MB |
+| XlsxWriteLowMemory | .NET 6.0 | 200000 | 1,182.9 ms | 14.79 ms | 13.83 ms | 26000.0000 |     78 MB |
+|   XlsbWriteDefault | .NET 6.0 | 200000 |   676.0 ms | 13.04 ms | 12.19 ms |  4000.0000 |     31 MB |

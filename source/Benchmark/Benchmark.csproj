@@ -1,15 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFrameworkS>net6.0;net5.0</TargetFrameworkS>
+    
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+    <PackageReference Include="Sylvan.Data.Csv" Version="1.1.8" />
+    <PackageReference Include="Sylvan.Data.Excel" Version="0.1.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CsvReaderTest\CsvReader.csproj" />
     <ProjectReference Include="..\SpreadSheetTasks\SpreadSheetTasks.csproj" />
   </ItemGroup>
 

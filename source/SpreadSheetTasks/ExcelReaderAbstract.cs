@@ -1,61 +1,93 @@
 ﻿using System;
 using System.Data.Common;
 
+
 namespace SpreadSheetTasks
 {
+    //some code from https://github.com/MarkPflug/Sylvan.Data.Excel
+    //some code from https://github.com/ExcelDataReader/ExcelDataReader
     public abstract class ExcelReaderAbstract
     {
-        protected DbDataReader dbReader = null;
-        protected string sylvanFilePath = null;
         public int FieldCount { get; set; }
         public virtual int ResultsCount { get; }
         public virtual string ActualSheetName { get; set; }
         public virtual int RowCount { get => 123123123; }
         public abstract void Open(string path, bool fool1 = true, bool fool2 = false);
-        public virtual bool Read()
+
+        public abstract bool Read();
+
+        /// <summary>
+        /// use only after read first row  = GetValue + ToString
+        /// </summary>
+        /// <param name="i">column number</param>
+        /// <returns></returns>
+        public string GetName(int i)
         {
-            Array.Clear(innerRow, 0, FieldCount);
-            return dbReader.Read();
+            return GetValue(i).ToString();
         }
 
-        public virtual string GetName(int i) => dbReader.GetName(i);
-        public virtual Type GetFieldType(int i)
+        //public virtual string GetName(int i) => dbReader.GetName(i);
+        public Type GetFieldType(int i)
         {
-            string rawVal = dbReader.GetValue(i).ToString();
-            if (long.TryParse(rawVal, out long longValue))
+            switch (innerRow[i].type)
             {
-                innerRow[i] = longValue;
-                return typeof(long);
+                case ExcelDataType.Null:
+                    return typeof(DBNull);
+                case ExcelDataType.Int64:
+                    return typeof(Int64);
+                case ExcelDataType.Double:
+                    return typeof(Double);
+                case ExcelDataType.DateTime:
+                    return typeof(DateTime);
+                case ExcelDataType.Boolean:
+                    return typeof(bool);
+                case ExcelDataType.String:
+                //case ExcelDataType.Error:
+                default:
+                    return typeof(string);
             }
-            else if (double.TryParse(rawVal, out double doubleValue))
-            {
-                innerRow[i] = doubleValue;
-                return typeof(double);
-            }
-            else if (DateTime.TryParse(rawVal, out DateTime dateTimeValue))
-            {
-                innerRow[i] = dateTimeValue;
-                return typeof(DateTime);
-            }
-            innerRow[i] = rawVal;
-            return typeof(string);
         }
 
-        public virtual object GetValue(int i)
+        public object GetValue(int i)
         {
-            if (innerRow[i] == null)
+            switch (innerRow[i].type)
             {
-                return dbReader.GetValue(i);
+                case ExcelDataType.Null:
+                    return DBNull.Value;
+                case ExcelDataType.Int64:
+                    return innerRow[i].int64Value;
+                case ExcelDataType.Double:
+                    return innerRow[i].doubleValue;
+                case ExcelDataType.DateTime:
+                    return innerRow[i].dtValue;
+                case ExcelDataType.Boolean:
+                    return (innerRow[i].int64Value == 1);
+                case ExcelDataType.String:
+                    return innerRow[i].strValue;
+                //case ExcelDataType.Error:
+                //    return "error in cell";
+                default:
+                    return typeof(string);
             }
-            return innerRow[i];
         }
 
-        public virtual void GetValues(object[] row)
+        public void GetValues(object[] row)
         {
             for (int i = 0; i < row.Length; i++)
             {
                 row[i] = GetValue(i);
             }
+        }
+
+
+        public ref FieldInfo GetNativeValue(int i)
+        {
+            return ref innerRow[i];
+        }
+
+        public ref FieldInfo[] GetNativeValues()
+        {
+            return ref innerRow;
         }
 
         public string GetString(int i)
@@ -65,36 +97,102 @@ namespace SpreadSheetTasks
 
         public DateTime GetDateTime(int i)
         {
-            var val = GetValue(i);
-            return (DateTime)val;
+            ref var w = ref innerRow[i];
+            if (w.type == ExcelDataType.DateTime)
+            {
+                return w.dtValue;
+            }
+            else
+            {
+                throw new InvalidCastException();
+            }
         }
 
         public Int64 GetInt64(int i)
         {
-            var val = GetValue(i);
-            return (Int64) val;
+            ref var w = ref innerRow[i];
+            if (w.type == ExcelDataType.Int64)
+            {
+                return w.int64Value;
+            }
+            else if (w.type == ExcelDataType.Double)
+            {
+                return Convert.ToInt64(w.doubleValue);
+            }
+            else
+            {
+                throw new InvalidCastException();
+            }
         }
 
         public double GetDouble(int i)
         {
-            var val = GetValue(i);
-            return (double) val;
-        }
-
-        public T GetQueryString<T>(int i)
-        {
-            var val = GetValue(i);
-            return (T)val;
+            ref var w = ref innerRow[i];
+            if (w.type == ExcelDataType.Double)
+            {
+                return w.doubleValue;
+            }
+            else if (w.type == ExcelDataType.Int64)
+            {
+                return Convert.ToDouble(w.int64Value);
+            }
+            else
+            {
+                throw new InvalidCastException();
+            }
         }
 
         public abstract string[] GetScheetNames();
 
-        protected object[] innerRow;
+        protected FieldInfo[] innerRow;
 
-        public virtual void Dispose()
-        {
-            dbReader.Dispose();
-        }
+        public abstract void Dispose();
+        //public virtual void Dispose()
+        //{
+        //    dbReader.Dispose();
+        //}
+
+        //Sylvan
 
     }
+
+    public struct FieldInfo
+    {
+        public ExcelDataType type;
+        public string strValue;
+        public Int64 int64Value;
+        public double doubleValue;
+        public DateTime dtValue;
+        //public int xfIdx;
+    }
+
+    public enum ExcelDataType
+    {
+        /// <summary>
+        /// A cell that contains no value.
+        /// </summary>
+        Null = 0,
+        /// <summary>
+        /// Number
+        /// </summary>
+        Int64,
+        Double,
+        /// <summary>
+        /// A DateTime value. This is an uncommonly used representation in .xlsx files.
+        /// </summary>
+        DateTime,
+        /// <summary>
+        /// A text field.
+        /// </summary>
+        String,
+        /// <summary>
+        /// A formula cell that contains a boolean.
+        /// </summary>
+        Boolean,
+        /// <summary>
+        /// A formula cell that contains an error.
+        /// </summary>
+        Error,
+    }
+
 }
