@@ -72,12 +72,11 @@ Xlsb
 
 
 ### Write
-
-|             Method |  Runtime |   Rows |       Mean |    Error |   StdDev |      Gen 0 | Allocated |
-|------------------- |--------- |------- |-----------:|---------:|---------:|-----------:|----------:|
-|   XlsxWriteDefault | .NET 5.0 | 200000 | 1,235.0 ms |  8.08 ms |  7.55 ms | 28000.0000 |    102 MB |
-| XlsxWriteLowMemory | .NET 5.0 | 200000 | 1,203.6 ms | 12.46 ms | 11.65 ms | 26000.0000 |     78 MB |
-|   XlsbWriteDefault | .NET 5.0 | 200000 |   690.3 ms | 13.32 ms | 13.08 ms |  4000.0000 |     31 MB |
-|   XlsxWriteDefault | .NET 6.0 | 200000 | 1,224.5 ms |  5.53 ms |  4.90 ms | 28000.0000 |    102 MB |
-| XlsxWriteLowMemory | .NET 6.0 | 200000 | 1,182.9 ms | 14.79 ms | 13.83 ms | 26000.0000 |     78 MB |
-|   XlsbWriteDefault | .NET 6.0 | 200000 |   676.0 ms | 13.04 ms | 12.19 ms |  4000.0000 |     31 MB |
+|             Method |  Runtime |   Rows |       Mean |    Error |  StdDev |     Gen 0 | Allocated |
+|------------------- |--------- |------- |-----------:|---------:|--------:|----------:|----------:|
+|   XlsxWriteDefault | .NET 5.0 | 200000 | 1,181.4 ms |  2.42 ms | 2.14 ms | 4000.0000 |     31 MB |
+| XlsxWriteLowMemory | .NET 5.0 | 200000 | 1,157.4 ms | 10.21 ms | 9.55 ms | 4000.0000 |     14 MB |
+|   XlsbWriteDefault | .NET 5.0 | 200000 |   687.9 ms |  2.41 ms | 2.25 ms | 4000.0000 |     31 MB |
+|   XlsxWriteDefault | .NET 6.0 | 200000 | 1,160.1 ms |  1.42 ms | 1.26 ms | 4000.0000 |     31 MB |
+| XlsxWriteLowMemory | .NET 6.0 | 200000 | 1,142.3 ms | 10.48 ms | 9.80 ms | 4000.0000 |     14 MB |
+|   XlsbWriteDefault | .NET 6.0 | 200000 |   680.5 ms |  1.47 ms | 1.37 ms | 4000.0000 |     31 MB |

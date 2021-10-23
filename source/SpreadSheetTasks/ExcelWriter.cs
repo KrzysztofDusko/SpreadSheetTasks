@@ -80,7 +80,7 @@ namespace SpreadSheetTasks
                 var dt = _dataColReader.DataTable;
                 for (int j = 0; j < ColumnCount; j++)
                 {
-                    newTypes[j] = Type.GetTypeCode(dt.Columns[j].DataType);
+                    newTypes[j] = Type.GetTypeCode(dt.Columns[j].DataType);       
                     if (detectBoolenaType && dt.Columns[j].DataType == typeof(Boolean))
                     {
                         typesArray[j] = 4;

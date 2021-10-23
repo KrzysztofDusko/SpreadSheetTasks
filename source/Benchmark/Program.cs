@@ -340,7 +340,7 @@ namespace Benchmark
         [Benchmark]
         public void XlsbWriteDefault()
         {
-            using (XlsxWriter xlsx = new XlsxWriter("file.xlsb"))
+            using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
             {
                 xlsx.AddSheet("sheetName");
                 xlsx.WriteSheet(dt.CreateDataReader());

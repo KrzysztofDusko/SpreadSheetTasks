@@ -212,7 +212,7 @@ namespace SpreadSheetTasks
                     string stringValue = _dataColReader.GetString(column);
                     WriteString(stringValue, column);
                 }
-                else if(newTypes[column] == TypeCode.Object) 
+                else if(newTypes[column] == TypeCode.Object)
                 {
                     string stringValue = _dataColReader.GetValue(column).ToString();
                     WriteString(stringValue, column);
