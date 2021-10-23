@@ -73,7 +73,6 @@ namespace SpreadSheetTasks
         private string _themeLocation = null;
         private int _uniqueStringCount = -1;
         private int _stringCount = -1;
-        private static readonly CultureInfo invariantCultureInfo = CultureInfo.InvariantCulture;
 
         Modes mode = Modes.xlsx;
         enum Modes
@@ -629,7 +628,7 @@ namespace SpreadSheetTasks
             len = 0;
             rowNum = 0;
             returnValue = true;
-            innerRow = new FieldInfo[1024];
+            innerRow = new FieldInfo[4096];
             sheetEntry = GetArchiverEntry(ActualSheetName);
         }
         private void initSheetXlsxReader()

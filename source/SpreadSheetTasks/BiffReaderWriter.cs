@@ -767,7 +767,6 @@ namespace SpreadSheetTasks
             {
                 if (_rowNum > 1 || !_headers)
                 {
-                    //return DataTable.Rows[_rowNum-2][j];
                     return _dataTableRow[j];
                 }
                 else
@@ -778,6 +777,424 @@ namespace SpreadSheetTasks
             else
             {
                 return daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        
+        public bool GetBoolean(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetBoolean(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("bool for header ?");
+                }
+                else
+                {
+                    return (bool)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (bool)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("bool for header ?");
+                }
+            }
+            else
+            {
+                return (bool)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public char GetChar(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetChar(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("char for header ?");
+                }
+                else
+                {
+                    return (char)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (char)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("char for header ?");
+                }
+            }
+            else
+            {
+                return (char)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public byte GetByte(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetByte(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("byte for header ?");
+                }
+                else
+                {
+                    return (byte)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (byte)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("byte for header ?");
+                }
+            }
+            else
+            {
+                return (byte)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public Int16 GetInt16(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetInt16(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("Int16 for header ?");
+                }
+                else
+                {
+                    return (Int16)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (Int16)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("Int16 for header ?");
+                }
+            }
+            else
+            {
+                return (Int16)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public Int32 GetInt32(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetInt32(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("Int32 for header ?");
+                }
+                else
+                {
+                    return (Int32)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (Int32)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("Int32 for header ?");
+                }
+            }
+            else
+            {
+                return (Int32)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public Int64 GetInt64(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetInt64(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("Int64 for header ?");
+                }
+                else
+                {
+                    return (Int64)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (Int64)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("Int64 for header ?");
+                }
+            }
+            else
+            {
+                return (Int32)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public float GetFloat(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetFloat(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("float for header ?");
+                }
+                else
+                {
+                    return (float)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (float)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("float for header ?");
+                }
+            }
+            else
+            {
+                return (float)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+        public double GetDouble(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetDouble(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("double for header ?");
+                }
+                else
+                {
+                    return (double)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (double)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("double for header ?");
+                }
+            }
+            else
+            {
+                return (double)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+        public decimal GetDecimal(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetDecimal(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("decimal for header ?");
+                }
+                else
+                {
+                    return (decimal)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (decimal)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("decimal for header ?");
+                }
+            }
+            else
+            {
+                return (decimal)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public DateTime GetDateTime(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetDateTime(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("DateTime for header ?");
+                }
+                else
+                {
+                    return (DateTime)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    return (DateTime)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("decimal for header ?");
+                }
+            }
+            else
+            {
+                return (DateTime)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
+        public string GetString(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.GetString(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    return dataReader.GetName(j);
+                }
+                else
+                {
+                    return top100[topNum - 1][j].ToString();
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return _dataTableRow[j].ToString();
+                }
+                else
+                {
+                    return DataTable.Columns[j].ColumnName;
+                }
+            }
+            else
+            {
+                return daneTabelaryczne[_rowNum - 1, j].ToString();
+            }
+        }
+
+        public bool IsDBNull(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return dataReader.IsDBNull(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    return false;
+                }
+                else
+                {
+                    return top100[topNum - 1][j] == null || top100[topNum - 1][j] == DBNull.Value;
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return _dataTableRow[j] == null || _dataTableRow[j] == DBNull.Value;
+                }
+                else
+                {
+                    return DataTable.Columns[j].ColumnName == null;
+                }
+            }
+            else
+            {
+                return daneTabelaryczne[_rowNum - 1, j] == null || daneTabelaryczne[_rowNum - 1, j] == DBNull.Value;
             }
         }
 

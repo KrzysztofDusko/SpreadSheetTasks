@@ -109,7 +109,7 @@ namespace SpreadSheetTasks.CsvReader
 
         public string GetName(int i)
         {
-            throw new NotImplementedException();
+            return GetString(i);
         }
 
         public int GetOrdinal(string name)
@@ -129,7 +129,11 @@ namespace SpreadSheetTasks.CsvReader
 
         public int GetValues(object[] values)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < values.Length; i++)
+            {
+                values[i] = GetString(i);
+            }
+            return 0;
         }
 
         public bool IsDBNull(int i)

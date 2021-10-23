@@ -35,13 +35,14 @@ namespace SpreadSheetTasks
 
         public string DocPopertyProgramName { get; set; }
 
-        internal static void SetTypes(DataColReader _dataColReader, int[] typesArray, int ColumnCount, bool detectBoolenaType = false)
+        internal static void SetTypes(DataColReader _dataColReader, int[] typesArray, TypeCode[] newTypes, int ColumnCount, bool detectBoolenaType = false)
         {
             if (_dataColReader.dataReader != null)
             {
                 var rdr = _dataColReader.dataReader;
                 for (int j = 0; j < ColumnCount; j++)
                 {
+                    newTypes[j] = Type.GetTypeCode(rdr.GetFieldType(j));
                     if (detectBoolenaType && rdr.GetFieldType(j) == typeof(Boolean))
                     {
                         typesArray[j] = 4;
@@ -63,9 +64,14 @@ namespace SpreadSheetTasks
                     {
                         typesArray[j] = 3;
                     }
+                    else if (rdr.GetFieldType(j) == typeof(System.TimeSpan))
+{
+                        typesArray[j] = 3;
+                    }
                     else // String, other -> as String
                     {
-                        typesArray[j] = -1;
+                        throw new Exception("Excel type problem !");
+                        //typesArray[j] = -1;
                     }
                 }
             }
@@ -74,6 +80,7 @@ namespace SpreadSheetTasks
                 var dt = _dataColReader.DataTable;
                 for (int j = 0; j < ColumnCount; j++)
                 {
+                    newTypes[j] = Type.GetTypeCode(dt.Columns[j].DataType);
                     if (detectBoolenaType && dt.Columns[j].DataType == typeof(Boolean))
                     {
                         typesArray[j] = 4;
@@ -90,9 +97,14 @@ namespace SpreadSheetTasks
                     {
                         typesArray[j] = 3;
                     }
+                    else if (dt.Columns[j].DataType == typeof(System.TimeSpan))
+{
+                        typesArray[j] = 3;
+                    }
                     else // Boolean, String, other -> as String
                     {
-                        typesArray[j] = -1;
+                        throw new Exception("Excel type problem !");
+                        //typesArray[j] = -1;
                     }
                 }
             }
@@ -100,6 +112,7 @@ namespace SpreadSheetTasks
             {
                 for (int j = 0; j < ColumnCount; j++)
                 {
+                    newTypes[j] = Type.GetTypeCode(_dataColReader.GetValue(j).GetType());
                     if (detectBoolenaType && _dataColReader.GetValue(j).GetType() == typeof(Boolean))
                     {
                         typesArray[j] = 4;
@@ -120,9 +133,14 @@ namespace SpreadSheetTasks
                     {
                         typesArray[j] = 3;
                     }
+                    else if (_dataColReader.GetValue(j).GetType() == typeof(System.TimeSpan))
+                    {
+                        typesArray[j] = 3;
+                    }
                     else // other
                     {
-                        typesArray[j] = -1;
+                        throw new Exception("Excel type problem !");
+                        //typesArray[j] = -1;
                     }
                 }
             }
@@ -143,6 +161,7 @@ namespace SpreadSheetTasks
 
         internal double[] colWidesArray;
         internal int[] typesArray;
+        internal TypeCode[] newTypes;
 
         internal abstract void FinalizeFile();
         public abstract void AddSheet(string sheetName, bool hidden = false);

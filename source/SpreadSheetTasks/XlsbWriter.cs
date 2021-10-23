@@ -108,6 +108,7 @@ namespace SpreadSheetTasks
             Array.Fill<double>(colWidesArray, -1.0);
 
             typesArray = new int[ColumnCount];
+            newTypes = new TypeCode[ColumnCount];
 
             var rdr = _dataColReader.dataReader;
             for (int l = 1; l <= ColumnCount; l++)
@@ -170,11 +171,12 @@ namespace SpreadSheetTasks
                             for (int i = 0; i < ColumnCount; i++)
                             {
                                 typesArray[i] = 0;
+                                newTypes[i] = TypeCode.String;
                             }
                         }
                         else
                         {
-                            ExcelWriter.SetTypes(_dataColReader, typesArray, ColumnCount, detectBoolenaType: true);
+                            ExcelWriter.SetTypes(_dataColReader, typesArray, newTypes, ColumnCount, detectBoolenaType: true);
                         }
                     }
 
@@ -202,60 +204,82 @@ namespace SpreadSheetTasks
         {
             for (int column = 0; column < ColumnCount; column++)
             {
-                var rawValue = _dataColReader.GetValue(column);
-                if (rawValue == null || rawValue == DBNull.Value)
+                if (_dataColReader.IsDBNull(column))
                     continue;
-                if (typesArray[column] == 0 || typesArray[column] == -1) // string
+
+                if (newTypes[column] == TypeCode.String) // string
                 {
-                    string stringValue = rawValue.ToString();
+                    string stringValue = _dataColReader.GetString(column);
                     WriteString(stringValue, column);
                 }
-                else if (typesArray[column] == 4) // bool
+                else if(newTypes[column] == TypeCode.Object) 
                 {
-                    WriteBool((bool)rawValue, column);
+                    string stringValue = _dataColReader.GetValue(column).ToString();
+                    WriteString(stringValue, column);
+                }
+                else if (newTypes[column] == TypeCode.Boolean) // bool
+                {
+                    WriteBool(_dataColReader.GetBoolean(column), column);
                 }
                 else if (typesArray[column] == 1)//number
                 {
-                    if (rawValue is decimal decimalVal)
+
+                    switch (newTypes[column])
                     {
-                        WriteDouble(decimal.ToDouble(decimalVal), column);
-                    }
-                    else if (rawValue is Int16 int16Val)
-                    {
-                        WriteRkNumberInteger(Convert.ToInt32(int16Val), column);
-                    }
-                    else if (rawValue is Byte byteValue)
-                    {
-                        WriteRkNumberInteger(byteValue, column);
-                    }
-                    else if (rawValue is Int32 intValue && intValue >= rRkIntegerLowerLimit && intValue <= rRkIntegerUpperLimit)
-                    {
-                        WriteRkNumberInteger(intValue, column);
-                    }
-                    else if (rawValue is Int64 longValue)
-                    {
-                        WriteDouble(Convert.ToDouble(longValue), column);
-                    }
-                    else if (rawValue is Single singleValue)
-                    {
-                        WriteDouble(Convert.ToDouble(singleValue), column);
-                    }
-                    else
-                    {
-                        WriteDouble((double)rawValue, column);
+                        case TypeCode.Byte:
+                            byte byteValue = _dataColReader.GetByte(column);
+                            WriteRkNumberInteger(byteValue, column);
+                            break;
+                        case TypeCode.Int16:
+                            Int16 int16Value = _dataColReader.GetInt16(column);
+                            WriteRkNumberInteger(Convert.ToInt32(int16Value), column);
+                            break;
+                        case TypeCode.Int32:
+
+                            Int32 int32Value = _dataColReader.GetInt32(column);
+
+                            if (int32Value >= rRkIntegerLowerLimit && int32Value <= rRkIntegerUpperLimit)
+                            {
+                                WriteRkNumberInteger(int32Value, column);
+                            }
+                            else
+                            {
+                                WriteDouble((double)int32Value, column);
+                            }
+                            break;
+                        case TypeCode.Int64:
+                            Int64 int64Value = _dataColReader.GetInt64(column);
+                            WriteDouble(Convert.ToDouble(int64Value), column);
+                            break;
+                        case TypeCode.Single:
+                            float floatVal = _dataColReader.GetFloat(column);
+                            WriteDouble(Convert.ToDouble(floatVal), column);
+                            break;
+                        case TypeCode.Double:
+                            double doubleVal = _dataColReader.GetDouble(column);
+                            WriteDouble(doubleVal, column);
+                            break;
+                        case TypeCode.Decimal:
+                            decimal decimalVal = _dataColReader.GetDecimal(column);
+                            WriteDouble(decimal.ToDouble(decimalVal), column);
+                            break;
+                        default:
+                            throw new Exception("number format Excel error");
                     }
                 }
                 else if (typesArray[column] == 2) //date
                 {
-                    WriteDate((DateTime)rawValue, column);
+                    DateTime dtVal = _dataColReader.GetDateTime(column);
+                    WriteDate(dtVal, column);
                 }
                 else if (typesArray[column] == 3) //dateTime
                 {
-                    if (SuppressSomeDate && rawValue is DateTime && (rawValue as DateTime?).Value.Year == 1000)//1000-xx-xx
+                    DateTime dtVal = _dataColReader.GetDateTime(column);
+                    if (SuppressSomeDate && (dtVal as DateTime?).Value.Year == 1000)//1000-xx-xx
                     {
                         continue;
                     }
-                    WriteDateTime((DateTime)rawValue, column);
+                    WriteDateTime(dtVal, column);
                 }
             }
         }
@@ -835,5 +859,4 @@ namespace SpreadSheetTasks
             _buff[offset++] = (byte)(intNumber >> 24);
         }
     }
-
 }

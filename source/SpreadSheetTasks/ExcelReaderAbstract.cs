@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data.Common;
-
+using System.Globalization;
 
 namespace SpreadSheetTasks
 {
@@ -8,6 +8,7 @@ namespace SpreadSheetTasks
     //some code from https://github.com/ExcelDataReader/ExcelDataReader
     public abstract class ExcelReaderAbstract
     {
+        public static CultureInfo invariantCultureInfo = CultureInfo.InvariantCulture;
         public int FieldCount { get; set; }
         public virtual int ResultsCount { get; }
         public virtual string ActualSheetName { get; set; }

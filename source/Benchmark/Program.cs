@@ -9,8 +9,9 @@ using BenchmarkDotNet.Running;
 
 using SpreadSheetTasks;
 using SpreadSheetTasks.CsvReader;
+using SpreadSheetTasks.CsvWriter;
 
-using Sylvan.Data.Csv;
+using SylvanCsv = Sylvan.Data.Csv;
 using Sylvan.Data.Excel;
 
 namespace Benchmark
@@ -20,23 +21,30 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
-            //var summary = BenchmarkRunner.Run<WriteBenchExcel>();
+            var summary = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary = BenchmarkRunner.Run<CsvReadBench>();
+            //var summary = BenchmarkRunner.Run<CsvWriterBench>();
+
 #endif
 #if DEBUG
             ExcelTest();
             //CsvTest();
+            //CsvWriterTest();
 #endif
         }
         static void ExcelTest()
         {
-            ReadBenchXlsb e = new ReadBenchXlsb();
+            //ReadBenchXlsb e = new ReadBenchXlsb();
 
-            e.FileName = "200kFile.xlsb";
-            e.ReadFile();
-
+            //e.FileName = "200kFile.xlsb";
+            //e.ReadFile();
+            WriteBenchExcel e = new WriteBenchExcel();
+            e.Rows = 200_000;
+            e.setup();
+            //e.XlsbWriteDefault();
+            e.XlsxWriteDefault();
         }
 
         static void CsvTest()
@@ -61,12 +69,21 @@ namespace Benchmark
                 {
                     //Console.WriteLine($"    col {l + 1}: {System.Text.Encoding.UTF8.GetString(rd.GetByteSpan(l))}");
                     Console.WriteLine($"    col {l + 1}: {rd.GetString(l)}");
-                    Console.WriteLine($"    col {l + 1}: {rd.GetSpan(l).ToString()}");
+                    //Console.WriteLine($"    col {l + 1}: {rd.GetSpan(l).ToString()}");
                 }
             }
 
             //Console.WriteLine("records " + rd.RecordsAffected);
             //Console.WriteLine(rd.ss);
+        }
+
+        static void CsvWriterTest()
+        {
+            CsvWriterBench csvWriterBench = new CsvWriterBench();
+            csvWriterBench.Rows = 50_000;
+            csvWriterBench.setup();
+            csvWriterBench.CsvWriterTestA();
+            //csvWriterBench.CsvWriterSylvan();
         }
     }
 
@@ -298,9 +315,11 @@ namespace Benchmark
             }
         }
 
+
         [Benchmark]
         public void XlsxWriteDefault()
         {
+            //using (XlsxWriterTest xlsx = new XlsxWriterTest(@"C:\sqls\fileLowMemory.xlsx"))
             using (XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx"))
             {
                 xlsx.AddSheet("sheetName");
@@ -321,13 +340,12 @@ namespace Benchmark
         [Benchmark]
         public void XlsbWriteDefault()
         {
-            using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
+            using (XlsxWriter xlsx = new XlsxWriter("file.xlsb"))
             {
                 xlsx.AddSheet("sheetName");
                 xlsx.WriteSheet(dt.CreateDataReader());
             }
         }
-
 
     }
 
@@ -493,7 +511,7 @@ namespace Benchmark
         //[Benchmark]
         public void SylvanString()
         {
-            var rd = CsvDataReader.Create(path/*, opt*/);
+            var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
 
             while (rd.Read())
             {
@@ -504,6 +522,63 @@ namespace Benchmark
             }
         }
 
+
+    }
+
+    [SimpleJob(RuntimeMoniker.Net50)]
+    [SimpleJob(RuntimeMoniker.Net60)]
+    [MemoryDiagnoser]
+    public class CsvWriterBench
+    {
+        [Params(500_000)]
+        public int Rows { get; set; }
+
+        public int BufferSize { get; set; }
+
+        DataTable dt = new DataTable();
+
+        string path = @"C:\sqls\testWriter.txt";
+
+        [GlobalSetup]
+        public void setup()
+        {
+            dt.Columns.Add("COL1_INT", typeof(int));
+            dt.Columns.Add("COL2_TXT", typeof(string));
+            dt.Columns.Add("COL3_DATETIME", typeof(DateTime));
+            dt.Columns.Add("COL4_DOUBLE", typeof(double));
+
+            Random rn = new Random();
+
+            for (int i = 0; i < Rows; i++)
+            {
+                dt.Rows.Add(new object[]
+                {
+                    i == Rows/2 ? DBNull.Value:rn.Next(1,10_000)
+                    , i == Rows/2 ? DBNull.Value:"TXT|_" + rn.Next(1,10_000)
+                    , i == Rows/2 ? DBNull.Value:new DateTime(rn.Next(1900,2100), rn.Next(1,12), rn.Next(1, 28))
+                    , i == Rows/2 ? DBNull.Value:rn.NextDouble()
+                });
+            }
+        }
+
+        [Benchmark]
+        public void CsvWriterTestA()
+        {
+            CsvWriter cw = new CsvWriter(path);
+            cw.Write(dt.CreateDataReader());
+        }
+
+
+        [Benchmark]
+        public void CsvWriterSylvan()
+        {
+            SylvanCsv.CsvDataWriterOptions opt = new SylvanCsv.CsvDataWriterOptions()
+            {
+                DateFormat = "yyyy-MM-dd HH:mm:ss"
+            };
+            using var cw = SylvanCsv.CsvDataWriter.Create(path);
+            cw.Write(dt.CreateDataReader());
+        }
 
     }
 }

@@ -7,10 +7,10 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-    <PackageReleaseNotes>Performance improvements, bug fixes</PackageReleaseNotes>
+    <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>
     <Company>Krzysztof Duśko</Company>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>

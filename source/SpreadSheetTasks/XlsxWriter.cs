@@ -7,9 +7,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-
 namespace SpreadSheetTasks
 {
+
     public class XlsxWriter : ExcelWriter, IDisposable
     {
         private readonly bool _inMemoryMode;
@@ -159,6 +159,56 @@ namespace SpreadSheetTasks
             }
         }
 
+        static CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
+        const int BUFFER_SIZE = 65_536;
+        const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
+        char[] buffer = new char[BUFFER_SIZE];
+        int currentBufferOffset = 0;
+        
+
+        private void writeByteToBuffer(byte val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
+
+        private void writeInt16ToBuffer(Int16 val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
+
+        private void writeInt32ToBuffer(Int32 val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
+        private void writeInt64ToBuffer(Int64 val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
+        private void writeDoubleToBuffer(double val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
+        private void writeFloatToBuffer(float val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
+
+        private void writeStringToBuffer(string val)
+        {
+            for (int i = 0; i < val.Length; i++)
+            {
+                char c = val[i];
+                buffer[currentBufferOffset++] = c;
+            }
+        }
+
+
         public bool TryToSpecifyWidthForMemoryMode { get; set; }
         private int WriteSheet(StreamWriter sheetWritter, int startingRow, int startingColumn)
         {
@@ -169,6 +219,7 @@ namespace SpreadSheetTasks
             Array.Fill<double>(colWidesArray, -1.0);
 
             typesArray = new int[ColumnCount];
+            newTypes = new TypeCode[ColumnCount];
 
             if (_inMemoryMode)
             {
@@ -260,30 +311,39 @@ namespace SpreadSheetTasks
                         for (int i = 0; i < ColumnCount; i++)
                         {
                             typesArray[i] = 0;
+                            newTypes[i] = TypeCode.String;
                         }
                     }
                     else
                     {
-                        ExcelWriter.SetTypes(_dataColReader, typesArray, ColumnCount);
+                        ExcelWriter.SetTypes(_dataColReader, typesArray, newTypes, ColumnCount);
                     }
                 }
 
-                sheetWritter.Write("<row r=\"");
-                sheetWritter.Write(rowNum + 1 + startingRow);
-                //daneZakladkiX.Write("\" spans=\"1:");
-                //daneZakladkiX.Write(liczbaKolumn);
-                sheetWritter.Write("\">");
+                writeStringToBuffer("<row r=\"");
+                writeInt32ToBuffer(rowNum + 1 + startingRow);
+                writeStringToBuffer("\">");
 
-                WriteRow(rowNum, sheetWritter, ColumnCount, startingColumn, startingRow);
+                WriteRow(rowNum, ColumnCount, startingColumn, startingRow);
 
                 rowNum++;
-                sheetWritter.Write("</row>");
-
+                writeStringToBuffer("</row>");
+                if (currentBufferOffset >= BUFFER_SIZE_HALF)
+                {
+                    sheetWritter.Write(buffer, 0, currentBufferOffset);
+                    currentBufferOffset = 0;
+                }
                 if (rowNum % 10000 == 0)
                 {
                     DoOn10k(rowNum);
                 }
             }
+            if (currentBufferOffset > 0)
+            {
+                sheetWritter.Write(buffer, 0, currentBufferOffset);
+                currentBufferOffset = 0;
+            }
+
             sheetWritter.Write("</sheetData>");
             sheetWritter.Write("<pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>");
 
@@ -355,23 +415,30 @@ namespace SpreadSheetTasks
                 WriteSheet(writter, 0, 0);
             }
         }
-        private void WriteRow(int rowNum, StreamWriter f, int columnCount, int startingColumn, int startingRow)
+        private void WriteRow(int rowNum, int columnCount, int startingColumn, int startingRow)
         {
-            for (int j = 0; j < columnCount; j++)
+            for (int column = 0; column < columnCount; column++)
             {
-                var rawValue = _dataColReader.GetValue(j);
-                if (rawValue == null || rawValue == DBNull.Value)
+                if (_dataColReader.IsDBNull(column))
                     continue;
 
-                if (typesArray[j] == 0 || typesArray[j] == -1) // string
+                if (newTypes[column] == TypeCode.String || newTypes[column] == TypeCode.Object) // string
                 {
-                    string stringValue = rawValue.ToString();
+                    string stringValue;
+                    if (newTypes[column] == TypeCode.String)
+                    {
+                        stringValue = _dataColReader.GetString(column);
+                    }
+                    else
+                    {
+                        stringValue = _dataColReader.GetValue(column).ToString();
+                    }                    
 
                     if (!_inMemoryMode)
                     {
-                        if (colWidesArray[j] < stringValue.Length * 1.25 + 2.0)
+                        if (colWidesArray[column] < stringValue.Length * 1.25 + 2.0)
                         {
-                            colWidesArray[j] = stringValue.Length * 1.25 + 2.0;
+                            colWidesArray[column] = stringValue.Length * 1.25 + 2.0;
                         }
                     }
 
@@ -398,94 +465,138 @@ namespace SpreadSheetTasks
 
                     if (!_useScharedStrings)
                     {
-                        f.Write("<c r=\"");
-                        f.Write(_letters[j + startingColumn]);
-                        f.Write((rowNum + 1 + startingRow));
+                        writeStringToBuffer("<c r=\"");
+                        writeStringToBuffer(_letters[column + startingColumn]);
+                        writeInt32ToBuffer((rowNum + 1 + startingRow));
                         if (stringValue.Length > 0 && (stringValue[0] == ' ' || stringValue[0] == '\t'))
                         {
-                            f.Write("\" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
+                            writeStringToBuffer("\" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                         }
                         else
                         {
-                            f.Write("\" t=\"inlineStr\"><is><t>");
+                             writeStringToBuffer("\" t=\"inlineStr\"><is><t>");
                         }
-                        f.Write(stringValue);
-                        f.Write("</t></is></c>");
+                        writeStringToBuffer(stringValue);
+                        writeStringToBuffer("</t></is></c>");
                     }
                     else
                     {
                         if (!_sstDic.ContainsKey(stringValue))
                         {
                             _sstDic[stringValue] = _sstCntUnique;
-                            f.Write("<c r=\"");
-                            f.Write(_letters[j + startingColumn]);
-                            f.Write((rowNum + 1 + startingRow));
-                            f.Write("\" t=\"s\"><v>");
-                            f.Write(_sstCntUnique);
-                            f.Write("</v></c>");
+                            writeStringToBuffer("<c r=\"");
+                            writeStringToBuffer(_letters[column + startingColumn]);
+                            writeInt32ToBuffer((rowNum + 1 + startingRow));
+                            writeStringToBuffer("\" t=\"s\"><v>");
+                            writeInt32ToBuffer(_sstCntUnique);
+                            writeStringToBuffer("</v></c>");
 
                             _sstCntUnique++;
                         }
                         else
                         {
-                            f.Write("<c r=\"");
-                            f.Write(_letters[j + startingColumn]);
-                            f.Write((rowNum + 1 + startingRow));
-                            f.Write("\" t=\"s\"><v>");
-                            f.Write(_sstDic[stringValue]);
-                            f.Write("</v></c>");
+                            writeStringToBuffer("<c r=\"");
+                            writeStringToBuffer(_letters[column + startingColumn]);
+                            writeInt32ToBuffer((rowNum + 1 + startingRow));
+                            writeStringToBuffer("\" t=\"s\"><v>");
+                            writeInt32ToBuffer(_sstDic[stringValue]);
+                            writeStringToBuffer("</v></c>");
                         }
                     }
                     _sstCntAll++;
                 }
-                else if (typesArray[j] == 1)//number
+                else if (typesArray[column] == 1)//number
                 {
-                    f.Write("<c r=\"");
-                    f.Write(_letters[j + startingColumn]);
-                    f.Write((rowNum + 1 + startingRow));
-                    f.Write("\"><v>");
-                    if (rawValue is decimal decimalValue)
+                    writeStringToBuffer("<c r=\"");
+                    writeStringToBuffer(_letters[column + startingColumn]);
+                    writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    writeStringToBuffer("\"><v>");
+
+                    switch (newTypes[column])
                     {
-                        f.Write(decimal.ToDouble(decimalValue));
-                    }
-                    else
-                    {
-                        f.Write(rawValue);
+                        case TypeCode.Byte:
+                            byte byteValue = _dataColReader.GetByte(column);
+                            writeByteToBuffer(byteValue);
+                            break;
+                        case TypeCode.Int16:
+                            Int16 int16Value = _dataColReader.GetInt16(column);
+                            writeInt16ToBuffer(int16Value);
+                            break;
+                        case TypeCode.Int32:
+                            Int32 int32Value = _dataColReader.GetInt32(column);
+                            writeInt32ToBuffer(int32Value);
+                            break;
+                        case TypeCode.Int64:
+                            Int64 int64Value = _dataColReader.GetInt64(column);
+                            writeInt64ToBuffer(int64Value);
+                            break;
+                        case TypeCode.Single:
+                            float doubleValue = _dataColReader.GetFloat(column);
+                            writeFloatToBuffer(doubleValue);
+                            break;
+                        case TypeCode.Double:
+                            double doubleVal = _dataColReader.GetDouble(column);
+                            writeDoubleToBuffer(doubleVal);
+                            break;
+                        case TypeCode.Decimal:
+                            decimal decimalVal = _dataColReader.GetDecimal(column);
+                            writeDoubleToBuffer(decimal.ToDouble(decimalVal));
+                            break;
+                        default:
+                            throw new Exception("number format Excel error");
                     }
 
-                    f.Write("</v></c>");
+
+                    writeStringToBuffer("</v></c>");
                 }
-                else if (typesArray[j] == 2) //date
+                else if (typesArray[column] == 2) //date
                 {
-                    f.Write("<c r=\"");
-                    f.Write(_letters[j + startingColumn]);
-                    f.Write((rowNum + 1 + startingRow));
-                    f.Write("\" s=\"1\"><v>");
-                    f.Write(((rawValue) as DateTime?)?.ToOADate());
-                    f.Write("</v></c>");
+                    DateTime dtVal = _dataColReader.GetDateTime(column);
+                    writeStringToBuffer("<c r=\"");
+                    writeStringToBuffer(_letters[column + startingColumn]);
+                    writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    writeStringToBuffer("\" s=\"1\"><v>");
+                    writeDoubleToBuffer((double)(dtVal as DateTime?)?.ToOADate());
+                    writeStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
-                        colWidesArray[j] = _dateWidth;
+                        colWidesArray[column] = _dateWidth;
                     }
-
                 }
-                else if (typesArray[j] == 3) //datetime
+                else if (typesArray[column] == 3) //datetime
                 {
-                    if (SuppressSomeDate && rawValue is DateTime && (rawValue as DateTime?).Value.Year == 1000)//1000-xx-xx
+                    DateTime dtVal = _dataColReader.GetDateTime(column);
+                    if (SuppressSomeDate && (dtVal as DateTime?).Value.Year == 1000)//1000-xx-xx
                     {
                         continue;
                     }
 
-                    f.Write("<c r=\"");
-                    f.Write(_letters[j + startingColumn]);
-                    f.Write((rowNum + 1 + startingRow));
-                    f.Write("\" s=\"2\"><v>");
-                    f.Write(((rawValue) as DateTime?)?.ToOADate());
-                    f.Write("</v></c>");
+                    writeStringToBuffer("<c r=\"");
+                    writeStringToBuffer(_letters[column + startingColumn]);
+                    writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    writeStringToBuffer("\" s=\"2\"><v>");
+                    writeDoubleToBuffer((double)((dtVal) as DateTime?)?.ToOADate());
+                    writeStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
-                        colWidesArray[j] = _dateTimeWidth;
+                        colWidesArray[column] = _dateTimeWidth;
                     }
+                }
+                else if (newTypes[column] == TypeCode.Boolean)
+                {
+                    writeStringToBuffer("<c r=\"");
+                    writeStringToBuffer(_letters[column + startingColumn]);
+                    writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    writeStringToBuffer("\" t=\"b\"><v>");
+                    if (_dataColReader.GetBoolean(column))
+                    {
+                        buffer[currentBufferOffset++] = '1';
+                    }
+                    else
+                    {
+                        buffer[currentBufferOffset++] = '0';
+                    }
+                    writeStringToBuffer("</v></c>");
                 }
             }
         }
@@ -840,7 +951,7 @@ namespace SpreadSheetTasks
 
     }
 
-    internal class FormattingStreamWriter : StreamWriter
+    public class FormattingStreamWriter : StreamWriter
     {
         private readonly IFormatProvider formatProvider;
 
