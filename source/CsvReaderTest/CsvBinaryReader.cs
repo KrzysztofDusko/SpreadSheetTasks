@@ -165,12 +165,24 @@ namespace SpreadSheetTasks.CsvReader
         private void detectDelimiter(string path)
         {
             using var fs = new FileStream(path, FileMode.Open);
-            fs.Read(buffer, 0, 100);
+            int l = fs.Read(buffer, 0, 16_384);
             int n = buffer.AsSpan().IndexOf((byte)'\n');
             if (n == -1)
             {
-                n = 100;
+                n = l >= 100 ? 100 : l;
             }
+            else
+            {
+                if (buffer[n - 1] == '\r')
+                {
+                    NEW_LINE_LENGTH = 2;
+                }
+                else
+                {
+                    NEW_LINE_LENGTH = 1;
+                }
+            }
+
             Dictionary<byte, int> dc = new();
             dc[(byte)','] = 0;
             dc[(byte)';'] = 0;
@@ -178,7 +190,7 @@ namespace SpreadSheetTasks.CsvReader
             dc[(byte)'\t'] = 0;
             dc[(byte)':'] = 0;
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < n; i++)
             {
                 byte b = buffer[i];
                 if (dc.ContainsKey(b))

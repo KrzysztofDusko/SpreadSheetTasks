@@ -14,6 +14,8 @@ using SpreadSheetTasks.CsvWriter;
 using SylvanCsv = Sylvan.Data.Csv;
 using Sylvan.Data.Excel;
 
+
+
 namespace Benchmark
 {
     class Program
@@ -23,14 +25,14 @@ namespace Benchmark
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
-            var summary = BenchmarkRunner.Run<WriteBenchExcel>();
+            //var summary = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary = BenchmarkRunner.Run<CsvReadBench>();
             //var summary = BenchmarkRunner.Run<CsvWriterBench>();
 
 #endif
 #if DEBUG
-            ExcelTest();
-            //CsvTest();
+            //ExcelTest();
+            CsvTest();
             //CsvWriterTest();
 #endif
         }
@@ -49,7 +51,7 @@ namespace Benchmark
 
         static void CsvTest()
         {
-            string path = @"C:\sqls\CsvReader\simpleCsv.txt";
+            string path = @"C:\sqls\CsvReader\twoCols.csv";
             //string path = @"C:\sqls\CsvReader\simpleCsvBig.txt";
 
             //string path = @"C:\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
@@ -96,7 +98,7 @@ namespace Benchmark
         string filename65k = "65K_Records_Data.xlsx";
         string filename200k = "200kFile.xlsx";
 
-        [Benchmark]
+        //[Benchmark]
         public void SpreadSheetTasks200K()
         {
             
@@ -149,7 +151,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void SpreadSheetTasks65k()
         {
 #if RELEASE
@@ -172,7 +174,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Sylvan65K()
         {
 #if RELEASE
