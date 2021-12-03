@@ -51,7 +51,7 @@ namespace Benchmark
 
         static void CsvTest()
         {
-            string path = @"C:\sqls\CsvReader\twoCols.csv";
+            string path = @"C:\sqls\CsvReader\simpleCsv.CSVforImport_simpleCsv_CSV";
             //string path = @"C:\sqls\CsvReader\simpleCsvBig.txt";
 
             //string path = @"C:\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";

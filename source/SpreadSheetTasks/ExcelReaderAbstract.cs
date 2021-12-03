@@ -17,6 +17,10 @@ namespace SpreadSheetTasks
 
         public abstract bool Read();
 
+        public virtual double RelativePositionInStream() => 50.0;
+
+
+
         /// <summary>
         /// use only after read first row  = GetValue + ToString
         /// </summary>

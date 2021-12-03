@@ -65,7 +65,15 @@ namespace SpreadSheetTasks
             @"[$-415]mmmm\ yy;@",
             @"[$-415]d\ mmmm\ yyyy;@",
             @"yyyy\-mm\-dd\ hh:mm",
-            @"yyyy\-mm\-dd\ hh:mm:ss"
+            @"yyyy\-mm\-dd\ hh:mm:ss",
+            @"yyyy\-mm\-dd;@",
+            @"[$-409]dd\-mm\-yy\ h:mm\ AM/PM;@",
+            @"dd\-mm\-yy\ h:mm;@",
+            @"[$-415]mmmmm;@",
+            @"[$-415]mmmmm\.yy;@",
+            @"\-m\-yyyy;@",
+            @"[$-415]d\-mmm\-yyyy;@",
+            @"d\-m\-yyyy;@"
         };
 
         private string _sharedStringsLocation = null;
@@ -786,9 +794,19 @@ namespace SpreadSheetTasks
                         }
                         else if (sstMark == 's' || sstMark == 'i' && sstLen == 9)  // InlineStr?
                         {
-                            xmlReader.Read();
-                            valueX.type = ExcelDataType.String;
-                            valueX.strValue = xmlReader.ReadContentAsString();
+                            if (xmlReader.NodeType != XmlNodeType.EndElement || xmlReader.Name != "c")
+                            {
+                                //if (xmlReader.NodeType != XmlNodeType.Text)
+                                //{ 
+                                //    xmlReader.Read();
+                                //}
+                                valueX.type = ExcelDataType.String;
+                                valueX.strValue = xmlReader.ReadContentAsString();
+                            }
+                            else
+                            {
+                                valueX.type = ExcelDataType.Null;
+                            }
                             //valueX = _buffer.AsSpan(0, len).ToString();
                         }
                         else
@@ -1401,6 +1419,5 @@ namespace SpreadSheetTasks
                 fieldInfo.doubleValue = rawValue;
             }
         }
-
     }
 }

@@ -250,8 +250,13 @@ namespace SpreadSheetTasks.CsvReader
         private void Open(string path)
         {
             reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096/*BUFFER_SIZE*/, FileOptions.SequentialScan));
-
         }
+
+        public double RelativePositionInStream()
+        {
+            return reader.BaseStream.Position / (double)reader.BaseStream.Length;
+        }
+
 
         public void Dispose()
         {
@@ -603,6 +608,12 @@ namespace SpreadSheetTasks.CsvReader
             }
             return charsBuff.AsSpan().Slice(0, newLength);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string generateStringFromQuoted(int start, int length)
+        {
+            //Span<char> tempBuff = length<1024 ? stackalloc char[length - 2] : new char[length-2];
+            return generateSpanFromQuoted(start, length).ToString();
+        }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -618,24 +629,7 @@ namespace SpreadSheetTasks.CsvReader
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string generateStringFromQuoted(int start, int length)
-        {
-            //Span<char> tempBuff = length<1024 ? stackalloc char[length - 2] : new char[length-2];
-            int n = 0;
-            int newLength = 0;
-            while (++n < length - 1)
-            {
-                char c = buffer[start + n];
-                if (c == '"')
-                {
-                    n++;
-                }
-                charsBuff[newLength] = c;
-                newLength++;
-            }
-            return charsBuff.AsSpan().Slice(0, newLength).ToString();
-        }
+
 
     }
 }
