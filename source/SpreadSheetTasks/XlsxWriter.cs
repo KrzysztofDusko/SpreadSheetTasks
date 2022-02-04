@@ -23,8 +23,7 @@ namespace SpreadSheetTasks
         private const double _dateWidth = 10.140625;
 
         private readonly bool _useTempPath;
-        private int _rowsCount;
-        public int RowsCount { get => _rowsCount; }
+
 
         public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool useTempPath = true)
         {

@@ -213,7 +213,7 @@ namespace SpreadSheetTasks.CsvReader
             Array.Fill<char>(buffer, '\0');
         }
 
-        public CsvTextReader(string path)
+        public CsvTextReader(string path, Encoding encoding = null)
         {
             buffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE);
 
@@ -224,11 +224,11 @@ namespace SpreadSheetTasks.CsvReader
             charBuffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE / 2);
             columnVec = Vector256.Create(this.columnDelimiter);
 
-            Open(path);
+            Open(path, encoding);
 
         }
 
-        public CsvTextReader(char colDel,string path)
+        public CsvTextReader(char colDel,string path, Encoding encoding = null)
         {
             buffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE);
 
@@ -239,7 +239,7 @@ namespace SpreadSheetTasks.CsvReader
             charBuffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE / 2);
             columnVec = Vector256.Create(this.columnDelimiter);
 
-            Open(path);
+            Open(path, encoding);
         }
 
 
@@ -247,9 +247,16 @@ namespace SpreadSheetTasks.CsvReader
         private readonly int[] rowNumberArr;
         private readonly int[] columnLocationsArr;
 
-        private void Open(string path)
+        private void Open(string path, Encoding encoding = null)
         {
-            reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096/*BUFFER_SIZE*/, FileOptions.SequentialScan));
+            if (encoding is not null)
+            {
+                reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096/*BUFFER_SIZE*/, FileOptions.SequentialScan),encoding);
+            }
+            else
+            {
+                reader = new StreamReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None, bufferSize: 4096/*BUFFER_SIZE*/, FileOptions.SequentialScan));
+            }
         }
 
         public double RelativePositionInStream()

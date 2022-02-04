@@ -163,6 +163,9 @@ namespace SpreadSheetTasks
         internal int[] typesArray;
         internal TypeCode[] newTypes;
 
+        protected int _rowsCount;
+        public int RowsCount { get => _rowsCount; }
+
         internal abstract void FinalizeFile();
         public abstract void AddSheet(string sheetName, bool hidden = false);
         public abstract void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0);

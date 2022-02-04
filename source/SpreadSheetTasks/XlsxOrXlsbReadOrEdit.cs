@@ -235,7 +235,7 @@ namespace SpreadSheetTasks
         /// <param name="path"></param>
         /// <param name="readSharedStrings"></param>
         /// <param name="updateMode"></param>
-        public override void Open(string path, bool readSharedStrings = true, bool updateMode = false)
+        public override void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding encoding = null)
         {
             if (path.EndsWith("xlsb", StringComparison.OrdinalIgnoreCase))
             {
@@ -330,7 +330,7 @@ namespace SpreadSheetTasks
                 throw new Exception("no shared strings found");
             }
 
-            var sharedstringsEntry = _xlsxArchive.GetEntry(@$"xl/{_sharedStringsLocation}");
+            var sharedstringsEntry = _xlsxArchive.GetEntry($@"xl/{_sharedStringsLocation}");
             Stream str = sharedstringsEntry.Open();
             //Stream str = getMemoryStream(sharedstringsEntry.Open(), sharedstringsEntry.Length);
 
@@ -408,7 +408,7 @@ namespace SpreadSheetTasks
                 throw new Exception("no shared strings found");
             }
 
-            var sharedstringsEntry = _xlsxArchive.GetEntry(@$"xl/{_sharedStringsLocation}");
+            var sharedstringsEntry = _xlsxArchive.GetEntry($@"xl/{_sharedStringsLocation}");
 
             Stream str;
             if (UseMemoryStreamInXlsb)

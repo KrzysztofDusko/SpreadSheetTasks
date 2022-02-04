@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.Common;
 using System.Globalization;
+using System.Text;
 
 namespace SpreadSheetTasks
 {
@@ -13,7 +14,7 @@ namespace SpreadSheetTasks
         public virtual int ResultsCount { get; }
         public virtual string ActualSheetName { get; set; }
         public virtual int RowCount { get => 123123123; }
-        public abstract void Open(string path, bool fool1 = true, bool fool2 = false);
+        public abstract void Open(string path, bool fool1 = true, bool fool2 = false, Encoding encoding = null);
 
         public abstract bool Read();
 

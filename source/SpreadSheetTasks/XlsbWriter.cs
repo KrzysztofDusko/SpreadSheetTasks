@@ -189,14 +189,13 @@ namespace SpreadSheetTasks
                     }
                     rowNum++;
                 }
-
+                _rowsCount = rowNum - 1;
                 stream.Write(sheet1Bytes, 218, sheet1Bytes.Length - 218); // całkowity koniec
             }
             finally
             {
                 stream.Dispose();
             }
-
             //throw new NotImplementedException();
         }
 
@@ -298,7 +297,7 @@ namespace SpreadSheetTasks
                 for (int rowNum = 0; rowNum < oneColumn.Length; rowNum++)
                 {
                     string txt = oneColumn[rowNum];
-                    InitRow(rowNum);
+                    InitRow((int)rowNum);
                     WriteString(txt, 0);
                 }
 
@@ -567,7 +566,7 @@ namespace SpreadSheetTasks
             for (int i = 0; i < _sheetList.Count; i++)
             {
                 var (_, _, _, _, _, sheetId) = _sheetList[i];
-                newEntry = _excelArchiveFile.CreateEntry(@$"xl/worksheets/binaryIndex{sheetId}.bin");
+                newEntry = _excelArchiveFile.CreateEntry($@"xl/worksheets/binaryIndex{sheetId}.bin");
                 using var str = newEntry.Open();
                 using var sw = new BinaryWriter(str);
                 sw.Write(binaryIndexBin);
@@ -587,8 +586,8 @@ namespace SpreadSheetTasks
                 {
                     var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId) = _sheetList[i];
 
-                    sw.Write(@$"<Override PartName=""/{pathInArchive}"" ContentType=""application/vnd.ms-excel.worksheet""/>");
-                    sw.Write(@$"<Override PartName=""/xl/worksheets/binaryIndex{sheetId}.bin"" ContentType=""application/vnd.ms-excel.binIndexWs""/>");
+                    sw.Write($@"<Override PartName=""/{pathInArchive}"" ContentType=""application/vnd.ms-excel.worksheet""/>");
+                    sw.Write($@"<Override PartName=""/xl/worksheets/binaryIndex{sheetId}.bin"" ContentType=""application/vnd.ms-excel.binIndexWs""/>");
                 }
 
                 sw.Write(@"<Override PartName=""/xl/styles.bin"" ContentType=""application/vnd.ms-excel.styles""/>");
@@ -613,11 +612,11 @@ namespace SpreadSheetTasks
                 {
                     var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId) = _sheetList[i];
                     string rId = $"rId{sheetId}";
-                    sw.Write(@$"<Relationship Id=""{rId}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"" Target=""worksheets/{nameInArchive}""/>");
+                    sw.Write($@"<Relationship Id=""{rId}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"" Target=""worksheets/{nameInArchive}""/>");
                 }
 
-                sw.Write(@$"<Relationship Id=""rId{_sheetList.Count + 2}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"" Target=""styles.bin""/>");
-                sw.Write(@$"<Relationship Id=""rId{_sheetList.Count + 3}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"" Target=""sharedStrings.bin""/>");
+                sw.Write($@"<Relationship Id=""rId{_sheetList.Count + 2}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"" Target=""styles.bin""/>");
+                sw.Write($@"<Relationship Id=""rId{_sheetList.Count + 3}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings"" Target=""sharedStrings.bin""/>");
                 sw.Write(@"</Relationships>");
             }
 
@@ -655,8 +654,8 @@ namespace SpreadSheetTasks
                     {
                         sw.Write($"<vt:lpstr>{name}</vt:lpstr>");
                     }
-                    sw.Write(@$"</vt:vector>");
-                    sw.Write(@$"</TitlesOfParts>");
+                    sw.Write($@"</vt:vector>");
+                    sw.Write($@"</TitlesOfParts>");
                     sw.Write(@"<Company></Company>");
                     sw.Write(@"<LinksUpToDate>false</LinksUpToDate>");
                     sw.Write(@"<SharedDoc>false</SharedDoc>");
@@ -669,13 +668,13 @@ namespace SpreadSheetTasks
                 using (var str = newEntry.Open())
                 {
                     using var sw = new StreamWriter(str, Encoding.UTF8);
-                    sw.WriteLine(@$"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
-                    sw.Write(@$"<cp:coreProperties xmlns:cp=""http://schemas.openxmlformats.org/package/2006/metadata/core-properties"" xmlns:dc=""http://purl.org/dc/elements/1.1/"" xmlns:dcterms=""http://purl.org/dc/terms/"" xmlns:dcmitype=""http://purl.org/dc/dcmitype/"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">");
-                    sw.Write(@$"<dc:creator>{DocPopertyProgramName} - used by {Environment.UserName}</dc:creator>");
-                    sw.Write(@$"<cp:lastModifiedBy>{DocPopertyProgramName} - used by {Environment.UserName}</cp:lastModifiedBy>");
-                    sw.Write(@$"<dcterms:created xsi:type=""dcterms:W3CDTF"">2015-06-05T18:19:34Z</dcterms:created>");
-                    sw.Write(@$"<dcterms:modified xsi:type=""dcterms:W3CDTF"">2021-09-05T11:11:46Z</dcterms:modified>");
-                    sw.Write(@$"</cp:coreProperties>");
+                    sw.WriteLine($@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
+                    sw.Write($@"<cp:coreProperties xmlns:cp=""http://schemas.openxmlformats.org/package/2006/metadata/core-properties"" xmlns:dc=""http://purl.org/dc/elements/1.1/"" xmlns:dcterms=""http://purl.org/dc/terms/"" xmlns:dcmitype=""http://purl.org/dc/dcmitype/"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">");
+                    sw.Write($@"<dc:creator>{DocPopertyProgramName} - used by {Environment.UserName}</dc:creator>");
+                    sw.Write($@"<cp:lastModifiedBy>{DocPopertyProgramName} - used by {Environment.UserName}</cp:lastModifiedBy>");
+                    sw.Write($@"<dcterms:created xsi:type=""dcterms:W3CDTF"">2015-06-05T18:19:34Z</dcterms:created>");
+                    sw.Write($@"<dcterms:modified xsi:type=""dcterms:W3CDTF"">2021-09-05T11:11:46Z</dcterms:modified>");
+                    sw.Write($@"</cp:coreProperties>");
                 }
             }
 
@@ -686,7 +685,7 @@ namespace SpreadSheetTasks
                 using var sw = new StreamWriter(str, Encoding.UTF8);
                 sw.WriteLine(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
                 sw.Write(@"<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">");
-                sw.Write(@$"<Relationship Id=""rId1"" Type=""http://schemas.microsoft.com/office/2006/relationships/xlBinaryIndex"" Target=""binaryIndex{sheetId}.bin""/>");
+                sw.Write($@"<Relationship Id=""rId1"" Type=""http://schemas.microsoft.com/office/2006/relationships/xlBinaryIndex"" Target=""binaryIndex{sheetId}.bin""/>");
                 sw.Write(@"</Relationships>");
             }
 
