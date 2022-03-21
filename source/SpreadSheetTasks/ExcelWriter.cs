@@ -196,6 +196,22 @@ namespace SpreadSheetTasks
         }
         public abstract void Dispose();
         public bool SuppressSomeDate { get; set; }
+
+        internal void SetColsLengtth(int ColumnCount, object[] arr)
+        {
+            for (int l = 1; l <= ColumnCount; l++)
+            {
+                if (arr[l - 1] != null)
+                {
+                    int lenn = arr[l - 1].ToString().Length;
+                    if (colWidesArray[l - 1] < 1.25 * lenn + 2)
+                    {
+                        colWidesArray[l - 1] = 1.25 * lenn + 2;
+                    }
+                }
+            }
+        }
+
     }
 
 }

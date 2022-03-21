@@ -141,14 +141,7 @@ namespace SpreadSheetTasks
 
                 _dataColReader.top100.Add(arr);
                 nr++;
-                for (int l = 1; l <= ColumnCount; l++)
-                {
-                    int lenn = arr[l - 1].ToString().Length;
-                    if (colWidesArray[l - 1] < 1.25 * lenn + 2)
-                    {
-                        colWidesArray[l - 1] = 1.25 * lenn + 2;
-                    }
-                }
+                SetColsLengtth(ColumnCount, arr);
             }
             areNextRows = rdr.Read();
             _dataColReader.AreNextRows = areNextRows;

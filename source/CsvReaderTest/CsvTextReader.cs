@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -77,6 +78,7 @@ namespace SpreadSheetTasks.CsvReader
             throw new NotImplementedException();
         }
 
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)]
         public Type GetFieldType(int i)
         {
             throw new NotImplementedException();

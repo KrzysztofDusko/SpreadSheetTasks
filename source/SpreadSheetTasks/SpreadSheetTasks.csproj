@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	  <TargetFrameworks>netstandard2.1;net6.0-windows</TargetFrameworks>
+	  <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <RootNamespace>SpreadSheetTasks</RootNamespace>
     <Authors>Krzysztof Duśko</Authors>
     <Description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</Description>
@@ -10,10 +10,12 @@
     <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>
     <Company>Krzysztof Duśko</Company>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	  <IsTrimmable>true</IsTrimmable>
+	  <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 </Project>

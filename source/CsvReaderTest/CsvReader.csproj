@@ -1,8 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	
   <PropertyGroup>
-	  <TargetFrameworks>net5.0;net6.0;net6.0-windows</TargetFrameworks>
+	  <TargetFrameworks>net6.0</TargetFrameworks>
 	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <IsTrimmable>true</IsTrimmable>
+	  <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
 	
 </Project>

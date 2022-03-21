@@ -2,14 +2,14 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworkS>net6.0;net5.0</TargetFrameworkS>
+    <TargetFrameworkS>net6.0</TargetFrameworkS>
     
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-    <PackageReference Include="Sylvan.Data.Csv" Version="1.1.8" />
-    <PackageReference Include="Sylvan.Data.Excel" Version="0.1.2" />
+    <PackageReference Include="Sylvan.Data.Csv" Version="1.1.12" />
+    <PackageReference Include="Sylvan.Data.Excel" Version="0.1.10" />
   </ItemGroup>
 
   <ItemGroup>

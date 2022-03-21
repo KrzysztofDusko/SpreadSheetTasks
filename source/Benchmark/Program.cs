@@ -23,11 +23,11 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            //var summary = BenchmarkRunner.Run<ReadBenchXlsb>();
-            //var summary = BenchmarkRunner.Run<WriteBenchExcel>();
-            //var summary = BenchmarkRunner.Run<CsvReadBench>();
-            //var summary = BenchmarkRunner.Run<CsvWriterBench>();
+            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 
 #endif
 #if DEBUG
@@ -89,7 +89,7 @@ namespace Benchmark
         }
     }
 
-    [SimpleJob(RuntimeMoniker.Net50)]
+    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class ReadBenchXlsx
@@ -98,7 +98,7 @@ namespace Benchmark
         string filename65k = "65K_Records_Data.xlsx";
         string filename200k = "200kFile.xlsx";
 
-        //[Benchmark]
+        [Benchmark]
         public void SpreadSheetTasks200K()
         {
             
@@ -151,7 +151,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void SpreadSheetTasks65k()
         {
 #if RELEASE
@@ -174,7 +174,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void Sylvan65K()
         {
 #if RELEASE
@@ -238,7 +238,7 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net50)]
+    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
@@ -284,7 +284,7 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net50)]
+    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class WriteBenchExcel
@@ -358,7 +358,7 @@ namespace Benchmark
     public class CsvReadBench
     {
         //string path = @"C:\sqls\CsvReader\1000000 Sales Records.csv";
-        string path = @"C:\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
+        string path = @"C:\Users\dusko\sqls\CsvReader\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
 
         [Benchmark]
         public void BinaryReaderGetByteSpan()
@@ -527,7 +527,7 @@ namespace Benchmark
 
     }
 
-    [SimpleJob(RuntimeMoniker.Net50)]
+    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class CsvWriterBench
@@ -539,7 +539,7 @@ namespace Benchmark
 
         DataTable dt = new DataTable();
 
-        string path = @"C:\sqls\testWriter.txt";
+        string path = @"C:\Users\dusko\sqls\CsvReader\testWriter.txt";
 
         [GlobalSetup]
         public void setup()
