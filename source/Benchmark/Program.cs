@@ -23,16 +23,16 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 
 #endif
 #if DEBUG
-            //ExcelTest();
-            CsvTest();
+            ExcelTest();
+            //CsvTest();
             //CsvWriterTest();
 #endif
         }
@@ -98,7 +98,7 @@ namespace Benchmark
         string filename65k = "65K_Records_Data.xlsx";
         string filename200k = "200kFile.xlsx";
 
-        [Benchmark]
+        //[Benchmark]
         public void SpreadSheetTasks200K()
         {
             
@@ -151,7 +151,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void SpreadSheetTasks65k()
         {
 #if RELEASE
@@ -174,7 +174,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Sylvan65K()
         {
 #if RELEASE
@@ -285,7 +285,8 @@ namespace Benchmark
 
 
     //[SimpleJob(RuntimeMoniker.Net50)]
-    [SimpleJob(RuntimeMoniker.Net60)]
+    //[SimpleJob(RuntimeMoniker.Net60)]
+
     [MemoryDiagnoser]
     public class WriteBenchExcel
     {

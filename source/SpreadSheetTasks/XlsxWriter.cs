@@ -7,9 +7,14 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
+
+//#if NET6_0_OR_GREATER
+//using System.Runtime.InteropServices;
+//#endif
+
+
 namespace SpreadSheetTasks
 {
-
     public class XlsxWriter : ExcelWriter, IDisposable
     {
         private readonly bool _inMemoryMode;
@@ -466,13 +471,30 @@ namespace SpreadSheetTasks
                         }
                         else
                         {
-                             writeStringToBuffer("\" t=\"inlineStr\"><is><t>");
+                            writeStringToBuffer("\" t=\"inlineStr\"><is><t>");
                         }
                         writeStringToBuffer(stringValue);
                         writeStringToBuffer("</t></is></c>");
                     }
                     else
                     {
+//#if NET6_0_OR_GREATER
+
+//                        ref var dicRefValue = ref CollectionsMarshal.GetValueRefOrAddDefault(_sstDic, stringValue, out bool exists);
+
+//                        if (!exists)
+//	                    {
+//                            dicRefValue = _sstCntUnique;
+//                            _sstCntUnique++;
+//	                    }
+//                        writeStringToBuffer("<c r=\"");
+//                        writeStringToBuffer(_letters[column + startingColumn]);
+//                        writeInt32ToBuffer((rowNum + 1 + startingRow));
+//                        writeStringToBuffer("\" t=\"s\"><v>");
+//                        writeInt32ToBuffer(dicRefValue);
+//                        writeStringToBuffer("</v></c>");
+
+//#else
                         if (!_sstDic.ContainsKey(stringValue))
                         {
                             _sstDic[stringValue] = _sstCntUnique;
@@ -482,7 +504,6 @@ namespace SpreadSheetTasks
                             writeStringToBuffer("\" t=\"s\"><v>");
                             writeInt32ToBuffer(_sstCntUnique);
                             writeStringToBuffer("</v></c>");
-
                             _sstCntUnique++;
                         }
                         else
@@ -494,8 +515,10 @@ namespace SpreadSheetTasks
                             writeInt32ToBuffer(_sstDic[stringValue]);
                             writeStringToBuffer("</v></c>");
                         }
+
+//#endif
+                        _sstCntAll++;
                     }
-                    _sstCntAll++;
                 }
                 else if (typesArray[column] == 1)//number
                 {

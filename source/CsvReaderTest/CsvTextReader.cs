@@ -224,7 +224,7 @@ namespace SpreadSheetTasks.CsvReader
             rowNumberArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE / 2);
             columnLocationsArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE);
             charBuffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE / 2);
-            columnVec = Vector256.Create(this.columnDelimiter);
+            columnVec = Vector256.Create((ushort)this.columnDelimiter);
 
             Open(path, encoding);
 
@@ -239,7 +239,7 @@ namespace SpreadSheetTasks.CsvReader
             rowNumberArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE / 2);
             columnLocationsArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE);
             charBuffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE / 2);
-            columnVec = Vector256.Create(this.columnDelimiter);
+            columnVec = Vector256.Create((ushort)this.columnDelimiter);
 
             Open(path, encoding);
         }

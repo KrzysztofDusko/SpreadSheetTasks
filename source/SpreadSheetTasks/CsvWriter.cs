@@ -22,7 +22,7 @@ namespace SpreadSheetTasks.CsvWriter
         private const char timeDelimiter = ':';
         private const char dateVsTimeDelimiter = ' ';
 
-        public CsvWriter(string path,string rowDelimiter = "\r\n", char colDelimiter = '|', Encoding encoding = null)
+        public CsvWriter(string path,string rowDelimiter = "\r\n", char colDelimiter = '|', Encoding encoding = null, bool includeHeaders = true)
         {
             if (colDelimiter == '.' || colDelimiter == dateDelimiter || colDelimiter == timeDelimiter 
                 || colDelimiter == dateVsTimeDelimiter || colDelimiter == qoute)
@@ -36,12 +36,34 @@ namespace SpreadSheetTasks.CsvWriter
             }
 
             _path = path;
-            _enconding = encoding?? Encoding.UTF8;
+            _enconding = encoding??Encoding.UTF8;
             _rowDelimiter = rowDelimiter;
             _colDelimiter = colDelimiter;
+            _includeHeaders = includeHeaders;
         }
 
-      
+        public CsvWriter(TextWriter textWriter, string rowDelimiter = "\r\n", char colDelimiter = '|', Encoding encoding = null, bool includeHeaders = true)
+        {
+            if (colDelimiter == '.' || colDelimiter == dateDelimiter || colDelimiter == timeDelimiter
+                || colDelimiter == dateVsTimeDelimiter || colDelimiter == qoute)
+            {
+                throw new Exception($"\"{colDelimiter}\" is not supported as column separator");
+            }
+
+            if (!rowDelimiter.Contains('\n'))
+            {
+                throw new Exception("row delimeter have to contains \\n");
+            }
+
+            _path = null;
+            _tw = textWriter;
+            _enconding = encoding ?? Encoding.UTF8;
+            _rowDelimiter = rowDelimiter;
+            _colDelimiter = colDelimiter;
+            _includeHeaders = includeHeaders;
+        }
+        TextWriter _tw;
+
 
         static CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
         const int BUFFER_SIZE = 65_536;
@@ -51,138 +73,156 @@ namespace SpreadSheetTasks.CsvWriter
         public long Write(IDataReader datareader)
         {
             long rows = 0;
-            using var fs = new StreamWriter(_path, false, _enconding);
-
-            int fieldCount = datareader.FieldCount;
-
-            TypeCode[] types = new TypeCode[fieldCount];
-            bool[] allowNull = new bool[fieldCount];
-            for (int i = 0; i < fieldCount; i++)
+            TextWriter fs;
+            
+            if (_tw != null)
             {
-                types[i] = Type.GetTypeCode(datareader.GetFieldType(i));
-            }
-            if (datareader is DbDataReader)
-            {
-                var schema = (datareader as IDbColumnSchemaGenerator)?.GetColumnSchema();
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    allowNull[i] = schema?[i].AllowDBNull ?? true;
-                }
+                fs = _tw;
             }
             else
             {
+                fs = new StreamWriter(_path, false, _enconding);
+            }
+            
+
+            try
+            {
+                int fieldCount = datareader.FieldCount;
+
+                TypeCode[] types = new TypeCode[fieldCount];
+                bool[] allowNull = new bool[fieldCount];
                 for (int i = 0; i < fieldCount; i++)
                 {
-                    allowNull[i] = true;
+                    types[i] = Type.GetTypeCode(datareader.GetFieldType(i));
                 }
-            }
-
-
-            if (_includeHeaders)
-            {
-                for (int i = 0; i < fieldCount - 1; i++)
+                if (datareader is DbDataReader)
                 {
-                    fs.Write(datareader.GetName(i));
-                    fs.Write(_colDelimiter);
-                }
-                fs.Write(datareader.GetName(fieldCount - 1));
-                fs.Write(_rowDelimiter);
-            }
-
-            string tempString = "";
-            int len = 0;
-            while (datareader.Read())
-            {
-                for (int i = 0; i < fieldCount; i++)
-                {
-                    if (allowNull[i] && !datareader.IsDBNull(i))
+                    var schema = (datareader as IDbColumnSchemaGenerator)?.GetColumnSchema();
+                    for (int i = 0; i < fieldCount; i++)
                     {
-                        switch (types[i])
+                        allowNull[i] = schema?[i].AllowDBNull ?? true;
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < fieldCount; i++)
+                    {
+                        allowNull[i] = true;
+                    }
+                }
+
+
+                if (_includeHeaders)
+                {
+                    for (int i = 0; i < fieldCount - 1; i++)
+                    {
+                        fs.Write(datareader.GetName(i));
+                        fs.Write(_colDelimiter);
+                    }
+                    fs.Write(datareader.GetName(fieldCount - 1));
+                    fs.Write(_rowDelimiter);
+                }
+
+                string tempString = "";
+                int len = 0;
+                while (datareader.Read())
+                {
+                    for (int i = 0; i < fieldCount; i++)
+                    {
+                        if (allowNull[i] && !datareader.IsDBNull(i))
                         {
-                            case TypeCode.Boolean:
-                                bool boolVal = datareader.GetBoolean(i);
-                                boolVal.TryFormat(buffer.AsSpan(currentBufferOffset), out len);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Char:
-                                char valchar = datareader.GetChar(i);
-                                buffer[currentBufferOffset++] = valchar;
-                                break;
-                            case TypeCode.Byte:
-                                byte valByte = datareader.GetByte(i);
-                                valByte.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Int16:
-                                Int16 val16 = datareader.GetInt16(i);
-                                val16.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);                                
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Int32:
-                                Int32 val = datareader.GetInt32(i);
-                                val.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Int64:
-                                Int64 val64 = datareader.GetInt64(i);
-                                val64.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Single:
-                                var valFloat = datareader.GetFloat(i);
-                                valFloat.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Double:
-                                var valDouble = datareader.GetDouble(i);
-                                valDouble.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.Decimal:
-                                var valDec = datareader.GetDecimal(i);
-                                valDec.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
-                                currentBufferOffset += len;
-                                break;
-                            case TypeCode.DateTime:
-                                DateTime dtVal = datareader.GetDateTime(i);
-                                //writeSimpleDateToBuffer(dtVal);
-                                //writeSimpleDateTimeToBuffer(dtVal);
-                                //writeDateTimeWithCulture(dtVal);
-                                writeIsoDateTimeToBuffer(dtVal);
-                                break;
-                            case TypeCode.String:
-                                tempString = datareader.GetString(i);
-                                writeStringToBuffer(tempString);
-                                break;
-                            default:
-                                tempString = datareader.GetValue(i).ToString();
-                                writeStringToBuffer(tempString);
-                                break;
+                            switch (types[i])
+                            {
+                                case TypeCode.Boolean:
+                                    bool boolVal = datareader.GetBoolean(i);
+                                    boolVal.TryFormat(buffer.AsSpan(currentBufferOffset), out len);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Char:
+                                    char valchar = datareader.GetChar(i);
+                                    buffer[currentBufferOffset++] = valchar;
+                                    break;
+                                case TypeCode.Byte:
+                                    byte valByte = datareader.GetByte(i);
+                                    valByte.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Int16:
+                                    Int16 val16 = datareader.GetInt16(i);
+                                    val16.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);                                
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Int32:
+                                    Int32 val = datareader.GetInt32(i);
+                                    val.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Int64:
+                                    Int64 val64 = datareader.GetInt64(i);
+                                    val64.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Single:
+                                    var valFloat = datareader.GetFloat(i);
+                                    valFloat.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Double:
+                                    var valDouble = datareader.GetDouble(i);
+                                    valDouble.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.Decimal:
+                                    var valDec = datareader.GetDecimal(i);
+                                    valDec.TryFormat(buffer.AsSpan(currentBufferOffset), out len, default, _invariantCulture);
+                                    currentBufferOffset += len;
+                                    break;
+                                case TypeCode.DateTime:
+                                    DateTime dtVal = datareader.GetDateTime(i);
+                                    //writeSimpleDateToBuffer(dtVal);
+                                    //writeSimpleDateTimeToBuffer(dtVal);
+                                    //writeDateTimeWithCulture(dtVal);
+                                    writeIsoDateTimeToBuffer(dtVal);
+                                    break;
+                                case TypeCode.String:
+                                    tempString = datareader.GetString(i);
+                                    writeStringToBuffer(tempString);
+                                    break;
+                                default:
+                                    tempString = datareader.GetValue(i).ToString();
+                                    writeStringToBuffer(tempString);
+                                    break;
+                            }
+                        }
+                        if (i < fieldCount - 1)
+                        {
+                            buffer[currentBufferOffset++] = _colDelimiter;
                         }
                     }
-                    if (i < fieldCount - 1)
+
+                    for (int j = 0; j < _rowDelimiter.Length; j++)
                     {
-                        buffer[currentBufferOffset++] = _colDelimiter;
+                        buffer[currentBufferOffset++] = _rowDelimiter[j];
                     }
-                }
 
-                for (int j = 0; j < _rowDelimiter.Length; j++)
-                {
-                    buffer[currentBufferOffset++] = _rowDelimiter[j];
+                    if (currentBufferOffset >= BUFFER_SIZE_HALF)
+                    {
+                        fs.Write(buffer, 0, currentBufferOffset);
+                        currentBufferOffset = 0;
+                    }
+                    rows++;
                 }
-
-                if (currentBufferOffset >= BUFFER_SIZE_HALF)
-                {
-                    fs.Write(buffer, 0, currentBufferOffset);
-                    currentBufferOffset = 0;
-                }
-                rows++;
-            }
 
             if (currentBufferOffset > 0)
             {
                 fs.Write(buffer, 0, currentBufferOffset);
                 currentBufferOffset = 0;
+            }
+
+            }
+            finally
+            {
+                fs.Dispose();
             }
 
             return rows;
