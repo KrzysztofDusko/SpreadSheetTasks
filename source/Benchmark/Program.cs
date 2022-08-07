@@ -10,9 +10,9 @@ using BenchmarkDotNet.Running;
 using SpreadSheetTasks;
 using SpreadSheetTasks.CsvReader;
 using SpreadSheetTasks.CsvWriter;
-
-using SylvanCsv = Sylvan.Data.Csv;
 using Sylvan.Data.Excel;
+using SylvanCsv = Sylvan.Data.Csv;
+
 
 
 
@@ -25,8 +25,8 @@ namespace Benchmark
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 
 #endif
@@ -51,13 +51,7 @@ namespace Benchmark
 
         static void CsvTest()
         {
-            string path = @"C:\sqls\CsvReader\simpleCsv.CSVforImport_simpleCsv_CSV";
-            //string path = @"C:\sqls\CsvReader\simpleCsvBig.txt";
-
-            //string path = @"C:\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
-            //var a = File.ReadAllText(path).Replace("\r\n", "\n");
-            //File.WriteAllText(@"C:\sqls\CsvReader\simpleCsvLF.txt", a);
-            //Span<char> buff = stackalloc char[256];
+            string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\sqls\CsvReader\simpleCsv.CSVforImport_simpleCsv_CSV";
 
             using CsvTextReader rd = new CsvTextReader(path);
             //rd.UseIntrinsic = false;
@@ -66,7 +60,6 @@ namespace Benchmark
             {
                 Console.WriteLine("row " + rd.RecordsAffected);
                 //Console.WriteLine("row " + ++j);
-                //rd.RetrieveStringRow(); tylko dla GetString
                 for (int l = 0; l < rd.FieldCount; l++)
                 {
                     //Console.WriteLine($"    col {l + 1}: {System.Text.Encoding.UTF8.GetString(rd.GetByteSpan(l))}");
@@ -98,7 +91,7 @@ namespace Benchmark
         string filename65k = "65K_Records_Data.xlsx";
         string filename200k = "200kFile.xlsx";
 
-        //[Benchmark]
+        [Benchmark]
         public void SpreadSheetTasks200K()
         {
             
@@ -131,7 +124,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Sylvan200k()
         {
 #if RELEASE
@@ -238,7 +231,6 @@ namespace Benchmark
     }
 
 
-    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
@@ -284,8 +276,7 @@ namespace Benchmark
     }
 
 
-    //[SimpleJob(RuntimeMoniker.Net50)]
-    //[SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net60)]
 
     [MemoryDiagnoser]
     public class WriteBenchExcel
@@ -322,7 +313,6 @@ namespace Benchmark
         [Benchmark]
         public void XlsxWriteDefault()
         {
-            //using (XlsxWriterTest xlsx = new XlsxWriterTest(@"C:\sqls\fileLowMemory.xlsx"))
             using (XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx"))
             {
                 xlsx.AddSheet("sheetName");
@@ -353,15 +343,14 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class CsvReadBench
     {
-        //string path = @"C:\sqls\CsvReader\1000000 Sales Records.csv";
-        string path = @"C:\Users\dusko\sqls\CsvReader\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
 
-        [Benchmark]
+        string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
+
+        //[Benchmark]
         public void BinaryReaderGetByteSpan()
         {
             using CsvBinaryReader rd = new CsvBinaryReader(path);
@@ -375,7 +364,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void BinaryReaderGetReadOnlyCharSpan()
         {
             using CsvBinaryReader rd = new CsvBinaryReader(path);
@@ -511,7 +500,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void SylvanString()
         {
             var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
@@ -528,7 +517,6 @@ namespace Benchmark
 
     }
 
-    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
     [MemoryDiagnoser]
     public class CsvWriterBench
@@ -540,7 +528,7 @@ namespace Benchmark
 
         DataTable dt = new DataTable();
 
-        string path = @"C:\Users\dusko\sqls\CsvReader\testWriter.txt";
+        string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\sqls\CsvReader\testWriter.txt";
 
         [GlobalSetup]
         public void setup()

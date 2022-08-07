@@ -7,9 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpreadSheetTasks", "SpreadS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "Benchmark\Benchmark.csproj", "{C928668B-F4A8-4993-92AD-CFDC913E08B3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CsvReader", "CsvReaderTest\CsvReader.csproj", "{8A56B293-C627-49E6-9558-ADB733254504}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrimSample", "TrimSample\TrimSample.csproj", "{552470D4-3B4A-4183-BE0C-0D215E2289C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TrimSample", "TrimSample\TrimSample.csproj", "{552470D4-3B4A-4183-BE0C-0D215E2289C5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,10 +23,6 @@ Global
 		{C928668B-F4A8-4993-92AD-CFDC913E08B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C928668B-F4A8-4993-92AD-CFDC913E08B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C928668B-F4A8-4993-92AD-CFDC913E08B3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8A56B293-C627-49E6-9558-ADB733254504}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A56B293-C627-49E6-9558-ADB733254504}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8A56B293-C627-49E6-9558-ADB733254504}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8A56B293-C627-49E6-9558-ADB733254504}.Release|Any CPU.Build.0 = Release|Any CPU
 		{552470D4-3B4A-4183-BE0C-0D215E2289C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{552470D4-3B4A-4183-BE0C-0D215E2289C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{552470D4-3B4A-4183-BE0C-0D215E2289C5}.Release|Any CPU.ActiveCfg = Release|Any CPU

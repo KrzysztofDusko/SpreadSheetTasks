@@ -2,18 +2,17 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net7.0</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
     
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-    <PackageReference Include="Sylvan.Data.Csv" Version="1.1.12" />
-    <PackageReference Include="Sylvan.Data.Excel" Version="0.1.10" />
+    <PackageReference Include="Sylvan.Data.Csv" Version="1.1.16" />
+    <PackageReference Include="Sylvan.Data.Excel" Version="0.2.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CsvReaderTest\CsvReader.csproj" />
     <ProjectReference Include="..\SpreadSheetTasks\SpreadSheetTasks.csproj" />
   </ItemGroup>
 

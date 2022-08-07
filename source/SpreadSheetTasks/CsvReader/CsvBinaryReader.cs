@@ -147,7 +147,7 @@ namespace SpreadSheetTasks.CsvReader
 
         private const int BUFFER_SIZE = 65_536;
         private FileStream reader;
-        private byte[] buffer;
+        private readonly byte[] buffer;
   
 
         private byte columnDelimiter;
@@ -164,7 +164,7 @@ namespace SpreadSheetTasks.CsvReader
 
         public bool UseIntrinsic = true;
 
-        private void detectDelimiter(string path)
+        private void DetectDelimiter(string path)
         {
             using var fs = new FileStream(path, FileMode.Open);
             int l = fs.Read(buffer, 0, 16_384);
@@ -185,12 +185,14 @@ namespace SpreadSheetTasks.CsvReader
                 }
             }
 
-            Dictionary<byte, int> dc = new();
-            dc[(byte)','] = 0;
-            dc[(byte)';'] = 0;
-            dc[(byte)'|'] = 0;
-            dc[(byte)'\t'] = 0;
-            dc[(byte)':'] = 0;
+            Dictionary<byte, int> dc = new()
+            {
+                [(byte)','] = 0,
+                [(byte)';'] = 0,
+                [(byte)'|'] = 0,
+                [(byte)'\t'] = 0,
+                [(byte)':'] = 0
+            };
 
             for (int i = 0; i < n; i++)
             {
@@ -218,7 +220,7 @@ namespace SpreadSheetTasks.CsvReader
         {
             buffer = ArrayPool<byte>.Shared.Rent(BUFFER_SIZE);
 
-            detectDelimiter(path);
+            DetectDelimiter(path);
             UseIntrinsic = Avx2.IsSupported && Bmi1.IsSupported;
             rowNumberArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE / 2);
             columnLocationsArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE);
@@ -375,7 +377,7 @@ namespace SpreadSheetTasks.CsvReader
 
                         if (quoteMask > 0)
                         {
-                            i = handleQuotedColumns(i, quoteOffset);
+                            i = HandleQuotedColumns(i, quoteOffset);
                         }
                     }
                 }
@@ -398,7 +400,7 @@ namespace SpreadSheetTasks.CsvReader
 
                         if (c == (byte)'\"')
                         {
-                            i = handleQuotedColumns(i, 0) + vectorLength - 1;
+                            i = HandleQuotedColumns(i, 0) + vectorLength - 1;
                         }
                         else if (c == columnDelimiter)
                         {
@@ -433,7 +435,7 @@ namespace SpreadSheetTasks.CsvReader
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int handleQuotedColumns(int i, int quoteOffset)
+        private int HandleQuotedColumns(int i, int quoteOffset)
         {
             i += (quoteOffset + 1);
             while (i < BUFFER_SIZE - 1)
@@ -496,7 +498,7 @@ namespace SpreadSheetTasks.CsvReader
             return res || _recordsAffected < rowNumberB;
         }
 
-        private char[] charBuffer;
+        private readonly char[] charBuffer;
         int ofsX = 1;
 
         public ReadOnlySpan<byte> GetByteSpan(int i)
@@ -550,7 +552,7 @@ namespace SpreadSheetTasks.CsvReader
             }
             int charCnt = encoding.GetChars(buffer, prevColumnIndex, indx - prevColumnIndex - off, charBuffer, 0);
             prevColumnIndex = indx;
-            return charBuffer.AsSpan().Slice(0, charCnt);
+            return charBuffer.AsSpan()[..charCnt];
         }
     }
 }

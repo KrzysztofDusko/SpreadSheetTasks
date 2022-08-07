@@ -151,7 +151,7 @@ namespace SpreadSheetTasks.CsvReader
 
         private const int BUFFER_SIZE = 65_536;
         private StreamReader reader;
-        private char[] buffer;
+        private readonly char[] buffer;
 
 
         private char columnDelimiter;
@@ -166,7 +166,7 @@ namespace SpreadSheetTasks.CsvReader
 
         public bool UseIntrinsic = true;
 
-        private void detectDelimiter(string path)
+        private void DetectDelimiter(string path)
         {
             using var fs = new StreamReader(path);
             int l = fs.Read(buffer, 0, 16_384);
@@ -186,12 +186,14 @@ namespace SpreadSheetTasks.CsvReader
                     NEW_LINE_LENGTH = 1;
                 }
             }
-            Dictionary<char, int> dc = new();
-            dc[(char)','] = 0;
-            dc[(char)';'] = 0;
-            dc[(char)'|'] = 0;
-            dc[(char)'\t'] = 0;
-            dc[(char)':'] = 0;
+            Dictionary<char, int> dc = new()
+            {
+                [(char)','] = 0,
+                [(char)';'] = 0,
+                [(char)'|'] = 0,
+                [(char)'\t'] = 0,
+                [(char)':'] = 0
+            };
 
             for (int i = 0; i < n; i++)
             {
@@ -219,7 +221,7 @@ namespace SpreadSheetTasks.CsvReader
         {
             buffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE);
 
-            detectDelimiter(path);
+            DetectDelimiter(path);
             UseIntrinsic = Avx2.IsSupported && Bmi1.IsSupported;
             rowNumberArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE / 2);
             columnLocationsArr = ArrayPool<int>.Shared.Rent(BUFFER_SIZE);
@@ -380,7 +382,7 @@ namespace SpreadSheetTasks.CsvReader
 
                         if (quoteMask > 0)
                         {
-                            i = handleQuotedColumns(i, quoteOffset);
+                            i = HandleQuotedColumns(i, quoteOffset);
                         }
                     }
                 }
@@ -403,7 +405,7 @@ namespace SpreadSheetTasks.CsvReader
 
                         if (c == (byte)'\"')
                         {
-                            i = handleQuotedColumns(i, 0) + vectorLength - 1;
+                            i = HandleQuotedColumns(i, 0) + vectorLength - 1;
                         }
                         else if (c == columnDelimiter)
                         {
@@ -438,7 +440,7 @@ namespace SpreadSheetTasks.CsvReader
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int handleQuotedColumns(int i, int quoteOffset)
+        private int HandleQuotedColumns(int i, int quoteOffset)
         {
             i += (quoteOffset/2 + 1);
             while (i < BUFFER_SIZE - 1)
@@ -501,7 +503,7 @@ namespace SpreadSheetTasks.CsvReader
             return res || _recordsAffected < rowNumberB;
         }
 
-        private char[] charBuffer;
+        private readonly char[] charBuffer;
 
         int ofsX = 1;
 
@@ -522,7 +524,7 @@ namespace SpreadSheetTasks.CsvReader
                 off = NEW_LINE_LENGTH;
             }
             //sp = buffer.AsSpan().Slice(prevColumnIndex, indx - prevColumnIndex - off);
-            sp = generateSpanFromBuffer(prevColumnIndex, indx - prevColumnIndex - off);
+            sp = GenerateSpanFromBuffer(prevColumnIndex, indx - prevColumnIndex - off);
             prevColumnIndex = indx;
             return sp;
         }
@@ -562,14 +564,14 @@ namespace SpreadSheetTasks.CsvReader
                 off = NEW_LINE_LENGTH;
             }
             //s = new string(buffer,prevColumnIndex, indx - prevColumnIndex - off);
-            s = generateStringFromBuffer(prevColumnIndex, indx - prevColumnIndex - off);
+            s = GenerateStringFromBuffer(prevColumnIndex, indx - prevColumnIndex - off);
             prevColumnIndex = indx;
             return s;
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ReadOnlySpan<char> generateSpanFromBuffer(int start, int length)
+        private ReadOnlySpan<char> GenerateSpanFromBuffer(int start, int length)
         {
             if (buffer[start] != '"')
             {
@@ -577,7 +579,7 @@ namespace SpreadSheetTasks.CsvReader
             }
             else
             {
-                return generateSpanFromQuoted(start, length);
+                return GenerateSpanFromQuoted(start, length);
             }
         }
 
@@ -600,8 +602,8 @@ namespace SpreadSheetTasks.CsvReader
         //    return new ReadOnlySpan<char>((void *)tempBuff, newLength);
         //}
 
-        char[] charsBuff = new char[4096];
-        private unsafe ReadOnlySpan<char> generateSpanFromQuoted(int start, int length)
+        readonly char[] charsBuff = new char[4096];
+        private unsafe ReadOnlySpan<char> GenerateSpanFromQuoted(int start, int length)
         {
             int n = 0;
             int newLength = 0;
@@ -615,18 +617,18 @@ namespace SpreadSheetTasks.CsvReader
                 charsBuff[newLength] = c;
                 newLength++;
             }
-            return charsBuff.AsSpan().Slice(0, newLength);
+            return charsBuff.AsSpan()[..newLength];
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string generateStringFromQuoted(int start, int length)
+        private string GenerateStringFromQuoted(int start, int length)
         {
             //Span<char> tempBuff = length<1024 ? stackalloc char[length - 2] : new char[length-2];
-            return generateSpanFromQuoted(start, length).ToString();
+            return GenerateSpanFromQuoted(start, length).ToString();
         }
 
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string generateStringFromBuffer(int start, int length)
+        private string GenerateStringFromBuffer(int start, int length)
         {
             if (buffer[start] != '"')
             {
@@ -634,7 +636,7 @@ namespace SpreadSheetTasks.CsvReader
             }
             else
             {
-                return generateStringFromQuoted(start, length);
+                return GenerateStringFromQuoted(start, length);
             }
         }
 

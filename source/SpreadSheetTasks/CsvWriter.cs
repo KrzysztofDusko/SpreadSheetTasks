@@ -11,11 +11,11 @@ namespace SpreadSheetTasks.CsvWriter
 {
     public class CsvWriter
     {
-        private string _path;
-        private Encoding _enconding;
-        private string _rowDelimiter = "\r\n";
-        private char _colDelimiter = '|';
-        private bool _includeHeaders = true;
+        private readonly string _path;
+        private readonly Encoding _enconding;
+        private readonly string _rowDelimiter = "\r\n";
+        private readonly char _colDelimiter = '|';
+        private readonly bool _includeHeaders = true;
 
         private const char qoute = '"';
         private const char dateDelimiter = '-';
@@ -62,13 +62,14 @@ namespace SpreadSheetTasks.CsvWriter
             _colDelimiter = colDelimiter;
             _includeHeaders = includeHeaders;
         }
-        TextWriter _tw;
+
+        readonly TextWriter _tw;
 
 
-        static CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
+        static readonly CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
         const int BUFFER_SIZE = 65_536;
         const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
-        char[] buffer = new char[BUFFER_SIZE];
+        readonly char[] buffer = new char[BUFFER_SIZE];
         int currentBufferOffset = 0;
         public long Write(IDataReader datareader)
         {
@@ -182,15 +183,15 @@ namespace SpreadSheetTasks.CsvWriter
                                     //writeSimpleDateToBuffer(dtVal);
                                     //writeSimpleDateTimeToBuffer(dtVal);
                                     //writeDateTimeWithCulture(dtVal);
-                                    writeIsoDateTimeToBuffer(dtVal);
+                                    WriteIsoDateTimeToBuffer(dtVal);
                                     break;
                                 case TypeCode.String:
                                     tempString = datareader.GetString(i);
-                                    writeStringToBuffer(tempString);
+                                    WriteStringToBuffer(tempString);
                                     break;
                                 default:
                                     tempString = datareader.GetValue(i).ToString();
-                                    writeStringToBuffer(tempString);
+                                    WriteStringToBuffer(tempString);
                                     break;
                             }
                         }
@@ -228,65 +229,9 @@ namespace SpreadSheetTasks.CsvWriter
             return rows;
         }
 
-        //private void writeDateTimeWithCulture(DateTime dtVal)
-        //{
-        //    if (!dtVal.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture))
-        //    {
-        //        throw new Exception("to small buffer!");
-        //    }
-        //    currentBufferOffset += len;
-        //}
-
-        // YYYY-MM-DD
-        // 0123456789
-        private void writeIsoDateToBuffer(DateTime dtVal)
-        {
-            int year = dtVal.Year;
-            int month = dtVal.Month;
-            int day = dtVal.Day;
-
-            buffer[currentBufferOffset + 9] = (char)('0' + day % 10);
-            buffer[currentBufferOffset + 8] = (char)('0' + day / 10);
-            buffer[currentBufferOffset + 7] = dateDelimiter;
-
-            buffer[currentBufferOffset + 6] = (char)('0' + month % 10);
-            buffer[currentBufferOffset + 5] = (char)('0' + month / 10);
-            buffer[currentBufferOffset + 4] = dateDelimiter;
-
-            buffer[currentBufferOffset + 3] = (char)((year % 10) + '0');
-            year /= 10;
-            buffer[currentBufferOffset + 2] = (char)((year % 10) + '0');
-            year /= 10;
-            buffer[currentBufferOffset + 1] = (char)((year % 10) + '0');
-            year /= 10;
-            buffer[currentBufferOffset + 0] = (char)((year % 10) + '0');
-
-            currentBufferOffset += 10;
-
-            /*Span<char> span = buffer.AsSpan().Slice(currentBufferOffset, 10);
-
-            span[9] = (char)('0' + day % 10);
-            span[8] = (char)('0' + day / 10);
-            span[7] = dateDelimiter;
-
-            span[6] = (char)('0' + month % 10);
-            span[5] = (char)('0' + month / 10);
-            span[4] = dateDelimiter;
-
-            span[3] = (char)((year % 10) + '0');
-            year /= 10;
-            span[2] = (char)((year % 10) + '0');
-            year /= 10;
-            span[1] = (char)((year % 10) + '0');
-            year /= 10;
-            span[0] = (char)((year % 10) + '0');
-            
-            currentBufferOffset += 10;*/
-        }
-
         // YYYY-MM-DD HH-MM-SS
         // 0123456789012345678
-        private void writeIsoDateTimeToBuffer(DateTime dtVal)
+        private void WriteIsoDateTimeToBuffer(DateTime dtVal)
         {
             int year = dtVal.Year;
             int month = dtVal.Month;
@@ -326,7 +271,7 @@ namespace SpreadSheetTasks.CsvWriter
             currentBufferOffset += 19;
         }
 
-        private void writeStringToBuffer(string temp)
+        private void WriteStringToBuffer(string temp)
         {
             bool escape = false;
             int orgOffset = currentBufferOffset;
@@ -368,21 +313,5 @@ namespace SpreadSheetTasks.CsvWriter
                 buffer[currentBufferOffset++] = qoute;
             } 
         }
-
-        private string prepareStringValue(string temp)
-        {
-            if (temp.Contains(_colDelimiter) || temp.Contains(_rowDelimiter))
-            {
-                if (temp.Contains(qoute))
-                {
-                    // to change ? (string create/buffer)
-                    temp = temp.Replace($"{qoute}", $"{qoute}{qoute}");
-                }
-                temp = $"{qoute}{temp}{qoute}";
-            }
-
-            return temp;
-        }
-
     }
 }
