@@ -222,6 +222,10 @@ namespace SpreadSheetTasks
                             byte byteValue = _dataColReader.GetByte(column);
                             WriteRkNumberInteger(byteValue, column);
                             break;
+                        case TypeCode.SByte:
+                            sbyte sbyteValue = _dataColReader.GetSByte(column);
+                            WriteRkNumberInteger(sbyteValue, column);
+                            break;
                         case TypeCode.Int16:
                             Int16 int16Value = _dataColReader.GetInt16(column);
                             WriteRkNumberInteger(Convert.ToInt32(int16Value), column);

@@ -886,6 +886,41 @@ namespace SpreadSheetTasks
             }
         }
 
+        public sbyte GetSByte(int j)
+        {
+            if (_isDataReader)
+            {
+                if ((_rowNum > 1 || !_headers) && top100 == null)
+                {
+                    return (sbyte)dataReader.GetInt16(j);
+                }
+                else if (_headers && _rowNum == 1)
+                {
+                    throw new Exception("byte for header ?");
+                }
+                else
+                {
+                    return (sbyte)top100[topNum - 1][j];
+                }
+            }
+            else if (_isDataTable)
+            {
+                if (_rowNum > 1 || !_headers)
+                {
+                    //return DataTable.Rows[_rowNum-2][j];
+                    return (sbyte)_dataTableRow[j];
+                }
+                else
+                {
+                    throw new Exception("sbyte for header ?");
+                }
+            }
+            else
+            {
+                return (sbyte)daneTabelaryczne[_rowNum - 1, j];
+            }
+        }
+
         public Int16 GetInt16(int j)
         {
             if (_isDataReader)

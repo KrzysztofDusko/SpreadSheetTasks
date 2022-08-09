@@ -175,6 +175,11 @@ namespace SpreadSheetTasks
             val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
             currentBufferOffset += len;
         }
+        private void writesByteToBuffer(sbyte val)
+        {
+            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
+            currentBufferOffset += len;
+        }
 
         private void writeInt16ToBuffer(Int16 val)
         {
@@ -532,6 +537,10 @@ namespace SpreadSheetTasks
                         case TypeCode.Byte:
                             byte byteValue = _dataColReader.GetByte(column);
                             writeByteToBuffer(byteValue);
+                            break;
+                        case TypeCode.SByte:
+                            sbyte sbyteValue = _dataColReader.GetSByte(column);
+                            writesByteToBuffer(sbyteValue);
                             break;
                         case TypeCode.Int16:
                             Int16 int16Value = _dataColReader.GetInt16(column);
