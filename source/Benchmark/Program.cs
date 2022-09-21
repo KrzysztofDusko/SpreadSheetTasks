@@ -25,8 +25,8 @@ namespace Benchmark
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-            //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 
 #endif
@@ -82,8 +82,9 @@ namespace Benchmark
         }
     }
 
-    //[SimpleJob(RuntimeMoniker.Net50)]
     [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class ReadBenchXlsx
     {
@@ -124,7 +125,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void Sylvan200k()
         {
 #if RELEASE
@@ -144,7 +145,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void SpreadSheetTasks65k()
         {
 #if RELEASE
@@ -167,7 +168,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void Sylvan65K()
         {
 #if RELEASE
@@ -232,6 +233,8 @@ namespace Benchmark
 
 
     [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
@@ -246,7 +249,7 @@ namespace Benchmark
         public void ReadFile()
         {
 #if RELEASE
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{FileName}");
+           var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{FileName}");
 #endif
 #if DEBUG
             var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\FilesToTest\\{FileName}");
@@ -277,6 +280,8 @@ namespace Benchmark
 
 
     [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.NativeAot70)]
 
     [MemoryDiagnoser]
     public class WriteBenchExcel
@@ -310,7 +315,7 @@ namespace Benchmark
         }
 
 
-        [Benchmark]
+        //[Benchmark]
         public void XlsxWriteDefault()
         {
             using (XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx"))
@@ -320,7 +325,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void XlsxWriteLowMemory()
         {
             using (XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false))

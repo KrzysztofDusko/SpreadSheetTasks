@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	<TargetFramework>net6.0</TargetFramework>
+	<TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <RootNamespace>SpreadSheetTasks</RootNamespace>
     <Authors>Krzysztof Duśko</Authors>
     <Description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</Description>

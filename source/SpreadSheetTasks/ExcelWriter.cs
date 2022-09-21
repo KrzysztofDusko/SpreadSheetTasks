@@ -55,12 +55,12 @@ namespace SpreadSheetTasks
                     {
                         typesArray[j] = 1;
                     }
-                    else if (rdr.GetFieldType(j) == typeof(System.DateTime) && _dataColReader.DatabaseTypes[j].Equals("Date", StringComparison.OrdinalIgnoreCase))
+                    else if (rdr.GetFieldType(j) == typeof(System.DateTime) && _dataColReader.DatabaseTypes[j].EndsWith("Date", StringComparison.OrdinalIgnoreCase))
                     {
                         typesArray[j] = 2;
                     }
                     else if (rdr.GetFieldType(j) == typeof(System.DateTime)
-                        && (_dataColReader.DatabaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) || _dataColReader.DatabaseTypes[j].Equals("DateTime", StringComparison.OrdinalIgnoreCase)))
+                        && (_dataColReader.DatabaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) || _dataColReader.DatabaseTypes[j].EndsWith("DateTime", StringComparison.OrdinalIgnoreCase)))
                     {
                         typesArray[j] = 3;
                     }

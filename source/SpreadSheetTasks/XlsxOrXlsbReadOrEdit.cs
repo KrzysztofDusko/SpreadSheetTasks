@@ -245,7 +245,7 @@ namespace SpreadSheetTasks
             else
             {
                 mode = Modes.xlsx;
-                OpenXlsx(path);
+                OpenXlsx(path,updateMode: updateMode); 
             }
         }
 
