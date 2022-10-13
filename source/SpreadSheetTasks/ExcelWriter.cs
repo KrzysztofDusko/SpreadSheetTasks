@@ -4,7 +4,6 @@ using System.Data;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.Intrinsics.Arm;
 
 namespace SpreadSheetTasks
 {
