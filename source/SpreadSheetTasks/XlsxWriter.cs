@@ -266,6 +266,16 @@ namespace SpreadSheetTasks
                         object[] arr = new object[rdr.FieldCount];
                         rdr.GetValues(arr);
 
+                        for (int i = 0; i < arr.Length; i++)
+                        {
+                            if (arr[i] is Memory<byte> mem)
+                            {
+                                Memory<byte> m = new byte[mem.Length];
+                                mem.CopyTo(m);
+                                arr[i] = m;
+                            }
+                        }
+
                         _dataColReader.top100.Add(arr);
                         nr++;
                         SetColsLengtth(ColumnCount, arr);

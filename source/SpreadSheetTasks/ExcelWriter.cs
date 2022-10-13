@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 
 namespace SpreadSheetTasks
 {
@@ -217,7 +218,16 @@ namespace SpreadSheetTasks
             {
                 if (arr[l - 1] != null)
                 {
-                    int lenn = arr[l - 1].ToString().Length;
+                    var itm = arr[l - 1];
+                    int lenn = 0;
+                    if (itm is Memory<byte> mem)
+                    {
+                        lenn = mem.Length;
+                    }
+                    else
+                    {
+                        lenn = arr[l - 1].ToString().Length;
+                    }
                     if (colWidesArray[l - 1] < 1.25 * lenn + 2)
                     {
                         colWidesArray[l - 1] = 1.25 * lenn + 2;
