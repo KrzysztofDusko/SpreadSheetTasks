@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Intrinsics.Arm;
 
 namespace SpreadSheetTasks
 {
@@ -68,9 +69,14 @@ namespace SpreadSheetTasks
 {
                         typesArray[j] = 3;
                     }
+                    else if (rdr.GetFieldType(j) == typeof(Memory<byte>))
+                    {
+                        typesArray[j] = 5;
+                    }
                     else // String, other -> as String
                     {
-                        throw new Exception("Excel type problem !");
+                        typesArray[j] = 0;
+                        //throw new Exception("Excel type problem !");
                         //typesArray[j] = -1;
                     }
                 }
@@ -101,9 +107,14 @@ namespace SpreadSheetTasks
 {
                         typesArray[j] = 3;
                     }
+                    else if (dt.Columns[j].DataType == typeof(Memory<byte>))
+                    {
+                        typesArray[j] = 5;
+                    }
                     else // Boolean, String, other -> as String
                     {
-                        throw new Exception("Excel type problem !");
+                        typesArray[j] = 0;
+                        //throw new Exception("Excel type problem !");
                         //typesArray[j] = -1;
                     }
                 }
@@ -136,6 +147,10 @@ namespace SpreadSheetTasks
                     else if (_dataColReader.GetValue(j).GetType() == typeof(System.TimeSpan))
                     {
                         typesArray[j] = 3;
+                    }
+                    else if (_dataColReader.GetValue(j).GetType() == typeof(Memory<byte>))
+                    {
+                        typesArray[j] = 5;
                     }
                     else // other
                     {

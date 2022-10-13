@@ -204,6 +204,11 @@ namespace SpreadSheetTasks
                     string stringValue = _dataColReader.GetString(column);
                     WriteString(stringValue, column);
                 }
+                else if (typesArray[column] == 5) // Memory<byte>
+                {
+                    var stringValue = Encoding.UTF8.GetString(((Memory<byte>)(_dataColReader.GetValue(column))).Span);
+                    WriteString(stringValue, column);
+                }
                 else if(newTypes[column] == TypeCode.Object)
                 {
                     string stringValue = _dataColReader.GetValue(column).ToString();
@@ -277,6 +282,7 @@ namespace SpreadSheetTasks
                     }
                     WriteDateTime(dtVal, column);
                 }
+                
             }
         }
 

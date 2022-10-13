@@ -424,12 +424,16 @@ namespace SpreadSheetTasks
                 if (_dataColReader.IsDBNull(column))
                     continue;
 
-                if (newTypes[column] == TypeCode.String || newTypes[column] == TypeCode.Object) // string
+                if (newTypes[column] == TypeCode.String || newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
                 {
                     string stringValue;
                     if (newTypes[column] == TypeCode.String)
                     {
                         stringValue = _dataColReader.GetString(column);
+                    }
+                    else if (typesArray[column] == 5)
+                    {
+                        stringValue = Encoding.UTF8.GetString(((Memory<byte>)_dataColReader.GetValue(column)).Span);
                     }
                     else
                     {
