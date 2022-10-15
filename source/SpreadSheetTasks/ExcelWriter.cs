@@ -43,33 +43,34 @@ namespace SpreadSheetTasks
                 var rdr = _dataColReader.dataReader;
                 for (int j = 0; j < ColumnCount; j++)
                 {
-                    newTypes[j] = Type.GetTypeCode(rdr.GetFieldType(j));
-                    if (detectBoolenaType && rdr.GetFieldType(j) == typeof(Boolean))
+                    var tempType = rdr.GetFieldType(j);
+                    newTypes[j] = Type.GetTypeCode(tempType);
+                    if (detectBoolenaType && tempType == typeof(Boolean))
                     {
                         typesArray[j] = 4;
                     }
-                    else if (_stringTypes.Contains(rdr.GetFieldType(j)))
+                    else if (_stringTypes.Contains(tempType))
                     {
                         typesArray[j] = 0;
                     }
-                    else if (_numberTypes.Contains(rdr.GetFieldType(j)))
+                    else if (_numberTypes.Contains(tempType))
                     {
                         typesArray[j] = 1;
                     }
-                    else if (rdr.GetFieldType(j) == typeof(System.DateTime) && _dataColReader.DatabaseTypes[j].EndsWith("Date", StringComparison.OrdinalIgnoreCase))
+                    else if (tempType == typeof(System.DateTime) && _dataColReader.DatabaseTypes[j].EndsWith("Date", StringComparison.OrdinalIgnoreCase))
                     {
                         typesArray[j] = 2;
                     }
-                    else if (rdr.GetFieldType(j) == typeof(System.DateTime)
+                    else if (tempType == typeof(System.DateTime)
                         && (_dataColReader.DatabaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) || _dataColReader.DatabaseTypes[j].EndsWith("DateTime", StringComparison.OrdinalIgnoreCase)))
                     {
                         typesArray[j] = 3;
                     }
-                    else if (rdr.GetFieldType(j) == typeof(System.TimeSpan))
+                    else if (tempType == typeof(System.TimeSpan))
 {
                         typesArray[j] = 3;
                     }
-                    else if (rdr.GetFieldType(j) == typeof(Memory<byte>))
+                    else if (tempType == typeof(Memory<byte>))
                     {
                         typesArray[j] = 5;
                     }
