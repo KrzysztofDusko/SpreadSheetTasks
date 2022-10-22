@@ -24,61 +24,21 @@ namespace Benchmark
         {
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 
 #endif
 #if DEBUG
-            ExcelTest();
+            var b = new CsvWriterBench();
+            b.Rows = 5_000_000;
+            b.setup();
+            b.CsvWriterTestA();
+            //ExcelTest();
             //CsvTest();
             //CsvWriterTest();
 #endif
-        }
-        static void ExcelTest()
-        {
-            //ReadBenchXlsb e = new ReadBenchXlsb();
-
-            //e.FileName = "200kFile.xlsb";
-            //e.ReadFile();
-            WriteBenchExcel e = new WriteBenchExcel();
-            e.Rows = 200_000;
-            e.setup();
-            //e.XlsbWriteDefault();
-            e.XlsxWriteDefault();
-        }
-
-        static void CsvTest()
-        {
-            string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\sqls\CsvReader\simpleCsv.CSVforImport_simpleCsv_CSV";
-
-            using CsvTextReader rd = new CsvTextReader(path);
-            //rd.UseIntrinsic = false;
-
-            while (rd.Read())
-            {
-                Console.WriteLine("row " + rd.RecordsAffected);
-                //Console.WriteLine("row " + ++j);
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    //Console.WriteLine($"    col {l + 1}: {System.Text.Encoding.UTF8.GetString(rd.GetByteSpan(l))}");
-                    Console.WriteLine($"    col {l + 1}: {rd.GetString(l)}");
-                    //Console.WriteLine($"    col {l + 1}: {rd.GetSpan(l).ToString()}");
-                }
-            }
-
-            //Console.WriteLine("records " + rd.RecordsAffected);
-            //Console.WriteLine(rd.ss);
-        }
-
-        static void CsvWriterTest()
-        {
-            CsvWriterBench csvWriterBench = new CsvWriterBench();
-            csvWriterBench.Rows = 50_000;
-            csvWriterBench.setup();
-            csvWriterBench.CsvWriterTestA();
-            //csvWriterBench.CsvWriterSylvan();
         }
     }
 
@@ -88,20 +48,14 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class ReadBenchXlsx
     {
-
-        string filename65k = "65K_Records_Data.xlsx";
-        string filename200k = "200kFile.xlsx";
+        readonly string filename65k = "65K_Records_Data.xlsx";
+        readonly string filename200k = "200kFile.xlsx";
 
         [Benchmark]
         public void SpreadSheetTasks200K()
         {
-            
-#if RELEASE
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{filename200k}");
-#endif
-#if DEBUG
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\FilesToTest\\{filename200k}");
-#endif
+            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+
             using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
             {
                 excelFile.Open(path);
@@ -111,10 +65,7 @@ namespace Benchmark
                 int rowNum = 0;
                 while (excelFile.Read())
                 {
-                    if (row == null)
-                    {
-                        row = new object[excelFile.FieldCount];
-                    }
+                    row ??= new object[excelFile.FieldCount];
                     excelFile.GetValues(row);
                     rowNum++;
 #if DEBUG
@@ -128,12 +79,7 @@ namespace Benchmark
         //[Benchmark]
         public void Sylvan200k()
         {
-#if RELEASE
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{filename200k}");
-#endif
-#if DEBUG
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\FilesToTest\\{filename200k}");
-#endif
+            var path = @$"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
 
             var reader = ExcelDataReader.Create(path);
 
@@ -145,15 +91,11 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void SpreadSheetTasks65k()
         {
-#if RELEASE
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{filename65k}");
-#endif
-#if DEBUG
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\FilesToTest\\{filename65k}");
-#endif
+            var path = @$"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+
             using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
             {
                 excelFile.Open(path);
@@ -171,12 +113,7 @@ namespace Benchmark
         //[Benchmark]
         public void Sylvan65K()
         {
-#if RELEASE
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{filename65k}");
-#endif
-#if DEBUG
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\FilesToTest\\{filename65k}");
-#endif
+            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
 
             var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
 
@@ -238,22 +175,17 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
-
         [Params("200kFile.xlsb")]
         public string FileName { get; set; }
 
-        [Params(false,true)]
+        [Params(false, true)]
         public bool InMemory { get; set; }
 
         [Benchmark]
         public void ReadFile()
         {
-#if RELEASE
-           var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\..\\..\\..\\..\\FilesToTest\\{FileName}");
-#endif
-#if DEBUG
-            var path = Path.Combine(Directory.GetCurrentDirectory(), $"..\\..\\..\\FilesToTest\\{FileName}");
-#endif
+            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+
             using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
             {
                 excelFile.UseMemoryStreamInXlsb = InMemory;
@@ -263,10 +195,7 @@ namespace Benchmark
                 int rowNum = 0;
                 while (excelFile.Read())
                 {
-                    if (row == null)
-                    {
-                        row = new object[excelFile.FieldCount];
-                    }
+                    row ??= new object[excelFile.FieldCount];
                     excelFile.GetValues(row);
                     rowNum++;
 #if DEBUG
@@ -282,7 +211,6 @@ namespace Benchmark
     [SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     [SimpleJob(RuntimeMoniker.NativeAot70)]
-
     [MemoryDiagnoser]
     public class WriteBenchExcel
     {
@@ -290,10 +218,10 @@ namespace Benchmark
         [Params(200_000)]
         public int Rows { get; set; }
 
-        DataTable dt = new DataTable();
+        readonly DataTable dt = new DataTable();
 
         [GlobalSetup]
-        public void setup()
+        public void Setup()
         {
             dt.Columns.Add("COL1_INT", typeof(int));
             dt.Columns.Add("COL2_TXT", typeof(string));
@@ -304,12 +232,12 @@ namespace Benchmark
 
             for (int i = 0; i < Rows; i++)
             {
-                dt.Rows.Add(new object[] 
-                { 
+                dt.Rows.Add(new object[]
+                {
                     rn.Next(0, 1_000_000)
                     , "TXT_" + rn.Next(0, 1_000_000)
                     , new DateTime(rn.Next(1900,2100), rn.Next(1,12), rn.Next(1, 28))
-                    , rn.NextDouble() 
+                    , rn.NextDouble()
                 });
             }
         }
@@ -344,16 +272,16 @@ namespace Benchmark
                 xlsx.WriteSheet(dt.CreateDataReader());
             }
         }
-
     }
 
 
     [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class CsvReadBench
     {
-
-        string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
+        readonly string path = @$"C:\Users\dusko\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
 
         //[Benchmark]
         public void BinaryReaderGetByteSpan()
@@ -449,7 +377,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void TextReaderGetSpan()
         {
             using CsvTextReader rd = new CsvTextReader(path);
@@ -491,7 +419,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void TextReaderGetStringIgnoreQuoted()
         {
             using CsvTextReader rd = new CsvTextReader(path);
@@ -505,7 +433,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void SylvanString()
         {
             var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
@@ -523,6 +451,8 @@ namespace Benchmark
     }
 
     [SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class CsvWriterBench
     {
@@ -531,12 +461,11 @@ namespace Benchmark
 
         public int BufferSize { get; set; }
 
-        DataTable dt = new DataTable();
-
-        string path = @$"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}\sqls\CsvReader\testWriter.txt";
+        readonly DataTable dt = new DataTable();
+        readonly string path = @$"C:\Users\dusko\sqls\CsvReader\testWriter.txt";
 
         [GlobalSetup]
-        public void setup()
+        public void Setup()
         {
             dt.Columns.Add("COL1_INT", typeof(int));
             dt.Columns.Add("COL2_TXT", typeof(string));
@@ -557,7 +486,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void CsvWriterTestA()
         {
             CsvWriter cw = new CsvWriter(path);
@@ -570,7 +499,7 @@ namespace Benchmark
         {
             SylvanCsv.CsvDataWriterOptions opt = new SylvanCsv.CsvDataWriterOptions()
             {
-                DateFormat = "yyyy-MM-dd HH:mm:ss"
+                DateTimeFormat = "yyyy-MM-dd HH:mm:ss"
             };
             using var cw = SylvanCsv.CsvDataWriter.Create(path);
             cw.Write(dt.CreateDataReader());

@@ -35,46 +35,31 @@ namespace SpreadSheetTasks
         //public virtual string GetName(int i) => dbReader.GetName(i);
         public Type GetFieldType(int i)
         {
-            switch (innerRow[i].type)
+            return innerRow[i].type switch
             {
-                case ExcelDataType.Null:
-                    return typeof(DBNull);
-                case ExcelDataType.Int64:
-                    return typeof(Int64);
-                case ExcelDataType.Double:
-                    return typeof(Double);
-                case ExcelDataType.DateTime:
-                    return typeof(DateTime);
-                case ExcelDataType.Boolean:
-                    return typeof(bool);
-                case ExcelDataType.String:
-                //case ExcelDataType.Error:
-                default:
-                    return typeof(string);
-            }
+                ExcelDataType.Null => typeof(DBNull),
+                ExcelDataType.Int64 => typeof(Int64),
+                ExcelDataType.Double => typeof(Double),
+                ExcelDataType.DateTime => typeof(DateTime),
+                ExcelDataType.Boolean => typeof(bool),
+                _ => typeof(string),
+            };
         }
 
         public object GetValue(int i)
         {
-            switch (innerRow[i].type)
+            return innerRow[i].type switch
             {
-                case ExcelDataType.Null:
-                    return DBNull.Value;
-                case ExcelDataType.Int64:
-                    return innerRow[i].int64Value;
-                case ExcelDataType.Double:
-                    return innerRow[i].doubleValue;
-                case ExcelDataType.DateTime:
-                    return innerRow[i].dtValue;
-                case ExcelDataType.Boolean:
-                    return (innerRow[i].int64Value == 1);
-                case ExcelDataType.String:
-                    return innerRow[i].strValue;
+                ExcelDataType.Null => DBNull.Value,
+                ExcelDataType.Int64 => innerRow[i].int64Value,
+                ExcelDataType.Double => innerRow[i].doubleValue,
+                ExcelDataType.DateTime => innerRow[i].dtValue,
+                ExcelDataType.Boolean => (innerRow[i].int64Value == 1),
+                ExcelDataType.String => innerRow[i].strValue,
                 //case ExcelDataType.Error:
                 //    return "error in cell";
-                default:
-                    return typeof(string);
-            }
+                _ => typeof(string),
+            };
         }
 
         public void GetValues(object[] row)

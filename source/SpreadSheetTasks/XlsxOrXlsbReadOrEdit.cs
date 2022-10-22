@@ -78,9 +78,9 @@ namespace SpreadSheetTasks
 
         private string _sharedStringsLocation = null;
         private string _stylesLocation = null;
-        private string _themeLocation = null;
+        //private string _themeLocation = null;
         private int _uniqueStringCount = -1;
-        private int _stringCount = -1;
+        //private int _stringCount = -1;
 
         Modes mode = Modes.xlsx;
         enum Modes
@@ -106,10 +106,7 @@ namespace SpreadSheetTasks
         }
         public override void Dispose()
         {
-            if (_xlsxArchive != null)
-            {
-                _xlsxArchive.Dispose();
-            }
+            _xlsxArchive?.Dispose();
         }
 
         private void OpenXlsx(string path, bool readSharedStrings = true, bool updateMode = false)
@@ -147,10 +144,7 @@ namespace SpreadSheetTasks
                     }
                     else if (reader.Name == "pivotCache")
                     {
-                        if (_pivotCacheIdtoRid == null)
-                        {
-                            _pivotCacheIdtoRid = new Dictionary<int, string>();
-                        }
+                        _pivotCacheIdtoRid ??= new Dictionary<int, string>();
 
                         if (!int.TryParse(reader.GetAttribute("cacheId"), out int cacheId))
                         {
@@ -273,10 +267,7 @@ namespace SpreadSheetTasks
                     }
                     else if (type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition")
                     {
-                        if (_pivotCachRidToLocation == null)
-                        {
-                            _pivotCachRidToLocation = new Dictionary<string, string>();
-                        }
+                        _pivotCachRidToLocation ??= new Dictionary<string, string>();
                         _pivotCachRidToLocation[rId] = target;
                     }
                     else if (type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings")
@@ -287,10 +278,10 @@ namespace SpreadSheetTasks
                     {
                         _stylesLocation = target;
                     }
-                    else if (type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme")
-                    {
-                        _themeLocation = target;
-                    }
+                    //else if (type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme")
+                    //{
+                    //    _themeLocation = target;
+                    //}
 
                 }
             }
@@ -303,7 +294,6 @@ namespace SpreadSheetTasks
         private static MemoryStream GetMemoryStream(Stream streamToRead, long length)
         {
             byte[] byteArray = new byte[length];
-            int pos = 0;
             int bytesRead = 0;
             int toRead = 65_536;
             while (true)
@@ -313,7 +303,7 @@ namespace SpreadSheetTasks
                     toRead = (int)length - bytesRead;
                 }
 
-                pos = streamToRead.Read(byteArray, bytesRead, toRead);
+                int pos = streamToRead.Read(byteArray, bytesRead, toRead);
                 bytesRead += pos;
                 if (pos == 0)
                 {
@@ -347,10 +337,10 @@ namespace SpreadSheetTasks
                     }
 
                     string cnt = reader.GetAttribute("count");
-                    if (cnt != null)
-                    {
-                        int.TryParse(cnt, out _stringCount);
-                    }
+                    //if (cnt != null)
+                    //{
+                    //    int.TryParse(cnt, out _stringCount);
+                    //}
                 }
                 else
                 {
@@ -620,7 +610,8 @@ namespace SpreadSheetTasks
         int len = 0;
         int rowNum = 0;
         bool returnValue = true;
-        void sheetPreInitialize()
+
+        private void SheetPreInitialize()
         {
             prevRowNum = -1;
             //isFirstRow = true;
@@ -639,9 +630,9 @@ namespace SpreadSheetTasks
             innerRow = new FieldInfo[4096];
             sheetEntry = GetArchiverEntry(ActualSheetName);
         }
-        private void initSheetXlsxReader()
+        private void InitSheetXlsxReader()
         {
-            sheetPreInitialize();
+            SheetPreInitialize();
             //sheetStream = sheetEntry.Open();
             sheetStream = new BufferedStream(sheetEntry.Open(), 65_536);
             xmlReader = XmlReader.Create(sheetStream, _xmlSettings);
@@ -673,7 +664,7 @@ namespace SpreadSheetTasks
         {
             if (isFirstRow)
             {
-                initSheetXlsxReader();
+                InitSheetXlsxReader();
             }
             if (emptyRowCnt < howManyEmptyRow)
             {
@@ -914,10 +905,9 @@ namespace SpreadSheetTasks
         }
 
 
-
-        private void initSheetXlsbReader()
+        private void InitSheetXlsbReader()
         {
-            sheetPreInitialize();
+            SheetPreInitialize();
 
             if (UseMemoryStreamInXlsb)
             {
@@ -943,7 +933,7 @@ namespace SpreadSheetTasks
             //fist time = initialize
             if (isFirstRow)
             {
-                initSheetXlsbReader();
+                InitSheetXlsbReader();
             }
 
             //last row is not complete
@@ -1016,7 +1006,7 @@ namespace SpreadSheetTasks
                                 var styleIndex = biffReader.xfIndex;
                                 if (styleIndex == 0) // general
                                 {
-                                    SetValueForXlsb(doubleVal, ref valueX);
+                                    XlsxOrXlsbReadOrEdit.SetValueForXlsb(doubleVal, ref valueX);
                                 }
                                 else
                                 {
@@ -1028,7 +1018,7 @@ namespace SpreadSheetTasks
                                     }
                                     else
                                     {
-                                        SetValueForXlsb(doubleVal, ref valueX);
+                                        XlsxOrXlsbReadOrEdit.SetValueForXlsb(doubleVal, ref valueX);
                                     }
                                 }
                                 break;
@@ -1178,8 +1168,8 @@ namespace SpreadSheetTasks
         private static (int row, int column) GetNumbersFromAdress(string startingCellAdress)
         {
             int n1 = startingCellAdress.IndexOfAny(_digits);
-            string letters = startingCellAdress.Substring(0, n1);
-            int rowNumFromAdress = int.Parse(startingCellAdress.Substring(n1));
+            string letters = startingCellAdress[..n1];
+            int rowNumFromAdress = int.Parse(startingCellAdress[n1..]);
             int colNumFromAdress = _letterToColumnNum[letters] + 1;
             return (rowNumFromAdress - 1, colNumFromAdress - 1);
         }
@@ -1355,7 +1345,7 @@ namespace SpreadSheetTasks
                 firsPartTxt = firsPartTxt.Replace($"ref=\"{reff}\"", $"ref=\"{referention}\"");
 
                 sw.Write(firsPartTxt);
-                sw.Write(pivotTableXmlAsPlainTxt.AsSpan().Slice(firsPartIndex));
+                sw.Write(pivotTableXmlAsPlainTxt.AsSpan()[firsPartIndex..]);
             }
         }
 
@@ -1372,7 +1362,7 @@ namespace SpreadSheetTasks
 
         private int _resultCount = -1;
         public override int ResultsCount { get => _resultCount; }
-        private string Name { get => ActualSheetName; }
+        //private string Name { get => ActualSheetName; }
 
         private int _rowCount = -2;
 
@@ -1404,7 +1394,7 @@ namespace SpreadSheetTasks
             return _rowCount;
         }
 
-        private void SetValueForXlsb(double rawValue, ref FieldInfo fieldInfo)
+        private static void SetValueForXlsb(double rawValue, ref FieldInfo fieldInfo)
         {
             long l1 = Convert.ToInt64(rawValue);
             double res = l1 - /*(double)*/rawValue;

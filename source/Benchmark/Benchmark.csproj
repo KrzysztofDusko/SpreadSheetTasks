@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-    <PackageReference Include="Sylvan.Data.Csv" Version="1.2.2" />
-    <PackageReference Include="Sylvan.Data.Excel" Version="0.3.3" />
+    <PackageReference Include="Sylvan.Data.Csv" Version="1.2.3" />
+    <PackageReference Include="Sylvan.Data.Excel" Version="0.4.0-b0008" />
   </ItemGroup>
 
   <ItemGroup>
