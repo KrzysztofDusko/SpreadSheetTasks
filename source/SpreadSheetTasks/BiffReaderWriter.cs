@@ -892,7 +892,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return (sbyte)dataReader.GetInt16(j);
+                    return (sbyte)dataReader.GetValue(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {

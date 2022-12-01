@@ -28,13 +28,15 @@ namespace Benchmark
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
+            //var sumary = BenchmarkRunner.Run<NumberParseTest>();
 
 #endif
 #if DEBUG
-            var b = new CsvWriterBench();
-            b.Rows = 5_000_000;
-            b.setup();
-            b.CsvWriterTestA();
+            var b = new WriteBenchExcel();
+            b.Rows = 200_000;
+            b.Setup();
+            b.XlsbWriteDefault();
+
             //ExcelTest();
             //CsvTest();
             //CsvWriterTest();
@@ -42,16 +44,16 @@ namespace Benchmark
         }
     }
 
-    [SimpleJob(RuntimeMoniker.Net60)]
+    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
-    [SimpleJob(RuntimeMoniker.NativeAot70)]
+    //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class ReadBenchXlsx
     {
         readonly string filename65k = "65K_Records_Data.xlsx";
         readonly string filename200k = "200kFile.xlsx";
 
-        [Benchmark]
+        //[Benchmark]
         public void SpreadSheetTasks200K()
         {
             var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
@@ -110,7 +112,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Sylvan65K()
         {
             var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
@@ -156,9 +158,9 @@ namespace Benchmark
             var channel = excelFile.GetString(3);
             var priority = excelFile.GetString(4);
             var orderDate = excelFile.GetDateTime(5);
-            var id = excelFile.GetInt64(6);
+            var id = excelFile.GetInt32(6);
             var shipDate = excelFile.GetDateTime(7);
-            var unitsSold = excelFile.GetInt64(8);
+            var unitsSold = excelFile.GetInt32(8);
             var unitPrice = excelFile.GetDouble(9);
             var unitCost = excelFile.GetDouble(10);
             var totalRevenue = excelFile.GetDouble(11);
@@ -169,9 +171,9 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net60)]
+    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
-    [SimpleJob(RuntimeMoniker.NativeAot70)]
+    //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
@@ -208,9 +210,9 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net60)]
+    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
-    [SimpleJob(RuntimeMoniker.NativeAot70)]
+    //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class WriteBenchExcel
     {
@@ -506,4 +508,85 @@ namespace Benchmark
         }
 
     }
+
+
+    //[SimpleJob(RuntimeMoniker.Net60)]
+    [SimpleJob(RuntimeMoniker.Net70)]
+    //[SimpleJob(RuntimeMoniker.NativeAot70)]
+    public class NumberParseTest
+    {
+
+        [Params(2,4,8,16)]
+        public int len { get; set; } = 16;
+
+        //int len = 16;
+        char[] buff = new char[] { '1', '2', '5', '9', '2', '5', '9', '9', '1', '2', '5', '9', '2', '5', '9', '9' };
+
+        //[Benchmark]
+        public Int64 ParseToInt64FromBuffer()
+        {
+            Int64 res = 0;
+            int start = buff[0] == '-' ? 1 : 0;
+            for (int i = start; i < len; i++)
+            {
+                res = res * 10 + (buff[i] - '0');
+            }
+            return start == 1 ? -res : res;
+        }
+
+
+        //[Benchmark]
+        public Int64 ParseToInt64FromBuffer2()
+        {
+            int start = buff[0] == '-' ? 1 : 0;
+            Int64 res = buff[start] - '0';
+            for (int i = start + 1; i < len; i++)
+            {
+                res = res * 10 + (buff[i] - '0');
+            }
+            return start == 1 ? -res : res;
+        }
+
+        //[Benchmark]
+        public Int64 ParseToInt64FromBuffer3()
+        {
+            var c1 = buff[0] == '-';
+            byte start = Unsafe.As<bool, byte>(ref c1);
+            Int64 res = buff[start] - '0';
+            for (int i = start + 1; i < len; i++)
+            {
+                res = res * 10 + (buff[i] - '0');
+            }
+            //return res * (1 - 2*start);
+            return start == 1 ? -res : res;
+        }
+
+        //[Benchmark]
+        public Int64 ParseToInt64System()
+        {
+            return Int64.Parse(buff.AsSpan(), System.Globalization.NumberStyles.AllowLeadingSign | System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        [Benchmark]
+        public bool ContainsDoubleMarks()
+        {
+            for (int i = 0; i < len; i++)
+            {
+                char c = buff[i];
+                if (c == '.' || c == 'E')
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+        [Benchmark]
+        public bool ContainsDoubleMarks2()
+        {
+            return buff.AsSpan(0, len).IndexOfAny('.','E') > 0;
+        }
+    }
+
 }

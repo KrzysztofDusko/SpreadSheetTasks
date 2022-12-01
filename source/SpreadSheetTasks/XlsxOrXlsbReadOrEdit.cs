@@ -806,7 +806,8 @@ namespace SpreadSheetTasks
                             if (sstMark == 'b') // 'b' = boolean, 'e' = error
                             {
                                 valueX.type = ExcelDataType.Boolean;
-                                valueX.int64Value = (_buffer[0] - '0');
+                                //valueX.int32Value = (_buffer[0] - '0');
+                                valueX.boolValue = _buffer[0] == 1;
                             }
                             else if (sstMark == 'e') // 'b' = boolean, 'e' = error
                             {
@@ -998,7 +999,8 @@ namespace SpreadSheetTasks
                             break;
                         case CellType.boolVal:
                             valueX.type = ExcelDataType.Boolean;
-                            valueX.int64Value = biffReader.boolValue ? 1 : 0;
+                            //valueX.int32Value = biffReader.boolValue ? 1 : 0;
+                            valueX.boolValue = biffReader.boolValue;
                             break;
                         case CellType.doubleVal:
                             {
@@ -1094,9 +1096,16 @@ namespace SpreadSheetTasks
 
         private static Int64 ParseToInt64FromBuffer(char[] buff, int len)
         {
-            Int64 res = 0;
+            //Int64 res = 0;
+            //int start = buff[0] == '-' ? 1 : 0;
+            //for (int i = start; i < len; i++)
+            //{
+            //    res = res * 10 + (buff[i] - '0');
+            //}
+            //return start == 1 ? -res : res;
             int start = buff[0] == '-' ? 1 : 0;
-            for (int i = start; i < len; i++)
+            Int64 res = buff[start] - '0';
+            for (int i = start + 1; i < len; i++)
             {
                 res = res * 10 + (buff[i] - '0');
             }
@@ -1105,15 +1114,16 @@ namespace SpreadSheetTasks
 
         private static bool ContainsDoubleMarks(char[] buff, int len)
         {
-            for (int i = 0; i < len; i++)
-            {
-                char c = buff[i];
-                if (c == '.' || c == 'E')
-                {
-                    return true;
-                }
-            }
-            return false;
+            //for (int i = 0; i < len; i++)
+            //{
+            //    char c = buff[i];
+            //    if (c == '.' || c == 'E')
+            //    {
+            //        return true;
+            //    }
+            //}
+            //return false;
+            return buff.AsSpan(0,len).IndexOfAny('.', 'E') > 0;
         }
 
         public IEnumerable<object[]> GetRowsOfXlsx(string sheetName)

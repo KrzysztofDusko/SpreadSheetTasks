@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SpreadSheetTasks
@@ -51,10 +53,12 @@ namespace SpreadSheetTasks
             return innerRow[i].type switch
             {
                 ExcelDataType.Null => DBNull.Value,
+                ExcelDataType.Int32 => innerRow[i].int32Value,
                 ExcelDataType.Int64 => innerRow[i].int64Value,
                 ExcelDataType.Double => innerRow[i].doubleValue,
                 ExcelDataType.DateTime => innerRow[i].dtValue,
-                ExcelDataType.Boolean => (innerRow[i].int64Value == 1),
+                //ExcelDataType.Boolean => (innerRow[i].int32Value == 1),
+                ExcelDataType.Boolean => innerRow[i].boolValue,
                 ExcelDataType.String => innerRow[i].strValue,
                 //case ExcelDataType.Error:
                 //    return "error in cell";
@@ -116,6 +120,28 @@ namespace SpreadSheetTasks
             }
         }
 
+        public Int32 GetInt32(int i)
+        {
+            ref var w = ref innerRow[i];
+            if (w.type == ExcelDataType.Int32)
+            {
+                return w.int32Value;
+            }
+            else if (w.type == ExcelDataType.Int64)
+            {
+                return Convert.ToInt32(w.int64Value);
+            }
+            else if (w.type == ExcelDataType.Double)
+            {
+                return Convert.ToInt32(w.doubleValue);
+            }
+            else
+            {
+                throw new InvalidCastException();
+            }
+        }
+
+
         public double GetDouble(int i)
         {
             ref var w = ref innerRow[i];
@@ -126,6 +152,10 @@ namespace SpreadSheetTasks
             else if (w.type == ExcelDataType.Int64)
             {
                 return Convert.ToDouble(w.int64Value);
+            }
+            else if (w.type == ExcelDataType.Int32)
+            {
+                return Convert.ToDouble(w.int32Value);
             }
             else
             {
@@ -147,14 +177,23 @@ namespace SpreadSheetTasks
 
     }
 
+    [StructLayout(LayoutKind.Explicit)]
     public struct FieldInfo
     {
+        [FieldOffset(8)]
         public ExcelDataType type;
-        public string strValue;
+        [FieldOffset(12)]
         public Int64 int64Value;
+        [FieldOffset(12)]
+        public Int32 int32Value;
+        [FieldOffset(12)]
+        public bool boolValue;
+        [FieldOffset(12)]
         public double doubleValue;
+        [FieldOffset(12)]
         public DateTime dtValue;
-        //public int xfIdx;
+        [FieldOffset(0)]
+        public string strValue;
     }
 
     public enum ExcelDataType
@@ -166,6 +205,7 @@ namespace SpreadSheetTasks
         /// <summary>
         /// Number
         /// </summary>
+        Int32,
         Int64,
         Double,
         /// <summary>

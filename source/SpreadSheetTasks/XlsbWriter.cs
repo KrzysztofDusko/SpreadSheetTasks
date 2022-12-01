@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SpreadSheetTasks
@@ -472,16 +473,26 @@ namespace SpreadSheetTasks
 
         private void WriteString(string stringValue, int colNum)
         {
-            if (_sstDic.TryGetValue(stringValue, out int index))
+
+            ref var index = ref CollectionsMarshal.GetValueRefOrAddDefault(_sstDic, stringValue, out bool exists);
+            if (!exists)
             {
-                WriteStringFromShared(index, colNum);
+                index = _sstCntUnique;
+                _sstCntUnique++;
             }
-            else
-            {
-                _sstDic[stringValue] = _sstCntUnique;
-                WriteStringFromShared(_sstCntUnique++, colNum);
-            }
+            WriteStringFromShared(index, colNum);
             _sstCntAll++;
+
+            //if (_sstDic.TryGetValue(stringValue, out int index))
+            //{
+            //    WriteStringFromShared(index, colNum);
+            //}
+            //else
+            //{
+            //    _sstDic[stringValue] = _sstCntUnique;
+            //    WriteStringFromShared(_sstCntUnique++, colNum);
+            //}
+            //_sstCntAll++;
         }
 
         private void WriteDateTime(DateTime dateTime, int colNum)

@@ -6,6 +6,8 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 
 //#if NET6_0_OR_GREATER
@@ -208,15 +210,20 @@ namespace SpreadSheetTasks
             currentBufferOffset += len;
         }
 
-        private void writeStringToBuffer(string val)
+        //private void writeStringToBuffer(string val)
+        //{
+        //    for (int i = 0; i < val.Length; i++)
+        //    {
+        //        char c = val[i];
+        //        buffer[currentBufferOffset++] = c;
+        //    }
+        //}
+        //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private void writeStringToBuffer(ReadOnlySpan<char> val)
         {
-            for (int i = 0; i < val.Length; i++)
-            {
-                char c = val[i];
-                buffer[currentBufferOffset++] = c;
-            }
+            val.CopyTo(buffer.AsSpan(currentBufferOffset));
+            currentBufferOffset += val.Length;
         }
-
 
         public bool TryToSpecifyWidthForMemoryMode { get; set; }
         private int WriteSheet(StreamWriter sheetWritter, int startingRow, int startingColumn)
@@ -497,45 +504,18 @@ namespace SpreadSheetTasks
                     }
                     else
                     {
-//#if NET6_0_OR_GREATER
-
-//                        ref var dicRefValue = ref CollectionsMarshal.GetValueRefOrAddDefault(_sstDic, stringValue, out bool exists);
-
-//                        if (!exists)
-//	                    {
-//                            dicRefValue = _sstCntUnique;
-//                            _sstCntUnique++;
-//	                    }
-//                        writeStringToBuffer("<c r=\"");
-//                        writeStringToBuffer(_letters[column + startingColumn]);
-//                        writeInt32ToBuffer((rowNum + 1 + startingRow));
-//                        writeStringToBuffer("\" t=\"s\"><v>");
-//                        writeInt32ToBuffer(dicRefValue);
-//                        writeStringToBuffer("</v></c>");
-
-//#else
-                        if (!_sstDic.ContainsKey(stringValue))
+                        ref var dicRefValue = ref CollectionsMarshal.GetValueRefOrAddDefault(_sstDic, stringValue, out bool exists);
+                        if (!exists)
                         {
-                            _sstDic[stringValue] = _sstCntUnique;
-                            writeStringToBuffer("<c r=\"");
-                            writeStringToBuffer(_letters[column + startingColumn]);
-                            writeInt32ToBuffer((rowNum + 1 + startingRow));
-                            writeStringToBuffer("\" t=\"s\"><v>");
-                            writeInt32ToBuffer(_sstCntUnique);
-                            writeStringToBuffer("</v></c>");
+                            dicRefValue = _sstCntUnique;
                             _sstCntUnique++;
                         }
-                        else
-                        {
-                            writeStringToBuffer("<c r=\"");
-                            writeStringToBuffer(_letters[column + startingColumn]);
-                            writeInt32ToBuffer((rowNum + 1 + startingRow));
-                            writeStringToBuffer("\" t=\"s\"><v>");
-                            writeInt32ToBuffer(_sstDic[stringValue]);
-                            writeStringToBuffer("</v></c>");
-                        }
-
-//#endif
+                        writeStringToBuffer("<c r=\"");
+                        writeStringToBuffer(_letters[column + startingColumn]);
+                        writeInt32ToBuffer((rowNum + 1 + startingRow));
+                        writeStringToBuffer("\" t=\"s\"><v>");
+                        writeInt32ToBuffer(dicRefValue);
+                        writeStringToBuffer("</v></c>");
                         _sstCntAll++;
                     }
                 }
