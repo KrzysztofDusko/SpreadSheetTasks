@@ -85,16 +85,18 @@ namespace SpreadSheetTasks.CsvWriter
                 fs = new StreamWriter(_path, false, _enconding);
             }
             
-
             try
             {
                 int fieldCount = datareader.FieldCount;
 
                 TypeCode[] types = new TypeCode[fieldCount];
+                bool[] isMemoryByte= new bool[fieldCount];
                 bool[] allowNull = new bool[fieldCount];
                 for (int i = 0; i < fieldCount; i++)
                 {
-                    types[i] = Type.GetTypeCode(datareader.GetFieldType(i));
+                    var t = datareader.GetFieldType(i);
+                    types[i] = Type.GetTypeCode(t);
+                    isMemoryByte[i] = (t == typeof(Memory<byte>));
                 }
                 if (datareader is DbDataReader)
                 {
@@ -111,7 +113,6 @@ namespace SpreadSheetTasks.CsvWriter
                         allowNull[i] = true;
                     }
                 }
-
 
                 if (_includeHeaders)
                 {
@@ -190,8 +191,15 @@ namespace SpreadSheetTasks.CsvWriter
                                     WriteStringToBuffer(tempString);
                                     break;
                                 default:
-                                    tempString = datareader.GetValue(i).ToString();
-                                    WriteStringToBuffer(tempString);
+                                    if (!isMemoryByte[i])
+                                    {
+                                        tempString = datareader.GetValue(i).ToString();
+                                        WriteStringToBuffer(tempString);
+                                    }
+                                    else
+                                    {
+                                        WriteByteMemoryToBuffer((Memory<byte>)datareader.GetValue(i));
+                                    }
                                     break;
                             }
                         }
@@ -214,12 +222,11 @@ namespace SpreadSheetTasks.CsvWriter
                     rows++;
                 }
 
-            if (currentBufferOffset > 0)
-            {
-                fs.Write(buffer, 0, currentBufferOffset);
-                currentBufferOffset = 0;
-            }
-
+                if (currentBufferOffset > 0)
+                {
+                    fs.Write(buffer, 0, currentBufferOffset);
+                    currentBufferOffset = 0;
+                }
             }
             finally
             {
@@ -313,5 +320,50 @@ namespace SpreadSheetTasks.CsvWriter
                 buffer[currentBufferOffset++] = qoute;
             } 
         }
+
+        private void WriteByteMemoryToBuffer(Memory<byte> mem)
+        {
+            bool escape = false;
+            int orgOffset = currentBufferOffset;
+            var temp = mem.Span;
+
+            if (temp.Length + orgOffset >= BUFFER_SIZE)
+            {
+                throw new Exception("buffers is too small");
+            }
+
+            for (int i = 0; i < temp.Length; i++)
+            {
+                byte c = temp[i];
+                if (c == _colDelimiter || c == '\n' || c == qoute)
+                {
+                    escape = true;
+                    break;
+                }
+                buffer[currentBufferOffset++] = (char)c;
+            }
+            if (!escape)
+            {
+                return;
+            }
+            else
+            {
+                currentBufferOffset = orgOffset;
+                buffer[currentBufferOffset++] = qoute;
+
+                for (int i = 0; i < temp.Length; i++)
+                {
+                    byte c = temp[i];
+                    buffer[currentBufferOffset++] = (char)c;
+                    if (c == qoute)
+                    {
+                        buffer[currentBufferOffset++] = qoute;
+                    }
+                }
+
+                buffer[currentBufferOffset++] = qoute;
+            }
+        }
+
     }
 }
