@@ -1,19 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Runtime.CompilerServices;
-
+using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
-
+using CommunityToolkit.HighPerformance.Buffers;
 using SpreadSheetTasks;
 using SpreadSheetTasks.CsvReader;
 using SpreadSheetTasks.CsvWriter;
 using Sylvan.Data.Excel;
 using SylvanCsv = Sylvan.Data.Csv;
-
-
 
 
 namespace Benchmark
@@ -24,11 +23,12 @@ namespace Benchmark
         {
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
+            //var summary7 = BenchmarkRunner.Run<StringPoolSylvanTest>();
 
 #endif
 #if DEBUG
@@ -277,13 +277,83 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net60)]
+    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
-    [SimpleJob(RuntimeMoniker.NativeAot70)]
+    //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class CsvReadBench
     {
         readonly string path = @$"C:\Users\dusko\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
+        int N = 20;
+
+        [Benchmark]
+        public void TextReaderGetString()
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                using CsvTextReader rd = new CsvTextReader(path);
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(rd.GetString(l));
+                    }
+                }
+            }
+        }
+        [Benchmark]
+        public void TextReaderGetSpanStringPoolSylvan()
+        {
+            List<string> list = new List<string>();
+            SimpleStringPool stringPool = new SimpleStringPool();
+            for (int i = 0; i < N; i++)
+            {
+                using CsvTextReader rd = new CsvTextReader(path);
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(stringPool.GetString(rd.GetSpan(l)));
+                    }
+                }
+            }
+        }
+        [Benchmark]
+        public void TextReaderGetSpanStringPool()
+        {
+            List<string> list = new List<string>();
+            StringPool stringPool = new StringPool();
+            for (int i = 0; i < N; i++)
+            {
+                using CsvTextReader rd = new CsvTextReader(path);
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(stringPool.GetOrAdd(rd.GetSpan(l)));
+                    }
+                }
+            }
+        }
+        [Benchmark]
+        public void SylvanString()
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
+
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(rd.GetString(l));
+                    }
+                }
+            }
+        }
+
 
         //[Benchmark]
         public void BinaryReaderGetByteSpan()
@@ -295,6 +365,19 @@ namespace Benchmark
                 for (int l = 0; l < rd.FieldCount; l++)
                 {
                     rd.GetByteSpan(l);
+                }
+            }
+        }
+        //[Benchmark]
+        public void BinaryReaderGetByteSpanAndStringPool()
+        {
+            using CsvBinaryReader rd = new CsvBinaryReader(path);
+            StringPool stringPool = new StringPool();
+            while (rd.Read())
+            {
+                for (int l = 0; l < rd.FieldCount; l++)
+                {
+                    stringPool.GetOrAdd(rd.GetByteSpan(l), Encoding.UTF8);
                 }
             }
         }
@@ -354,46 +437,6 @@ namespace Benchmark
         }
 
         //[Benchmark]
-        public void BinaryReaderGetStringASCII()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetString(l, System.Text.Encoding.ASCII);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void BinaryReaderGetStringASCII2()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    System.Text.Encoding.ASCII.GetString(rd.GetByteSpan(l));
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void TextReaderGetSpan()
-        {
-            using CsvTextReader rd = new CsvTextReader(path);
-
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetSpan(l);
-                }
-            }
-        }
-
-        //[Benchmark]
         public void TextReaderGetStringFromSpan()
         {
             using CsvTextReader rd = new CsvTextReader(path);
@@ -403,48 +446,6 @@ namespace Benchmark
                 for (int l = 0; l < rd.FieldCount; l++)
                 {
                     rd.GetSpan(l).ToString();
-                }
-            }
-        }
-
-        [Benchmark]
-        public void TextReaderGetString()
-        {
-            using CsvTextReader rd = new CsvTextReader(path);
-
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetString(l);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void TextReaderGetStringIgnoreQuoted()
-        {
-            using CsvTextReader rd = new CsvTextReader(path);
-
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetStringIgnoreQuoted(l);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void SylvanString()
-        {
-            var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
-
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetString(l);
                 }
             }
         }
@@ -588,5 +589,53 @@ namespace Benchmark
             return buff.AsSpan(0, len).IndexOfAny('.','E') > 0;
         }
     }
+
+
+    [SimpleJob(RuntimeMoniker.Net70)]
+    [MemoryDiagnoser]
+    public class StringPoolSylvanTest
+    {
+        List<string> ls = new List<string>();
+        [GlobalSetup]
+        public void FillList()
+        {
+            Random r = new Random(10);
+            for (int i = 0; i < 100_000; i++)
+            {
+                ls.Add(r.Next().ToString());
+            }
+        }
+
+
+        [Params(16,32)]
+        public int N { get; set; }
+
+        [Benchmark]
+        public void BenchSylvanPoolSylvan()
+        {
+            SimpleStringPool stringPool = new SimpleStringPool();
+            for (int i = 0; i < N; i++)
+            {
+                foreach (var item in ls)
+                {
+                    stringPool.GetString(item.AsSpan());
+                }
+            }
+        }
+
+        [Benchmark]
+        public void BenchStringPool()
+        {
+            StringPool stringPool = new StringPool();
+            for (int i = 0; i < N; i++)
+            {
+                foreach (var item in ls)
+                {
+                    stringPool.GetOrAdd(item.AsSpan());
+                }
+            }
+        }
+    }
+
 
 }
