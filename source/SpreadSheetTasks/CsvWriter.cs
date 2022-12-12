@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
@@ -69,7 +70,7 @@ namespace SpreadSheetTasks.CsvWriter
         static readonly CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
         const int BUFFER_SIZE = 65_536;
         const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
-        readonly char[] buffer = new char[BUFFER_SIZE];
+        private char[] buffer;
         int currentBufferOffset = 0;
         public long Write(IDataReader datareader)
         {
@@ -87,6 +88,8 @@ namespace SpreadSheetTasks.CsvWriter
             
             try
             {
+                buffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE);
+
                 int fieldCount = datareader.FieldCount;
 
                 TypeCode[] types = new TypeCode[fieldCount];
@@ -230,6 +233,7 @@ namespace SpreadSheetTasks.CsvWriter
             }
             finally
             {
+                ArrayPool<char>.Shared.Return(buffer);
                 fs.Dispose();
             }
 
@@ -278,7 +282,7 @@ namespace SpreadSheetTasks.CsvWriter
             currentBufferOffset += 19;
         }
 
-        private void WriteStringToBuffer(string temp)
+        private void WriteStringToBuffer(ReadOnlySpan<char> temp)
         {
             bool escape = false;
             int orgOffset = currentBufferOffset;
@@ -323,47 +327,10 @@ namespace SpreadSheetTasks.CsvWriter
 
         private void WriteByteMemoryToBuffer(Memory<byte> mem)
         {
-            bool escape = false;
-            int orgOffset = currentBufferOffset;
-            var temp = mem.Span;
-
-            if (temp.Length + orgOffset >= BUFFER_SIZE)
-            {
-                throw new Exception("buffers is too small");
-            }
-
-            for (int i = 0; i < temp.Length; i++)
-            {
-                byte c = temp[i];
-                if (c == _colDelimiter || c == '\n' || c == qoute)
-                {
-                    escape = true;
-                    break;
-                }
-                buffer[currentBufferOffset++] = (char)c;
-            }
-            if (!escape)
-            {
-                return;
-            }
-            else
-            {
-                currentBufferOffset = orgOffset;
-                buffer[currentBufferOffset++] = qoute;
-
-                for (int i = 0; i < temp.Length; i++)
-                {
-                    byte c = temp[i];
-                    buffer[currentBufferOffset++] = (char)c;
-                    if (c == qoute)
-                    {
-                        buffer[currentBufferOffset++] = qoute;
-                    }
-                }
-
-                buffer[currentBufferOffset++] = qoute;
-            }
+            var temp2 = mem.Span;
+            Span<char> temp = temp2.Length < 128 ? stackalloc char[temp2.Length] : new char[temp2.Length];
+            int written = Encoding.UTF8.GetChars(temp2, temp);
+            WriteStringToBuffer(temp[0..written]);
         }
-
     }
 }
