@@ -44,7 +44,6 @@ namespace Benchmark
         }
     }
 
-    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -171,7 +170,6 @@ namespace Benchmark
     }
 
 
-    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -210,7 +208,6 @@ namespace Benchmark
     }
 
 
-    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -276,8 +273,6 @@ namespace Benchmark
         }
     }
 
-
-    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -453,7 +448,6 @@ namespace Benchmark
 
     }
 
-    [SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     [SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -510,8 +504,6 @@ namespace Benchmark
 
     }
 
-
-    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     public class NumberParseTest

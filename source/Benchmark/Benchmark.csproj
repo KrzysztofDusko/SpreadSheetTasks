@@ -2,19 +2,20 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-	<TargetFrameworks>net7.0;net6.0</TargetFrameworks> 
+	<TargetFrameworks>net7.0</TargetFrameworks> 
 	  <IlcInstructionSet>avx2,bmi1,bmi2,fma,lzcnt,pclmul,popcnt,aes</IlcInstructionSet>
+	  <TieredPGO>false</TieredPGO>
   </PropertyGroup>
 
-	<PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
+	<!--<PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
 		<PublishAot>true</PublishAot>
-	</PropertyGroup>
+	</PropertyGroup>-->
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.13.2" />
-    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.1.0-preview1" />
-    <PackageReference Include="Sylvan.Data.Csv" Version="1.2.4" />
-    <PackageReference Include="Sylvan.Data.Excel" Version="0.4.3" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.13.5" />
+    <PackageReference Include="CommunityToolkit.HighPerformance" Version="8.1.0" />
+    <PackageReference Include="Sylvan.Data.Csv" Version="1.2.7" />
+    <PackageReference Include="Sylvan.Data.Excel" Version="0.4.6" />
   </ItemGroup>
 
   <ItemGroup>
