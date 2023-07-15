@@ -821,6 +821,7 @@ namespace SpreadSheetTasks
 
                                 if (_numberFormatsTypeDic.TryGetValue(numFormatId, out Type type) && type == typeof(DateTime?)
                                     && double.TryParse(_buffer.AsSpan(0, len), NumberStyles.Any, provider: invariantCultureInfo, out double doubleDate)
+                                    //&& FastDoubleParser.TryParseDouble(_buffer.AsSpan(0, len), out double doubleDate)
                                     )
                                 {
                                     valueX.type = ExcelDataType.DateTime;
@@ -832,6 +833,7 @@ namespace SpreadSheetTasks
                                     {
                                         valueX.type = ExcelDataType.Double;
                                         valueX.doubleValue = double.Parse(_buffer.AsSpan(0, len), provider: invariantCultureInfo);
+                                        //valueX.doubleValue = FastDoubleParser.ParseDouble(_buffer.AsSpan(0, len));
                                     }
                                     else
                                     {
@@ -846,6 +848,7 @@ namespace SpreadSheetTasks
                                 {
                                     valueX.type = ExcelDataType.Double;
                                     valueX.doubleValue = double.Parse(_buffer.AsSpan(0, len), provider: invariantCultureInfo);
+                                    //valueX.doubleValue = FastDoubleParser.ParseDouble(_buffer.AsSpan(0, len));
                                 }
                                 else
                                 {

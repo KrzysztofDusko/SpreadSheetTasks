@@ -23,9 +23,9 @@ namespace Benchmark
         {
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
             //var summary7 = BenchmarkRunner.Run<StringPoolSylvanTest>();
@@ -44,6 +44,7 @@ namespace Benchmark
         }
     }
 
+    //[SimpleJob(RuntimeMoniker.Net60)]
     [SimpleJob(RuntimeMoniker.Net70)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -171,11 +172,13 @@ namespace Benchmark
 
 
     [SimpleJob(RuntimeMoniker.Net70)]
+    //[SimpleJob(RuntimeMoniker.Net80)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
-        [Params("200kFile.xlsb")]
+        //[Params("200kFile.xlsb")]
+        [Params("65K_Records_Data.xlsb")]
         public string FileName { get; set; }
 
         [Params(false, true)]
