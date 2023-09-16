@@ -2,16 +2,19 @@
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using CommunityToolkit.HighPerformance.Buffers;
+using nietras.SeparatedValues;
 using SpreadSheetTasks;
 using SpreadSheetTasks.CsvReader;
 using SpreadSheetTasks.CsvWriter;
 using Sylvan.Data.Excel;
+using static System.Net.Mime.MediaTypeNames;
 using SylvanCsv = Sylvan.Data.Csv;
 
 
@@ -23,19 +26,18 @@ namespace Benchmark
         {
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
             //var summary7 = BenchmarkRunner.Run<StringPoolSylvanTest>();
 
 #endif
 #if DEBUG
-            var b = new WriteBenchExcel();
-            b.Rows = 200_000;
-            b.Setup();
-            b.XlsbWriteDefault();
+            var b = new CsvReadBench();
+
+            b.SepOneColumnSpanString();
 
             //ExcelTest();
             //CsvTest();
@@ -172,6 +174,7 @@ namespace Benchmark
 
 
     [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     //[SimpleJob(RuntimeMoniker.Net80)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
@@ -212,6 +215,7 @@ namespace Benchmark
 
 
     [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class WriteBenchExcel
@@ -245,7 +249,7 @@ namespace Benchmark
         }
 
 
-        //[Benchmark]
+        [Benchmark]
         public void XlsxWriteDefault()
         {
             using (XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx"))
@@ -255,7 +259,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void XlsxWriteLowMemory()
         {
             using (XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false))
@@ -265,7 +269,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void XlsbWriteDefault()
         {
             using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
@@ -276,15 +280,16 @@ namespace Benchmark
         }
     }
 
-    [SimpleJob(RuntimeMoniker.Net70)]
-    //[SimpleJob(RuntimeMoniker.NativeAot70)]
+    //[SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
+    //[SimpleJob(RuntimeMoniker.NativeAot80)]
     [MemoryDiagnoser]
     public class CsvReadBench
     {
         readonly string path = @$"C:\Users\dusko\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
         int N = 20;
 
-        [Benchmark]
+        //[Benchmark]
         public void TextReaderGetString()
         {
             List<string> list = new List<string>();
@@ -300,41 +305,7 @@ namespace Benchmark
                 }
             }
         }
-        [Benchmark]
-        public void TextReaderGetSpanStringPoolSylvan()
-        {
-            List<string> list = new List<string>();
-            SimpleStringPool stringPool = new SimpleStringPool();
-            for (int i = 0; i < N; i++)
-            {
-                using CsvTextReader rd = new CsvTextReader(path);
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        list.Add(stringPool.GetString(rd.GetSpan(l)));
-                    }
-                }
-            }
-        }
-        [Benchmark]
-        public void TextReaderGetSpanStringPool()
-        {
-            List<string> list = new List<string>();
-            StringPool stringPool = new StringPool();
-            for (int i = 0; i < N; i++)
-            {
-                using CsvTextReader rd = new CsvTextReader(path);
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        list.Add(stringPool.GetOrAdd(rd.GetSpan(l)));
-                    }
-                }
-            }
-        }
-        [Benchmark]
+        //[Benchmark]
         public void SylvanString()
         {
             List<string> list = new List<string>();
@@ -351,7 +322,168 @@ namespace Benchmark
                 }
             }
         }
+        //[Benchmark]
+        public void SepGetString()
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                using var rd = Sep.Reader().FromFile(path);
+                foreach (var readRow in rd)
+                {
+                    for (int l = 0; l < readRow.ColCount; l++)
+                    {
+                        list.Add(readRow[l].ToString());
+                    }
+                }
+            }
+        }
 
+
+        //[Benchmark]
+        public void TextReaderGetSpanStringPoolSylvan()
+        {
+            List<string> list = new List<string>();
+            SimpleStringPool stringPool = new SimpleStringPool();
+            for (int i = 0; i < N; i++)
+            {
+                using CsvTextReader rd = new CsvTextReader(path);
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(stringPool.GetString(rd.GetSpan(l)));
+                    }
+                }
+            }
+        }
+
+        //[Benchmark]
+        public void SylvanSpanString()
+        {
+            List<string> list = new List<string>();
+            SimpleStringPool stringPool = new SimpleStringPool();
+            for (int i = 0; i < N; i++)
+            {
+                var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
+
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(stringPool.GetString(rd.GetFieldSpan(l)));
+                    }
+                }
+            }
+        }
+
+        //[Benchmark]
+        public void SepOneColumnSpanString()
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                using var rd = Sep.Reader(o => o with
+                {
+                    CreateToString = SepToString.PoolPerCol(maximumStringLength: 128),
+                }).FromFile(path);
+                foreach (var readRow in rd)
+                {
+                    for (int l = 0; l < readRow.ColCount; l++)
+                    {
+                        list.Add(readRow[l].ToString());
+                    }
+                }
+            }
+        }
+
+        [Benchmark]
+        public void SepAllColumnsSpanString()
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                using var rd = Sep.Reader(o => o with
+                {
+                    CreateToString = SepToString.OnePool(maximumStringLength: 128,maximumCapacity:4096*128),
+                }).FromFile(path);
+                foreach (var readRow in rd)
+                {
+                    for (int l = 0; l < readRow.ColCount; l++)
+                    {
+                        list.Add(readRow[l].ToString());
+                    }
+                }
+            }
+        }
+
+        [Benchmark]
+        public void SepSpanSylvanPoolString()
+        {
+            List<string> list = new List<string>();
+            SimpleStringPool stringPool = new SimpleStringPool();
+            for (int i = 0; i < N; i++)
+            {
+                using var rd = Sep.Reader().FromFile(path);
+                foreach (var readRow in rd)
+                {
+                    for (int l = 0; l < readRow.ColCount; l++)
+                    {
+                        list.Add(stringPool.GetString(readRow[l].Span));
+                    }
+                }
+            }
+        }
+
+        [Benchmark]
+        public void SepSpanCustomPoolString()
+        {
+            List<string> list = new List<string>();
+            for (int i = 0; i < N; i++)
+            {
+                using var rd = Sep.Reader(o => o with
+                {
+                    CreateToString = (o,e) => MyPool.Instance
+                }).FromFile(path);
+                foreach (var readRow in rd)
+                {
+                    for (int l = 0; l < readRow.ColCount; l++)
+                    {
+                        list.Add(readRow[l].ToString());
+                    }
+                }
+            }
+        }
+
+        sealed class MyPool : SepToString
+        {
+            public static readonly MyPool Instance = new MyPool();
+
+            private static readonly SimpleStringPool stringPool = new SimpleStringPool();
+            public override string ToString(ReadOnlySpan<char> chars)
+            {
+                return stringPool.GetString(chars);
+            }
+        }
+
+
+        //[Benchmark]
+        public void TextReaderGetSpanStringPool()
+        {
+            List<string> list = new List<string>();
+            StringPool stringPool = new StringPool();
+            for (int i = 0; i < N; i++)
+            {
+                using CsvTextReader rd = new CsvTextReader(path);
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        list.Add(stringPool.GetOrAdd(rd.GetSpan(l)));
+                    }
+                }
+            }
+        }
 
         //[Benchmark]
         public void BinaryReaderGetByteSpan()
