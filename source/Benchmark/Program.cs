@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO;
-using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Running;
 using CommunityToolkit.HighPerformance.Buffers;
 using nietras.SeparatedValues;
 using SpreadSheetTasks;
 using SpreadSheetTasks.CsvReader;
 using SpreadSheetTasks.CsvWriter;
 using Sylvan.Data.Excel;
-using static System.Net.Mime.MediaTypeNames;
 using SylvanCsv = Sylvan.Data.Csv;
 
 
@@ -35,9 +31,12 @@ namespace Benchmark
 
 #endif
 #if DEBUG
-            var b = new CsvReadBench();
+            var b = new WriteBenchExcel();
 
-            b.SepOneColumnSpanString();
+            b.Rows = 10000;
+            b.Setup();
+            b.XlsbWriteDefault();
+
 
             //ExcelTest();
             //CsvTest();
@@ -275,7 +274,7 @@ namespace Benchmark
             using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
             {
                 xlsx.AddSheet("sheetName");
-                xlsx.WriteSheet(dt.CreateDataReader());
+                xlsx.WriteSheet(dt.CreateDataReader(), doAutofilter: true);
             }
         }
     }
@@ -289,7 +288,7 @@ namespace Benchmark
         readonly string path = @$"C:\Users\dusko\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
         int N = 20;
 
-        //[Benchmark]
+        [Benchmark]
         public void TextReaderGetString()
         {
             List<string> list = new List<string>();
@@ -322,7 +321,7 @@ namespace Benchmark
                 }
             }
         }
-        //[Benchmark]
+        [Benchmark]
         public void SepGetString()
         {
             List<string> list = new List<string>();
@@ -378,26 +377,6 @@ namespace Benchmark
         }
 
         //[Benchmark]
-        public void SepOneColumnSpanString()
-        {
-            List<string> list = new List<string>();
-            for (int i = 0; i < N; i++)
-            {
-                using var rd = Sep.Reader(o => o with
-                {
-                    CreateToString = SepToString.PoolPerCol(maximumStringLength: 128),
-                }).FromFile(path);
-                foreach (var readRow in rd)
-                {
-                    for (int l = 0; l < readRow.ColCount; l++)
-                    {
-                        list.Add(readRow[l].ToString());
-                    }
-                }
-            }
-        }
-
-        [Benchmark]
         public void SepAllColumnsSpanString()
         {
             List<string> list = new List<string>();
@@ -405,7 +384,7 @@ namespace Benchmark
             {
                 using var rd = Sep.Reader(o => o with
                 {
-                    CreateToString = SepToString.OnePool(maximumStringLength: 128,maximumCapacity:4096*128),
+                    CreateToString = SepToString.OnePool(),
                 }).FromFile(path);
                 foreach (var readRow in rd)
                 {
@@ -417,33 +396,16 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
-        public void SepSpanSylvanPoolString()
-        {
-            List<string> list = new List<string>();
-            SimpleStringPool stringPool = new SimpleStringPool();
-            for (int i = 0; i < N; i++)
-            {
-                using var rd = Sep.Reader().FromFile(path);
-                foreach (var readRow in rd)
-                {
-                    for (int l = 0; l < readRow.ColCount; l++)
-                    {
-                        list.Add(stringPool.GetString(readRow[l].Span));
-                    }
-                }
-            }
-        }
 
-        [Benchmark]
-        public void SepSpanCustomPoolString()
+        //[Benchmark]
+        public void SepOneColumnSpanString()
         {
             List<string> list = new List<string>();
             for (int i = 0; i < N; i++)
             {
                 using var rd = Sep.Reader(o => o with
                 {
-                    CreateToString = (o,e) => MyPool.Instance
+                    CreateToString = SepToString.PoolPerCol(),
                 }).FromFile(path);
                 foreach (var readRow in rd)
                 {
@@ -454,6 +416,45 @@ namespace Benchmark
                 }
             }
         }
+
+
+        //[Benchmark]
+        //public void SepSpanSylvanPoolString()
+        //{
+        //    List<string> list = new List<string>();
+        //    SimpleStringPool stringPool = new SimpleStringPool();
+        //    for (int i = 0; i < N; i++)
+        //    {
+        //        using var rd = Sep.Reader().FromFile(path);
+        //        foreach (var readRow in rd)
+        //        {
+        //            for (int l = 0; l < readRow.ColCount; l++)
+        //            {
+        //                list.Add(stringPool.GetString(readRow[l].Span));
+        //            }
+        //        }
+        //    }
+        //}
+
+        //[Benchmark]
+        //public void SepSpanCustomPoolString()
+        //{
+        //    List<string> list = new List<string>();
+        //    for (int i = 0; i < N; i++)
+        //    {
+        //        using var rd = Sep.Reader(o => o with
+        //        {
+        //            CreateToString = (o,e) => MyPool.Instance
+        //        }).FromFile(path);
+        //        foreach (var readRow in rd)
+        //        {
+        //            for (int l = 0; l < readRow.ColCount; l++)
+        //            {
+        //                list.Add(readRow[l].ToString());
+        //            }
+        //        }
+        //    }
+        //}
 
         sealed class MyPool : SepToString
         {

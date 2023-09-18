@@ -1233,7 +1233,7 @@ namespace SpreadSheetTasks
             }
         }
 
-        public void GetWidthFromDataTable(Span<double> width, double maxWidth)
+        public void GetWidthFromDataTable(Span<double> width, double maxWidth, bool doAutofilter)
         {
             int n = DataTableRowsCount > 100 ? 100 : DataTableRowsCount;
             int m = FieldCount;
@@ -1241,6 +1241,11 @@ namespace SpreadSheetTasks
             for (int j = 0; j < m; j++)
             {
                 double valTemp = 1.25 * DataTable.Columns[j].ToString().Length + 2;
+                if (doAutofilter)
+                {
+                    valTemp += 2;
+                }
+
                 if (valTemp > maxWidth)
                 {
                     valTemp = maxWidth;

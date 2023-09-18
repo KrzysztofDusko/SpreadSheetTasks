@@ -10,7 +10,7 @@
     <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>
     <Company>Krzysztof Duśko</Company>
-    <Version>0.2.5</Version>
+    <Version>0.2.6</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>

@@ -184,11 +184,11 @@ namespace SpreadSheetTasks
 
         internal abstract void FinalizeFile();
         public abstract void AddSheet(string sheetName, bool hidden = false);
-        public abstract void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0);
+        public abstract void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false);
 
-        public virtual void WriteSheet(DataTable dataTable, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0)
+        public virtual void WriteSheet(DataTable dataTable, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
-            WriteSheet(dataTable.CreateDataReader(), headers, overLimit, startingRow, startingColumn);
+            WriteSheet(dataTable.CreateDataReader(), headers, overLimit, startingRow, startingColumn, doAutofilter);
         }
 
         public abstract void WriteSheet(string[] oneColumn);

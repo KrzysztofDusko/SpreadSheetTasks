@@ -32,7 +32,7 @@ namespace SpreadSheetTasks
         private readonly bool _useTempPath;
 
 
-        public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool useTempPath = true)
+        public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool useTempPath = true, bool doAutofilter = false)
         {
             if (filePath == "")
             {
@@ -130,7 +130,7 @@ namespace SpreadSheetTasks
             _sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", archveSheetName), GetTempFileFullPath(), hidden, archveSheetName, (sheetCnt + 2)));
             //_sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", sheetName), getTempFileFullPath(), hidden, sheetName));
         }
-        public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0)
+        public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
             sheetCnt++;
             this.areHeaders = headers;
@@ -139,15 +139,15 @@ namespace SpreadSheetTasks
             {
                 var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, clvl);
                 using StreamWriter daneZakladkiX = new FormattingStreamWriter(e1.Open(), Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
-                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn) - 1;
+                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn, doAutofilter: doAutofilter) - 1;
             }
             else
             {
                 using StreamWriter daneZakladkiX = new FormattingStreamWriter(_sheetList[sheetCnt].pathOnDisc, false, Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
-                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn) - 1;
+                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn, doAutofilter: doAutofilter) - 1;
             }
         }
-        public override void WriteSheet(DataTable dataTable, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0)
+        public override void WriteSheet(DataTable dataTable, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
             sheetCnt++;
             this.areHeaders = headers;
@@ -156,12 +156,12 @@ namespace SpreadSheetTasks
             {
                 var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, clvl);
                 using StreamWriter daneZakladkiX = new FormattingStreamWriter(e1.Open(), Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
-                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn) - 1;
+                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn,doAutofilter: doAutofilter) - 1;
             }
             else
             {
                 using StreamWriter daneZakladkiX = new FormattingStreamWriter(_sheetList[sheetCnt].pathOnDisc, false, Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
-                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn) - 1;
+                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn, doAutofilter: doAutofilter) - 1;
             }
         }
 
@@ -226,7 +226,7 @@ namespace SpreadSheetTasks
         }
 
         public bool TryToSpecifyWidthForMemoryMode { get; set; }
-        private int WriteSheet(StreamWriter sheetWritter, int startingRow, int startingColumn)
+        private int WriteSheet(StreamWriter sheetWritter, int startingRow, int startingColumn, bool doAutofilter = false)
         {
             int rowNum = 0;
 
@@ -247,7 +247,7 @@ namespace SpreadSheetTasks
                     var rdr = _dataColReader.dataReader;
                     for (int l = 1; l <= ColumnCount; l++)
                     {
-                        int lenn = rdr.GetName(l - 1).Length;
+                        int lenn = rdr.GetName(l - 1).Length + (doAutofilter ?2:0);
                         double tempWidth = 1.25 * lenn + 2;
                         if (tempWidth > _MAX_WIDTH)
                         {
@@ -301,7 +301,7 @@ namespace SpreadSheetTasks
                 {
                     sheetWritter.Write($"<dimension ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader.DataTableRowsCount + 1 + startingRow}\"/>");
 
-                    _dataColReader.GetWidthFromDataTable(colWidesArray, _MAX_WIDTH);
+                    _dataColReader.GetWidthFromDataTable(colWidesArray, _MAX_WIDTH, doAutofilter);
                     sheetWritter.Write("<cols>");
                     for (int l = 1; l <= ColumnCount; l++)
                     {
@@ -364,6 +364,10 @@ namespace SpreadSheetTasks
             }
 
             sheetWritter.Write("</sheetData>");
+            if (doAutofilter)
+            {
+                sheetWritter.Write($"<autoFilter ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader.DataTableRowsCount + 1 + startingRow}\"/>");
+            }
             sheetWritter.Write("<pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>");
 
             //System.NotSupportedException: 'This stream from ZipArchiveEntry does not support seeking.'
