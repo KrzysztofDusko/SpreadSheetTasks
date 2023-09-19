@@ -165,12 +165,11 @@ namespace SpreadSheetTasks
             }
         }
 
-        static CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
-        const int BUFFER_SIZE = 65_536;
-        const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
-        char[] buffer = new char[BUFFER_SIZE];
-        int currentBufferOffset = 0;
-        
+        private static readonly CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
+        private const int BUFFER_SIZE = 65_536;
+        private const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
+        private readonly char[] buffer = new char[BUFFER_SIZE];
+        private int currentBufferOffset = 0;
 
         private void writeByteToBuffer(byte val)
         {

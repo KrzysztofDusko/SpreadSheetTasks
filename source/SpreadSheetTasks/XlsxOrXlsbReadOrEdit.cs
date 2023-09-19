@@ -138,9 +138,6 @@ namespace SpreadSheetTasks
                         string rId = reader.GetAttribute("r:id");
                         _worksheetIdToName[rId] = name;
                         _worksheetNameToId[name] = rId;
-
-                        //int.TryParse(reader.GetAttribute("sheetId"), out int sheetId);
-                        //_worksheetSheetIdToId[sheetId] = rId;
                     }
                     else if (reader.Name == "pivotCache")
                     {
@@ -333,7 +330,7 @@ namespace SpreadSheetTasks
                     string unqCnt = reader.GetAttribute("uniqueCount");
                     if (unqCnt != null)
                     {
-                        int.TryParse(unqCnt, out _uniqueStringCount);
+                        _ = int.TryParse(unqCnt, out _uniqueStringCount);
                     }
 
                     string cnt = reader.GetAttribute("count");
@@ -469,8 +466,8 @@ namespace SpreadSheetTasks
                         {
                             if (reader.IsStartElement("xf"))
                             {
-                                int.TryParse(reader.GetAttribute("xfId"), out var xfId);
-                                int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
+                                _ = int.TryParse(reader.GetAttribute("xfId"), out var xfId);
+                                _ = int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
                                 _stylesCellXfs.Add(new StyleInfo() { XfId = xfId, NumFmtId = numFmtId/*, ApplyNumberFormat = applyNumberFormat*/ });
                                 reader.Skip();
                             }
@@ -488,7 +485,7 @@ namespace SpreadSheetTasks
                             if (reader.IsStartElement("numFmt"))
                             {
                                 string formatCode = reader.GetAttribute("formatCode");
-                                int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
+                                _ = int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
 
                                 if (!_numberFormatsTypeDic.TryGetValue(numFmtId, out var type))
                                 {
@@ -1268,7 +1265,7 @@ namespace SpreadSheetTasks
                         string name = reader.GetAttribute("name");
                         if (name == pivotTableName)
                         {
-                            int.TryParse(reader.GetAttribute("cacheId"), out cacheId);
+                            _ = int.TryParse(reader.GetAttribute("cacheId"), out cacheId);
                             break;
                         }
                     }
@@ -1393,10 +1390,10 @@ namespace SpreadSheetTasks
                 return _rowCount;
             }
 
-            int i1 = _actualSheetDimensions.IndexOf(":");
+            int i1 = _actualSheetDimensions.IndexOf(':');
             string t1 = _actualSheetDimensions[..i1];
             int i2 = t1.IndexOfAny(_digits);
-            int.TryParse(t1[i2..], out int start);
+            _ = int.TryParse(t1[i2..], out int start);
 
             t1 = _actualSheetDimensions[(i1 + 1)..];
             i2 = t1.IndexOfAny(_digits);
