@@ -32,7 +32,7 @@ namespace SpreadSheetTasks
         private readonly bool _useTempPath;
 
 
-        public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool useTempPath = true, bool doAutofilter = false)
+        public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool useTempPath = true)
         {
             if (filePath == "")
             {
@@ -378,15 +378,28 @@ namespace SpreadSheetTasks
                 sheetWritter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">");
                 sheetWritter.Write(String.Format("<dimension ref=\"A1:{0}{1}\"/>", _letters[ColumnCount - 1], rowNum + 1));
 
-                if (sheetCnt == 0)
+                if (doAutofilter)
                 {
-                    sheetWritter.Write("<sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    if (sheetCnt == 0)
+                    {
+                        sheetWritter.Write("<sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\" /> <selection pane=\"bottomLeft\" /></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    }
+                    else
+                    {
+                        sheetWritter.Write("<sheetViews><sheetView workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\" /> <selection pane=\"bottomLeft\" /></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    }
                 }
                 else
                 {
-                    sheetWritter.Write("<sheetViews><sheetView workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    if (sheetCnt == 0)
+                    {
+                        sheetWritter.Write("<sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    }
+                    else
+                    {
+                        sheetWritter.Write("<sheetViews><sheetView workbookViewId=\"0\"/></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    }
                 }
-
 
                 List<double> colWidth2 = colWidesArray.ToArray().ToList();
                 List<double> colWidth3 = colWidth2.FindAll(x => x != 1.0);

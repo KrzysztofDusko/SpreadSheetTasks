@@ -12,6 +12,7 @@ using System.Text;
 
 namespace SpreadSheetTasks.CsvReader
 {
+    [Obsolete]
     public class CsvBinaryReader : IDataReader
     {
         public object this[int i] => throw new NotImplementedException();

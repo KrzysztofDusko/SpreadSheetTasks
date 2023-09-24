@@ -11,18 +11,14 @@ namespace SpreadSheetTasks
     //some code from https://github.com/ExcelDataReader/ExcelDataReader
     public abstract class ExcelReaderAbstract
     {
-        public static CultureInfo invariantCultureInfo = CultureInfo.InvariantCulture;
+        protected static CultureInfo invariantCultureInfo = CultureInfo.InvariantCulture;
         public int FieldCount { get; set; }
         public virtual int ResultsCount { get; }
         public virtual string ActualSheetName { get; set; }
         public virtual int RowCount { get => 123123123; }
-        public abstract void Open(string path, bool fool1 = true, bool fool2 = false, Encoding encoding = null);
-
+        public abstract void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding encoding = null);
         public abstract bool Read();
-
         public virtual double RelativePositionInStream() => 50.0;
-
-
 
         /// <summary>
         /// use only after read first row  = GetValue + ToString

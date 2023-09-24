@@ -36,7 +36,7 @@ namespace Benchmark
 
             b.Rows = 10000;
             b.Setup();
-            b.XlsbWriteDefault();
+            b.XlsxWriteDefault();
 
 
             //ExcelTest();
@@ -46,9 +46,7 @@ namespace Benchmark
         }
     }
 
-    //[SimpleJob(RuntimeMoniker.Net60)]
-    [SimpleJob(RuntimeMoniker.Net70)]
-    //[SimpleJob(RuntimeMoniker.NativeAot70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     [MemoryDiagnoser]
     public class ReadBenchXlsx
     {
@@ -173,10 +171,7 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net70)]
     [SimpleJob(RuntimeMoniker.Net80)]
-    //[SimpleJob(RuntimeMoniker.Net80)]
-    //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
@@ -184,7 +179,7 @@ namespace Benchmark
         [Params("65K_Records_Data.xlsb")]
         public string FileName { get; set; }
 
-        [Params(false, true)]
+        [Params(false/*, true*/)]
         public bool InMemory { get; set; }
 
         [Benchmark]
@@ -211,12 +206,26 @@ namespace Benchmark
                 }
             }
         }
+
+        [Benchmark]
+        public void Sylvan()
+        {
+            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+
+            using ExcelDataReader reader = ExcelDataReader.Create(path);
+
+            object[] row = new object[reader.FieldCount];
+
+            while (reader.Read())
+            {
+                reader.GetValues(row);
+            }
+        }
+
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net70)]
     [SimpleJob(RuntimeMoniker.Net80)]
-    //[SimpleJob(RuntimeMoniker.NativeAot70)]
     [MemoryDiagnoser]
     public class WriteBenchExcel
     {
@@ -255,7 +264,7 @@ namespace Benchmark
             using (XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx"))
             {
                 xlsx.AddSheet("sheetName");
-                xlsx.WriteSheet(dt.CreateDataReader());
+                xlsx.WriteSheet(dt.CreateDataReader(),doAutofilter:true);
             }
         }
 
@@ -280,16 +289,78 @@ namespace Benchmark
         }
     }
 
-    //[SimpleJob(RuntimeMoniker.Net70)]
     [SimpleJob(RuntimeMoniker.Net80)]
-    //[SimpleJob(RuntimeMoniker.NativeAot80)]
     [MemoryDiagnoser]
     public class CsvReadBench
     {
         readonly string path = @$"C:\Users\dusko\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
         int N = 20;
 
+
         [Benchmark]
+        public void TextReaderSPAN()
+        {
+            for (int i = 0; i < N; i++)
+            {
+                using CsvTextReader rd = new CsvTextReader(path);
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        var x = rd.GetSpan(l);
+                    }
+                }
+            }
+        }
+        [Benchmark]
+        public void SylvanSPAN()
+        {
+            for (int i = 0; i < N; i++)
+            {
+                var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
+
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        var x = rd.GetFieldSpan(l);
+                    }
+                }
+            }
+        }
+        [Benchmark]
+        public void SepSPAN()
+        {
+            for (int i = 0; i < N; i++)
+            {
+                using var rd = Sep.Reader().FromFile(path);
+                foreach (var readRow in rd)
+                {
+                    for (int l = 0; l < readRow.ColCount; l++)
+                    {
+                        var x = readRow[l].Span;
+                    }
+                }
+            }
+        }
+        [Benchmark]
+        public void BinaryReaderSPAN()
+        {
+            for (int i = 0; i < N; i++)
+            {
+                using CsvBinaryReader rd = new CsvBinaryReader(path);
+
+                while (rd.Read())
+                {
+                    for (int l = 0; l < rd.FieldCount; l++)
+                    {
+                        var x = rd.GetByteSpan(l);
+                    }
+                }
+            }
+        }
+
+        //[Benchmark]
         public void TextReaderGetString()
         {
             List<string> list = new List<string>();
@@ -322,7 +393,7 @@ namespace Benchmark
                 }
             }
         }
-        [Benchmark]
+        //[Benchmark]
         public void SepGetString()
         {
             List<string> list = new List<string>();
@@ -488,19 +559,6 @@ namespace Benchmark
         }
 
         //[Benchmark]
-        public void BinaryReaderGetByteSpan()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetByteSpan(l);
-                }
-            }
-        }
-        //[Benchmark]
         public void BinaryReaderGetByteSpanAndStringPool()
         {
             using CsvBinaryReader rd = new CsvBinaryReader(path);
@@ -585,8 +643,7 @@ namespace Benchmark
 
     }
 
-    [SimpleJob(RuntimeMoniker.Net70)]
-    [SimpleJob(RuntimeMoniker.NativeAot70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     [MemoryDiagnoser]
     public class CsvWriterBench
     {
@@ -641,8 +698,7 @@ namespace Benchmark
 
     }
 
-    [SimpleJob(RuntimeMoniker.Net70)]
-    //[SimpleJob(RuntimeMoniker.NativeAot70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     public class NumberParseTest
     {
 
@@ -720,7 +776,7 @@ namespace Benchmark
     }
 
 
-    [SimpleJob(RuntimeMoniker.Net70)]
+    [SimpleJob(RuntimeMoniker.Net80)]
     [MemoryDiagnoser]
     public class StringPoolSylvanTest
     {
