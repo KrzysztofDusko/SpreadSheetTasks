@@ -909,7 +909,10 @@ namespace SpreadSheetTasks
         private void InitSheetXlsbReader()
         {
             SheetPreInitialize();
-
+            if (sheetEntry.Length >= int.MaxValue)
+            {
+                UseMemoryStreamInXlsb = false;
+            }
             if (UseMemoryStreamInXlsb)
             {
                 sheetStream = GetMemoryStream(sheetEntry.Open(), sheetEntry.Length);
