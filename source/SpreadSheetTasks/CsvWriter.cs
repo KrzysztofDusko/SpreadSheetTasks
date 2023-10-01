@@ -201,7 +201,7 @@ namespace SpreadSheetTasks.CsvWriter
                                     }
                                     else
                                     {
-                                        WriteByteMemoryToBuffer((Memory<byte>)datareader.GetValue(i));
+                                        WriteByteMemoryToBuffer(((Memory<byte>)datareader.GetValue(i)).Span);
                                     }
                                     break;
                             }
@@ -325,11 +325,10 @@ namespace SpreadSheetTasks.CsvWriter
             } 
         }
 
-        private void WriteByteMemoryToBuffer(Memory<byte> mem)
+        private void WriteByteMemoryToBuffer(Span<byte> spn)
         {
-            var temp2 = mem.Span;
-            Span<char> temp = temp2.Length < 128 ? stackalloc char[temp2.Length] : new char[temp2.Length];
-            int written = Encoding.UTF8.GetChars(temp2, temp);
+            Span<char> temp = spn.Length < 128 ? stackalloc char[spn.Length] : new char[spn.Length];
+            int written = Encoding.UTF8.GetChars(spn, temp);
             WriteStringToBuffer(temp[0..written]);
         }
     }
