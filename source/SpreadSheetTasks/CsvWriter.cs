@@ -94,27 +94,11 @@ namespace SpreadSheetTasks.CsvWriter
 
                 TypeCode[] types = new TypeCode[fieldCount];
                 bool[] isMemoryByte= new bool[fieldCount];
-                bool[] allowNull = new bool[fieldCount];
                 for (int i = 0; i < fieldCount; i++)
                 {
                     var t = datareader.GetFieldType(i);
                     types[i] = Type.GetTypeCode(t);
                     isMemoryByte[i] = (t == typeof(Memory<byte>));
-                }
-                if (datareader is DbDataReader)
-                {
-                    var schema = (datareader as IDbColumnSchemaGenerator)?.GetColumnSchema();
-                    for (int i = 0; i < fieldCount; i++)
-                    {
-                        allowNull[i] = schema?[i].AllowDBNull ?? true;
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < fieldCount; i++)
-                    {
-                        allowNull[i] = true;
-                    }
                 }
 
                 if (_includeHeaders)
@@ -134,7 +118,7 @@ namespace SpreadSheetTasks.CsvWriter
                 {
                     for (int i = 0; i < fieldCount; i++)
                     {
-                        if (allowNull[i] && !datareader.IsDBNull(i))
+                        if (!datareader.IsDBNull(i))
                         {
                             switch (types[i])
                             {
