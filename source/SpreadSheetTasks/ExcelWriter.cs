@@ -62,7 +62,10 @@ namespace SpreadSheetTasks
                         typesArray[j] = 2;
                     }
                     else if (tempType == typeof(System.DateTime)
-                        && (_dataColReader.DatabaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) || _dataColReader.DatabaseTypes[j].EndsWith("DateTime", StringComparison.OrdinalIgnoreCase)))
+                        && (_dataColReader.DatabaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) ||
+                        _dataColReader.DatabaseTypes[j].EndsWith("DateTime", StringComparison.OrdinalIgnoreCase) ||
+                         _dataColReader.DatabaseTypes[j].EndsWith("abstime", StringComparison.OrdinalIgnoreCase)
+                        ))
                     {
                         typesArray[j] = 3;
                     }
