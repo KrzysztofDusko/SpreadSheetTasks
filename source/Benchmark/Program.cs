@@ -327,10 +327,9 @@ namespace Benchmark
                 }
             }
         }
-        //[Benchmark]
+        [Benchmark]
         public void SylvanString()
         {
-            List<string> list = new List<string>();
             for (int i = 0; i < N; i++)
             {
                 var rd = SylvanCsv.CsvDataReader.Create(path/*, opt*/);
@@ -339,15 +338,14 @@ namespace Benchmark
                 {
                     for (int l = 0; l < rd.FieldCount; l++)
                     {
-                        list.Add(rd.GetString(l));
+                        rd.GetString(l);
                     }
                 }
             }
         }
-        //[Benchmark]
+        [Benchmark]
         public void SepGetString()
         {
-            List<string> list = new List<string>();
             for (int i = 0; i < N; i++)
             {
                 using var rd = Sep.Reader().FromFile(path);
@@ -355,7 +353,7 @@ namespace Benchmark
                 {
                     for (int l = 0; l < readRow.ColCount; l++)
                     {
-                        list.Add(readRow[l].ToString());
+                        readRow[l].ToString();
                     }
                 }
             }
