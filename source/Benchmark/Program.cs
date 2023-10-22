@@ -9,7 +9,6 @@ using BenchmarkDotNet.Running;
 using CommunityToolkit.HighPerformance.Buffers;
 using nietras.SeparatedValues;
 using SpreadSheetTasks;
-using SpreadSheetTasks.CsvReader;
 using SpreadSheetTasks.CsvWriter;
 using Sylvan.Data.Excel;
 using SylvanCsv = Sylvan.Data.Csv;
@@ -298,21 +297,6 @@ namespace Benchmark
 
 
         [Benchmark]
-        public void TextReaderSPAN()
-        {
-            for (int i = 0; i < N; i++)
-            {
-                using CsvTextReader rd = new CsvTextReader(path);
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        var x = rd.GetSpan(l);
-                    }
-                }
-            }
-        }
-        [Benchmark]
         public void SylvanSPAN()
         {
             for (int i = 0; i < N; i++)
@@ -339,39 +323,6 @@ namespace Benchmark
                     for (int l = 0; l < readRow.ColCount; l++)
                     {
                         var x = readRow[l].Span;
-                    }
-                }
-            }
-        }
-        [Benchmark]
-        public void BinaryReaderSPAN()
-        {
-            for (int i = 0; i < N; i++)
-            {
-                using CsvBinaryReader rd = new CsvBinaryReader(path);
-
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        var x = rd.GetByteSpan(l);
-                    }
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void TextReaderGetString()
-        {
-            List<string> list = new List<string>();
-            for (int i = 0; i < N; i++)
-            {
-                using CsvTextReader rd = new CsvTextReader(path);
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        list.Add(rd.GetString(l));
                     }
                 }
             }
@@ -405,25 +356,6 @@ namespace Benchmark
                     for (int l = 0; l < readRow.ColCount; l++)
                     {
                         list.Add(readRow[l].ToString());
-                    }
-                }
-            }
-        }
-
-
-        //[Benchmark]
-        public void TextReaderGetSpanStringPoolSylvan()
-        {
-            List<string> list = new List<string>();
-            SimpleStringPool stringPool = new SimpleStringPool();
-            for (int i = 0; i < N; i++)
-            {
-                using CsvTextReader rd = new CsvTextReader(path);
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        list.Add(stringPool.GetString(rd.GetSpan(l)));
                     }
                 }
             }
@@ -489,45 +421,6 @@ namespace Benchmark
             }
         }
 
-
-        //[Benchmark]
-        //public void SepSpanSylvanPoolString()
-        //{
-        //    List<string> list = new List<string>();
-        //    SimpleStringPool stringPool = new SimpleStringPool();
-        //    for (int i = 0; i < N; i++)
-        //    {
-        //        using var rd = Sep.Reader().FromFile(path);
-        //        foreach (var readRow in rd)
-        //        {
-        //            for (int l = 0; l < readRow.ColCount; l++)
-        //            {
-        //                list.Add(stringPool.GetString(readRow[l].Span));
-        //            }
-        //        }
-        //    }
-        //}
-
-        //[Benchmark]
-        //public void SepSpanCustomPoolString()
-        //{
-        //    List<string> list = new List<string>();
-        //    for (int i = 0; i < N; i++)
-        //    {
-        //        using var rd = Sep.Reader(o => o with
-        //        {
-        //            CreateToString = (o,e) => MyPool.Instance
-        //        }).FromFile(path);
-        //        foreach (var readRow in rd)
-        //        {
-        //            for (int l = 0; l < readRow.ColCount; l++)
-        //            {
-        //                list.Add(readRow[l].ToString());
-        //            }
-        //        }
-        //    }
-        //}
-
         sealed class MyPool : SepToString
         {
             public static readonly MyPool Instance = new MyPool();
@@ -538,108 +431,6 @@ namespace Benchmark
                 return stringPool.GetString(chars);
             }
         }
-
-
-        //[Benchmark]
-        public void TextReaderGetSpanStringPool()
-        {
-            List<string> list = new List<string>();
-            StringPool stringPool = new StringPool();
-            for (int i = 0; i < N; i++)
-            {
-                using CsvTextReader rd = new CsvTextReader(path);
-                while (rd.Read())
-                {
-                    for (int l = 0; l < rd.FieldCount; l++)
-                    {
-                        list.Add(stringPool.GetOrAdd(rd.GetSpan(l)));
-                    }
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void BinaryReaderGetByteSpanAndStringPool()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            StringPool stringPool = new StringPool();
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    stringPool.GetOrAdd(rd.GetByteSpan(l), Encoding.UTF8);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void BinaryReaderGetReadOnlyCharSpan()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetCharSpan(l);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void BinaryReaderGetReadOnlyCharSpanASCII()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetCharSpan(l, System.Text.Encoding.ASCII);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void BinaryReaderGetReadOnlySpanIntrinsicOFF()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            rd.UseIntrinsic = false;
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetCharSpan(l);
-                }
-            }
-
-        }
-
-        //[Benchmark]
-        public void BinaryReaderGetStringFromUTF8()
-        {
-            using CsvBinaryReader rd = new CsvBinaryReader(path);
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetString(l);
-                }
-            }
-        }
-
-        //[Benchmark]
-        public void TextReaderGetStringFromSpan()
-        {
-            using CsvTextReader rd = new CsvTextReader(path);
-
-            while (rd.Read())
-            {
-                for (int l = 0; l < rd.FieldCount; l++)
-                {
-                    rd.GetSpan(l).ToString();
-                }
-            }
-        }
-
 
     }
 
