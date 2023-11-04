@@ -55,10 +55,10 @@ using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
 | 'Sylvan.Data.Excel - XLSB Read'     | 65K_R(...).xlsb [21] |  90.80 ms | 0.641 ms | 0.535 ms | 1000.0000 |         - |         - |  23.16 MB |
 
   ### XLSB Write
-| Method                          | Rows   | Mean     | Error   | StdDev  | Allocated |
-|-------------------------------- |------- |---------:|--------:|--------:|----------:|
-| 'SpreadSheetTasks - XLSB Write' | 200000 | 466.0 ms | 1.27 ms | 1.06 ms |  30.57 MB |
-| XlsbSylvanWrite                 | 200000 | 242.3 ms | 2.19 ms | 1.83 ms |  36.75 MB |
+| Method                          | Mean     | Error   | StdDev  | Gen0     | Allocated |
+|-------------------------------- |---------:|--------:|--------:|---------:|----------:|
+| 'SpreadSheetTasks - XLSB Write' | 191.4 ms | 3.02 ms | 4.23 ms | 500.0000 |  30.57 MB |
+| XlsbSylvanWrite                 | 234.4 ms | 2.34 ms | 2.19 ms | 500.0000 |  36.75 MB |
 
 https://github.com/KrzysztofDusko/SpreadSheetTasks
  

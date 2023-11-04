@@ -195,12 +195,13 @@ namespace SpreadSheetTasks
         private const int rRkIntegerLowerLimit = -1 << 29;
         private const int rRkIntegerUpperLimit = (1 << 29) - 1;
 
-
-        public XlsbWriter(string path)
+        private readonly CompressionLevel _compressionLevel = CompressionLevel.Fastest;
+        public XlsbWriter(string path, CompressionLevel compressionLevel = CompressionLevel.Fastest)
         {
             sheetCnt = 0;
             _sstDic = new Dictionary<string, int>();
             _path = path;
+            _compressionLevel = compressionLevel;
             try
             {
                 _newExcelFileStream = new FileStream(_path, FileMode.Create);
@@ -288,7 +289,7 @@ namespace SpreadSheetTasks
             {
                 sheet1Bytes[54] = 0x9C; // only first is selected
             }
-            var newEntry = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt - 1].pathInArchive);
+            var newEntry = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt - 1].pathInArchive, _compressionLevel);
             stream = new BufferedStream(newEntry.Open());
             try
             {
@@ -459,7 +460,7 @@ namespace SpreadSheetTasks
             {
                 sheet1Bytes[54] = 156; // only first is selected
             }
-            var newEntry = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt - 1].pathInArchive);
+            var newEntry = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt - 1].pathInArchive, _compressionLevel);
             stream = new BufferedStream(newEntry.Open());
             try
             {
@@ -682,14 +683,14 @@ namespace SpreadSheetTasks
         internal override void FinalizeFile()
         {
             SaveSst();
-            var newEntry = _excelArchiveFile.CreateEntry(@"xl/styles.bin");
+            var newEntry = _excelArchiveFile.CreateEntry(@"xl/styles.bin", _compressionLevel);
             using (var str = newEntry.Open())
             {
                 using var sw = new BinaryWriter(str);
                 sw.Write(stylesBin);
             }
 
-            newEntry = _excelArchiveFile.CreateEntry(@"xl/workbook.bin");
+            newEntry = _excelArchiveFile.CreateEntry(@"xl/workbook.bin", _compressionLevel);
             using (var str = newEntry.Open())
             {
                 using var sw = new BinaryWriter(str);
@@ -731,13 +732,13 @@ namespace SpreadSheetTasks
             for (int i = 0; i < _sheetList.Count; i++)
             {
                 var (_, _, _, _, _, sheetId) = _sheetList[i];
-                newEntry = _excelArchiveFile.CreateEntry($@"xl/worksheets/binaryIndex{sheetId}.bin");
+                newEntry = _excelArchiveFile.CreateEntry($@"xl/worksheets/binaryIndex{sheetId}.bin", _compressionLevel);
                 using var str = newEntry.Open();
                 using var sw = new BinaryWriter(str);
                 sw.Write(binaryIndexBin);
             }
 
-            newEntry = _excelArchiveFile.CreateEntry(@"[Content_Types].xml");
+            newEntry = _excelArchiveFile.CreateEntry(@"[Content_Types].xml", _compressionLevel);
             using (var str = newEntry.Open())
             {
                 using var sw = new StreamWriter(str, Encoding.UTF8);
@@ -766,7 +767,7 @@ namespace SpreadSheetTasks
                 sw.Write(@"</Types>");
             }
 
-            newEntry = _excelArchiveFile.CreateEntry($"xl/_rels/workbook.bin.rels");
+            newEntry = _excelArchiveFile.CreateEntry($"xl/_rels/workbook.bin.rels", _compressionLevel);
             using (var str = newEntry.Open())
             {
                 using var sw = new StreamWriter(str, Encoding.UTF8);
@@ -785,7 +786,7 @@ namespace SpreadSheetTasks
                 sw.Write(@"</Relationships>");
             }
 
-            newEntry = _excelArchiveFile.CreateEntry($"_rels/.rels");
+            newEntry = _excelArchiveFile.CreateEntry($"_rels/.rels", _compressionLevel);
             using (var str = newEntry.Open())
             {
                 using var sw = new StreamWriter(str, Encoding.UTF8);
@@ -802,7 +803,7 @@ namespace SpreadSheetTasks
 
             if (!String.IsNullOrWhiteSpace(DocPopertyProgramName))
             {
-                newEntry = _excelArchiveFile.CreateEntry($"docProps/app.xml");
+                newEntry = _excelArchiveFile.CreateEntry($"docProps/app.xml", _compressionLevel);
                 using (var str = newEntry.Open())
                 {
                     using var sw = new StreamWriter(str, Encoding.UTF8);
@@ -829,7 +830,7 @@ namespace SpreadSheetTasks
                     sw.Write(@"</Properties>");
                 }
 
-                newEntry = _excelArchiveFile.CreateEntry($"docProps/core.xml");
+                newEntry = _excelArchiveFile.CreateEntry($"docProps/core.xml", _compressionLevel);
                 using (var str = newEntry.Open())
                 {
                     using var sw = new StreamWriter(str, Encoding.UTF8);
@@ -845,7 +846,7 @@ namespace SpreadSheetTasks
 
             foreach (var (_, _, _, _, nameInArchive, sheetId) in _sheetList)
             {
-                newEntry = _excelArchiveFile.CreateEntry($"xl/worksheets/_rels/{nameInArchive}.rels");
+                newEntry = _excelArchiveFile.CreateEntry($"xl/worksheets/_rels/{nameInArchive}.rels", _compressionLevel);
                 using var str = newEntry.Open();
                 using var sw = new StreamWriter(str, Encoding.UTF8);
                 sw.WriteLine(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
@@ -861,7 +862,7 @@ namespace SpreadSheetTasks
 
         private void SaveSst()
         {
-            var newSST = _excelArchiveFile.CreateEntry($"xl/sharedStrings.bin");
+            var newSST = _excelArchiveFile.CreateEntry($"xl/sharedStrings.bin", _compressionLevel);
             int bufferLen = 1 << 17;// 2*256 * 256;
             var _buffX = ArrayPool<byte>.Shared.Rent(bufferLen);
             try
