@@ -5,6 +5,7 @@
     <Authors>Krzysztof Duśko</Authors>
     <Description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
     <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
@@ -18,4 +19,7 @@
 	  <IsTrimmable>true</IsTrimmable>
 	  <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
 </Project>
