@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
-using System.Text;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
@@ -23,8 +23,8 @@ namespace Benchmark
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-            //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            var summary4 = BenchmarkRunner.Run<CsvReadBench>();
+            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
             //var summary7 = BenchmarkRunner.Run<StringPoolSylvanTest>();
@@ -35,12 +35,8 @@ namespace Benchmark
 
             b.Rows = 10000;
             b.Setup();
-            b.XlsxWriteDefault();
-
-
-            //ExcelTest();
-            //CsvTest();
-            //CsvWriterTest();
+            b.XlsbWriteDefault();
+            b.XlsbSylvanWrite();
 #endif
         }
     }
@@ -55,32 +51,30 @@ namespace Benchmark
         //[Benchmark]
         public void SpreadSheetTasks200K()
         {
-            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
 
-            using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
+            using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+            excelFile.Open(path);
+            var sheetNames = excelFile.GetScheetNames();
+            excelFile.ActualSheetName = sheetNames[0];
+            object[] row = null;
+            int rowNum = 0;
+            while (excelFile.Read())
             {
-                excelFile.Open(path);
-                var sheetNames = excelFile.GetScheetNames();
-                excelFile.ActualSheetName = sheetNames[0];
-                object[] row = null;
-                int rowNum = 0;
-                while (excelFile.Read())
-                {
-                    row ??= new object[excelFile.FieldCount];
-                    excelFile.GetValues(row);
-                    rowNum++;
+                row ??= new object[excelFile.FieldCount];
+                excelFile.GetValues(row);
+                rowNum++;
 #if DEBUG
                     if (rowNum % 10_000 == 0)
                         Console.WriteLine("row " + rowNum.ToString("N0") + ": " + String.Join('|', row));
 #endif
-                }
             }
         }
 
         //[Benchmark]
         public void Sylvan200k()
         {
-            var path = @$"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+            var path = @$"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
 
             var reader = ExcelDataReader.Create(path);
 
@@ -95,26 +89,24 @@ namespace Benchmark
         [Benchmark]
         public void SpreadSheetTasks65k()
         {
-            var path = @$"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+            var path = @$"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
 
-            using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
+            using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+            excelFile.Open(path);
+            var sheetNames = excelFile.GetScheetNames();
+            excelFile.ActualSheetName = sheetNames[0];
+
+            excelFile.Read(); // = skip header
+            while (excelFile.Read())
             {
-                excelFile.Open(path);
-                var sheetNames = excelFile.GetScheetNames();
-                excelFile.ActualSheetName = sheetNames[0];
-
-                excelFile.Read(); // = skip header
-                while (excelFile.Read())
-                {
-                    ProcessRecord(excelFile);
-                }
+                ProcessRecord(excelFile);
             }
         }
 
         [Benchmark]
         public void Sylvan65K()
         {
-            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
 
             var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
 
@@ -174,53 +166,55 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
-        //[Params("200kFile.xlsb")]
-        [Params("65K_Records_Data.xlsb")]
+        [Params("65K_Records_Data.xlsb", "200kFile.xlsb")]
         public string FileName { get; set; }
 
-        [Params(false/*, true*/)]
-        public bool InMemory { get; set; }
-
-        [Benchmark]
+        [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v1")]
         public void ReadFile()
         {
-            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
-
-            using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
+            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+            excelFile.Open(path);
+            excelFile.ActualSheetName = "sheet1";
+            object[] row = null;
+            int rowNum = 0;
+            while (excelFile.Read())
             {
-                excelFile.UseMemoryStreamInXlsb = InMemory;
-                excelFile.Open(path);
-                excelFile.ActualSheetName = "sheet1";
-                object[] row = null;
-                int rowNum = 0;
-                while (excelFile.Read())
-                {
-                    row ??= new object[excelFile.FieldCount];
-                    excelFile.GetValues(row);
-                    rowNum++;
-#if DEBUG
-                    if (rowNum % 10_000 == 0)
-                        Console.WriteLine("row " + rowNum.ToString("N0") + ": " + String.Join('|', row));
-#endif
-                }
+                row ??= new object[excelFile.FieldCount];
+                excelFile.GetValues(row);
+                rowNum++;
             }
         }
 
-        [Benchmark]
+        [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v2")]
+        public void ReadFileInMemory()
+        {
+            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+            excelFile.Open(path);
+            excelFile.UseMemoryStreamInXlsb = false;
+            excelFile.ActualSheetName = "sheet1";
+            object[] row = null;
+            int rowNum = 0;
+            while (excelFile.Read())
+            {
+                row ??= new object[excelFile.FieldCount];
+                excelFile.GetValues(row);
+                rowNum++;
+            }
+        }
+
+        [Benchmark(Description = "Sylvan.Data.Excel - XLSB Read")]
         public void Sylvan()
         {
-            var path = $@"C:\Users\dusko\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
-
+            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
             using ExcelDataReader reader = ExcelDataReader.Create(path);
-
             object[] row = new object[reader.FieldCount];
-
             while (reader.Read())
             {
                 reader.GetValues(row);
             }
         }
-
     }
 
 
@@ -257,42 +251,47 @@ namespace Benchmark
         }
 
 
-        [Benchmark]
-        public void XlsxWriteDefault()
-        {
-            using (XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx"))
-            {
-                xlsx.AddSheet("sheetName");
-                xlsx.WriteSheet(dt.CreateDataReader(),doAutofilter:true);
-            }
-        }
-
-        [Benchmark]
-        public void XlsxWriteLowMemory()
-        {
-            using (XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false))
-            {
-                xlsx.AddSheet("sheetName");
-                xlsx.WriteSheet(dt.CreateDataReader());
-            }
-        }
-
-        //[Benchmark]
+        [Benchmark(Description = "SpreadSheetTasks - XLSB Write")]
         public void XlsbWriteDefault()
         {
-            using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
-            {
-                xlsx.AddSheet("sheetName");
-                xlsx.WriteSheet(dt.CreateDataReader(), doAutofilter: true);
-            }
+            using XlsbWriter xlsx = new XlsbWriter("file.xlsb");
+            xlsx.AddSheet("sheetName");
+            xlsx.WriteSheet(dt.CreateDataReader(), doAutofilter: true);
+            
         }
+
+        [Benchmark]
+        public void XlsbSylvanWrite()
+        {
+            using var edw = ExcelDataWriter.Create("fileSylvan.xlsb");
+            DbDataReader dr;
+            dr = dt.CreateDataReader();
+            edw.Write(dr, "sheetName");
+        }
+
+        //[Benchmark(Description = "SpreadSheetTasks - XLSX Write - v2")]
+        public void XlsxWriteLowMemory()
+        {
+            using XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false);
+            xlsx.AddSheet("sheetName");
+            xlsx.WriteSheet(dt.CreateDataReader());
+        }
+
+        //[Benchmark(Description = "SpreadSheetTasks - XLSX Write - v2")]
+        public void XlsxWriteDefault()
+        {
+            using XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx");
+            xlsx.AddSheet("sheetName");
+            xlsx.WriteSheet(dt.CreateDataReader(), doAutofilter: true);
+        }
+
     }
 
     [SimpleJob(RuntimeMoniker.Net80)]
     [MemoryDiagnoser]
     public class CsvReadBench
     {
-        readonly string path = @$"C:\Users\dusko\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
+        readonly string path = @$"E:\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
         int N = 20;
 
 
@@ -442,7 +441,7 @@ namespace Benchmark
         public int BufferSize { get; set; }
 
         readonly DataTable dt = new DataTable();
-        readonly string path = @$"C:\Users\dusko\sqls\CsvReader\testWriter.txt";
+        readonly string path = @$"E:\sqls\CsvReader\testWriter.txt";
 
         [GlobalSetup]
         public void Setup()
