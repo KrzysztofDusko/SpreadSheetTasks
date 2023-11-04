@@ -1401,7 +1401,7 @@ namespace SpreadSheetTasks
             t1 = _actualSheetDimensions[(i1 + 1)..];
             i2 = t1.IndexOfAny(_digits);
 
-            int.TryParse(t1[i2..], out int end);
+            _ = int.TryParse(t1[i2..], out int end);
             _rowCount = end - start; // header is not row !!
 
             return _rowCount;

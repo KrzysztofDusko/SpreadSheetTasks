@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers;
-using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -181,9 +180,6 @@ namespace SpreadSheetTasks
             0x02,0x00
         };
 
-        private readonly byte[] _buffer = new byte[256];
-        private readonly byte[] _buffer8 = new byte[8];
-
         private BufferedStream stream;
 
         private int ColumnCount;
@@ -327,13 +323,14 @@ namespace SpreadSheetTasks
 
                 if (doAutofilter)
                 {
+                    Span<byte> buff = stackalloc byte[8];
                     stream.Write(autoFilterStartBytes);
-                    Int32ToSpecificBuffer(_buffer8, startingRow, 0);
-                    Int32ToSpecificBuffer(_buffer8, startingRow + _rowsCount, 4);
-                    stream.Write(_buffer8);
-                    Int32ToSpecificBuffer(_buffer8, startingColumn, 0);
-                    Int32ToSpecificBuffer(_buffer8, startingColumn + ColumnCount - 1, 4);
-                    stream.Write(_buffer8);
+                    Int32ToSpecificBuffer(buff, startingRow, 0);
+                    Int32ToSpecificBuffer(buff, startingRow + _rowsCount, 4);
+                    stream.Write(buff);
+                    Int32ToSpecificBuffer(buff, startingColumn, 0);
+                    Int32ToSpecificBuffer(buff, startingColumn + ColumnCount - 1, 4);
+                    stream.Write(buff);
                     stream.Write(autoFilterEndBytes);
                 }
 
@@ -406,7 +403,6 @@ namespace SpreadSheetTasks
                         case TypeCode.Int32:
 
                             Int32 int32Value = _dataColReader.GetInt32(column);
-
                             if (int32Value >= rRkIntegerLowerLimit && int32Value <= rRkIntegerUpperLimit)
                             {
                                 WriteRkNumberInteger(int32Value, column);
@@ -544,64 +540,65 @@ namespace SpreadSheetTasks
             stream.WriteByte(0); // pos. 176 // BrtACEnd
         }
 
-        private readonly static byte[] row25 = { 0, 25 };
-        private readonly static byte[] rowNeededBytes = { 0, 0, 0, 0, 44, 1, 0, 0, 0, 1, 0, 0, 0 };
+        //private readonly static byte[] rowNeededBytes = { 0, 0, 0, 0, 44, 1, 0, 0, 0, 1, 0, 0, 0 };
         private void InitRow(int rowNumber)
         {
-            row25.CopyTo(_buffer, 0);//2 bytes
-            Int32ToBuffer(rowNumber, 2);// 4 bytes -> 6
-            rowNeededBytes.CopyTo(_buffer, 6); // magicArray.length = 13
-            //colA.CopyTo(_buffer, 6 + 13);
-            //colZ.CopyTo(_buffer, 6 + 13 + 4);
-            Int32ToSpecificBuffer(_buffer, (int)startCol, 6 + 13);
-            Int32ToSpecificBuffer(_buffer, (int)endCol, 6 + 13 + 4);
-
-            stream.Write(_buffer, 0, 6 + 13 + 4 + 4);// 6 + 13 + 4 + 4 = 27
+            Span<byte> buff = stackalloc byte[27];
+            //buff[0] = 0; stackalloct is 0,0..
+            buff[1] = 25;
+            BitConverter.TryWriteBytes(buff[2..], (int)rowNumber);
+            buff[10] = 44;
+            buff[11] = 1;
+            buff[15] = 1;
+            BitConverter.TryWriteBytes(buff[(6 + 13)..], (int)startCol);
+            BitConverter.TryWriteBytes(buff[(6 + 13 + 4)..], (int)endCol);
+            
+            stream.Write(buff);// 6 + 13 + 4 + 4 = 27
         }
 
         private void WriteDouble(double val, int colNum/*, int offset = 0*/, byte styleNum = 0)
         {
-            _buffer[/*offset*/ +0] = 5;
-            _buffer[/*offset*/ +1] = 16;//8+8
-            Int32ToBuffer(colNum, /*offset*/ +2);
-
-            //generalStyle.CopyTo(_buffer, /*offset*/ +6);
-            _buffer[/*offset*/ +6] = styleNum;
-            _buffer[/*offset*/ +7] = 0;
-            _buffer[/*offset*/ +8] = 0;
-            _buffer[/*offset*/ +9] = 0;
-
-            BitConverter.TryWriteBytes(_buffer8, val);
-            _buffer8.CopyTo(_buffer, /*offset*/ +10);
-            stream.Write(_buffer, 0, 18);
+            Span<byte> buff = stackalloc byte[18];
+            buff[0] = 5;
+            buff[1] = 16;//8+8
+            BitConverter.TryWriteBytes(buff[2..], (int)colNum);
+            buff[6] = styleNum;
+            //_buffer[7] = 0;
+            //_buffer[8] = 0;
+            //_buffer[9] = 0;
+            BitConverter.TryWriteBytes(buff[10..], val);
+            stream.Write(buff);
         }
 
-        private void WriteBool(bool val, int column)
+        private void WriteBool(bool val, int colNum)
         {
-            _buffer[0] = 0x04;
-            _buffer[1] = 8 + 1;
-            //columnNumber
-            Int32ToBuffer(column, 2);
-            //styl
-            generalStyle.CopyTo(_buffer, 6);
-            _buffer[10] = (byte)(val ? 1 : 0); // 0 = false, 1 = true
-            _buffer[11] = 1;
-            stream.Write(_buffer, 0, 11);
+            Span<byte> buff = stackalloc byte[11];
+            buff[0] = 0x04;
+            buff[1] = 8 + 1;
+            BitConverter.TryWriteBytes(buff[2..], (int)colNum);
+            //style
+            //generalStyle.CopyTo(_buffer, 6); generalStyle = [0,0,0,0]
+            buff[10] = (byte)(val ? 1 : 0); // 0 = false, 1 = true
+            buff[11] = 1;
+            stream.Write(buff);
         }
 
         private void WriteRkNumberInteger(int val, int colNum/*, int offset = 0*/, byte styleNum = 0)
         {
+            Span<byte> buff = stackalloc byte[14];
+            buff[0] = 2;
+            buff[1] = 12;//8+4
+            BitConverter.TryWriteBytes(buff[2..], (int)colNum);
+            buff[6] = styleNum;
+            //buff[7] = 0;
+            //buff[8] = 0;
+            //buff[9] = 0; stackalloc set bytes to 0
 
-            _buffer[/*offset*/ +0] = 2;
-            _buffer[/*offset*/ +1] = 12;//8+4
-            Int32ToBuffer(colNum, /*offset*/ +2);
-            //generalStyle.CopyTo(_buffer, /*offset*/ + 6);
-            _buffer[/*offset*/ +6] = styleNum;
-            _buffer[/*offset*/ +7] = 0;
-            _buffer[/*offset*/ +8] = 0;
-            _buffer[/*offset*/ +9] = 0;
-            RkNumberIntWrite(val, /*offset*/ +10);
-            stream.Write(_buffer, /*offset*/ +0, /*offset*/ +14);
+            val <<= 2;
+            val |= 0b00000010; // = integer flag
+
+            BitConverter.TryWriteBytes(buff[10..], val);
+            stream.Write(buff);
         }
 
         // 
@@ -652,32 +649,33 @@ namespace SpreadSheetTasks
             }
             else
             {
-                _buffer[/*offset*/ +0] = 2;
-                _buffer[/*offset*/ +1] = 12;//8+4
-                Int32ToBuffer(colNum, /*offset*/ +2);
+                Span<byte> buff = stackalloc byte[14];
+                buff[0] = 2;
+                buff[1] = 12;//8+4
+                BitConverter.TryWriteBytes(buff[2..], (int)colNum);
                 //generalStyle.CopyTo(_buffer, /*offset*/ + 6);
-                _buffer[/*offset*/ +6] = 2;
-                _buffer[/*offset*/ +7] = 0;
-                _buffer[/*offset*/ +8] = 0;
-                _buffer[/*offset*/ +9] = 0;
-                RkNumberGeneralWrite(d1, /*offset*/ +10, false);
-                stream.Write(_buffer, /*offset*/ +0, /*offset*/ +14);
+                buff[6] = 2;
+                buff[7] = 0;
+                buff[8] = 0;
+                buff[9] = 0;
+                RkNumberGeneralWrite(buff[10..],d1);
+                stream.Write(buff);
             }
         }
 
-        private void WriteStringFromShared(int val, int colNum/*, int offset = 0*/, bool bolded = false)
+        private void WriteStringFromShared(int val, int colNum, bool bolded = false)
         {
-            _buffer[/*offset*/ +0] = 7;
-            _buffer[/*offset*/ +1] = 12;//8+4
-            Int32ToBuffer(colNum, /*offset*/ +2);
-            generalStyle.CopyTo(_buffer, /*offset*/ +6);
-            if (bolded)
-            {
-                _buffer[6] = 3;
-            }
+            Span<byte> buff = stackalloc byte[14];
+            buff[0] = 7;
+            buff[1] = 12;//8+4
+            BitConverter.TryWriteBytes(buff[2..], (int)colNum);
+            //generalStyle.CopyTo(buff, 6); generalStyle = [0,0,0,0]
+            
+            buff[6] = (byte)(bolded ? 3 : 0);
+            
 
-            Int32ToBuffer(val, /*offset*/ +10);
-            stream.Write(_buffer, /*offset*/ +0, /*offset*/ +14);
+            BitConverter.TryWriteBytes(buff[10..], (int)val);
+            stream.Write(buff);
         }
 
         internal override void FinalizeFile()
@@ -941,79 +939,44 @@ namespace SpreadSheetTasks
             }
         }
 
-        private void RkNumberGeneralWrite(double d, uint offset, bool div100 = false)
+        private static void RkNumberGeneralWrite(Span<byte> buff, double d/*, int offset, bool div100 = false*/)
         {
             // dla rk number
             // bytes[214] |=  0b00000001; = /100 flag
             // bytes[214] |=  0b00000010; = integer flag
 
-            if (div100)
-            {
-                Int64 revD3 = BitConverter.DoubleToInt64Bits(100 * d);
-                Int64 revD2 = revD3 >> 32;
-                UInt32 revD1 = (uint)revD2;
-                _buffer[offset + 0] = (byte)((revD1 % 256) | 0b00000001);
-                revD1 >>= 8;
-                _buffer[offset + 1] = (byte)(revD1 % 256);
-                revD1 >>= 8;
-                _buffer[offset + 2] = (byte)(revD1 % 256);
-                revD1 >>= 8;
-                _buffer[offset + 3] = (byte)(revD1 % 256);
-            }
-            else
-            {
-                Int64 revD3 = BitConverter.DoubleToInt64Bits(d);
-                Int64 revD2 = revD3 >> 32;
-                UInt32 revD1 = (uint)revD2;
+            //if (div100)
+            //{
+            //    Int64 revD3 = BitConverter.DoubleToInt64Bits(100 * d);
+            //    Int64 revD2 = revD3 >> 32;
+            //    UInt32 revD1 = (uint)revD2;
+            //    _buffer[offset + 0] = (byte)((revD1 % 256) | 0b00000001);
+            //    revD1 >>= 8;
+            //    _buffer[offset + 1] = (byte)(revD1 % 256);
+            //    revD1 >>= 8;
+            //    _buffer[offset + 2] = (byte)(revD1 % 256);
+            //    revD1 >>= 8;
+            //    _buffer[offset + 3] = (byte)(revD1 % 256);
+            //}
+            //else
+            //{
+            Int64 revD3 = BitConverter.DoubleToInt64Bits(d);
+            Int64 revD2 = revD3 >> 32;
+            UInt32 revD1 = (uint)revD2;
 
-                _buffer[offset + 0] = (byte)((revD1 % 256) & 0b11111100);
-                revD1 >>= 8;
-                _buffer[offset + 1] = (byte)(revD1 % 256);
-                revD1 >>= 8;
-                _buffer[offset + 2] = (byte)(revD1 % 256);
-                revD1 >>= 8;
-                _buffer[offset + 3] = (byte)(revD1 % 256);
-            }
+            buff[0] = (byte)((revD1 % 256) & 0b11111100);
+            revD1 >>= 8;
+            buff[1] = (byte)(revD1 % 256);
+            revD1 >>= 8;
+            buff[2] = (byte)(revD1 % 256);
+            revD1 >>= 8;
+            buff[3] = (byte)(revD1 % 256);
+            //}
         }
 
-        /// <summary>
-        /// writes to Buffer integer in "excel mode"
-        /// </summary>
-        /// <param name="intNumber"></param>
-        /// <param name="offset"></param>
-        private void RkNumberIntWrite(Int32 intNumber, int offset)
+        private static void Int32ToSpecificBuffer(Span<byte> _buff, Int32 intNumber, int offset)
         {
-            intNumber <<= 2;
-            intNumber |= 0b00000010; // = integer flag
-            //_buffer[offset++] = (byte)(d | 0b00000010);
-            _buffer[offset++] = (byte)(intNumber);
-            _buffer[offset++] = (byte)(intNumber >> 8);
-            //d >>= 8;
-            _buffer[offset++] = (byte)(intNumber >> 16);
-            //d >>= 8;
-            _buffer[offset++] = (byte)(intNumber >> 24);
-        }
-
-        /// <summary>
-        /// integer to byte buffer
-        /// </summary>
-        /// <param name="intNumber"></param>
-        /// <param name="offset"></param>
-        private void Int32ToBuffer(Int32 intNumber, int offset)
-        {
-            _buffer[offset++] = (byte)intNumber;
-            _buffer[offset++] = (byte)(intNumber >> 8);
-            _buffer[offset++] = (byte)(intNumber >> 16);
-            _buffer[offset++] = (byte)(intNumber >> 24);
-        }
-
-        //BitConverter.GetBytes(intNumber)
-        private static void Int32ToSpecificBuffer(byte[] _buff, Int32 intNumber, int offset)
-        {
-            _buff[offset++] = (byte)intNumber;
-            _buff[offset++] = (byte)(intNumber >> 8);
-            _buff[offset++] = (byte)(intNumber >> 16);
-            _buff[offset++] = (byte)(intNumber >> 24);
+            BitConverter.TryWriteBytes(_buff[offset..], intNumber);
         }
     }
 }

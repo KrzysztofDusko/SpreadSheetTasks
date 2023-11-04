@@ -11,7 +11,7 @@ namespace SpreadSheetTasks
     //some code from https://github.com/ExcelDataReader/ExcelDataReader
     public abstract class ExcelReaderAbstract
     {
-        protected static CultureInfo invariantCultureInfo = CultureInfo.InvariantCulture;
+        protected static readonly CultureInfo invariantCultureInfo = CultureInfo.InvariantCulture;
         public int FieldCount { get; set; }
         public virtual int ResultsCount { get; }
         public virtual string ActualSheetName { get; set; }

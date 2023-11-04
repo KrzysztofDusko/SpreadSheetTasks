@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO.Compression;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
@@ -29,16 +31,19 @@ namespace Benchmark
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
             //var summary7 = BenchmarkRunner.Run<StringPoolSylvanTest>();
-
 #endif
 #if DEBUG
             var b = new WriteBenchExcel();
             b.Setup();
+            b.ReaderType = "INT";
             b.XlsbWriteDefault();
-            b.XlsbSylvanWrite();
+            //b.XlsbSylvanWrite();
+            //micro.DoJob();
+            //micro.DoM4();
 #endif
         }
     }
+
 
     [SimpleJob(RuntimeMoniker.Net80)]
     [MemoryDiagnoser]
@@ -231,7 +236,8 @@ namespace Benchmark
             {"TEXT", new DataTable() },
         };
 
-        [Params("GENERAL"/*, "INT", "DOUBLE", "DATETIME", "TEXT"*/)]
+        //[Params("GENERAL", "INT", "DOUBLE", "DATETIME", "TEXT")]
+        [Params("GENERAL")]
         public string ReaderType { get; set; } = "GENERAL";
         private DataTable Dt => dataTables[ReaderType];
 
@@ -265,10 +271,10 @@ namespace Benchmark
             {
                 dataTables["INT"].Rows.Add(new object[]
                 {
-                    rn.Next(0, 1_000_000),
-                    rn.Next(0, 1_000_000),
-                    rn.Next(0, 1_000_000),
-                    rn.Next(0, 1_000_000),
+                    rn.Next(),
+                    rn.Next(),
+                    rn.Next(),
+                    rn.Next(),
                 });
             }
 

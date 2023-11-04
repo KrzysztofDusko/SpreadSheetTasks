@@ -571,12 +571,6 @@ namespace SpreadSheetTasks
             return BitConverter.Int64BitsToDouble(num3);
         }
 
-        void Dispose(bool disposing)
-        {
-            if (disposing)
-                Stream.Dispose();
-        }
-
         //https://github.com/ExcelDataReader/ExcelDataReader
 
         private bool TryReadVariableValue(out uint value)
@@ -620,6 +614,11 @@ namespace SpreadSheetTasks
         {
             Stream.Dispose();
         }
+        //void Dispose(bool disposing)
+        //{
+        //    if (disposing)
+        //        Stream.Dispose();
+        //}
     }
 
     internal class DataColReader
