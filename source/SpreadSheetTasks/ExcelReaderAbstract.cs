@@ -81,7 +81,8 @@ namespace SpreadSheetTasks
             return ref innerRow;
         }
 
-        public string GetString(int i)
+        public bool TreatAllColumnsAsText { get; set; } = false;
+        public virtual string GetString(int i)
         {
             return GetValue(i).ToString();
         }

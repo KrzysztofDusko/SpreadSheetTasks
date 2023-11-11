@@ -24,10 +24,7 @@
     object[] row = null;
     while (excelFile.Read())
     {
-        if (row == null)
-        {
-            row = new object[excelFile.FieldCount];
-        }
+        row ??= new object[excelFile.FieldCount];
         excelFile.GetValues(row);
     }
  }
@@ -43,9 +40,8 @@ using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
  
  ## Benchamarks and more
 
-  ### XLSB Read
-
-  | Method                              | FileName             | Mean      | Error    | StdDev   | Gen0      | Gen1      | Gen2      | Allocated |
+### XLSB Read
+| Method                              | FileName             | Mean      | Error    | StdDev   | Gen0      | Gen1      | Gen2      | Allocated |
 |------------------------------------ |--------------------- |----------:|---------:|---------:|----------:|----------:|----------:|----------:|
 | 'SpreadSheetTasks - XLSB Read - v1' | 200kFile.xlsb        | 117.29 ms | 1.907 ms | 1.784 ms | 3400.0000 | 2800.0000 | 1400.0000 |  68.49 MB |
 | 'SpreadSheetTasks - XLSB Read - v2' | 200kFile.xlsb        | 138.62 ms | 2.752 ms | 2.826 ms | 3000.0000 | 2000.0000 | 1000.0000 |  49.03 MB |
@@ -54,7 +50,7 @@ using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
 | 'SpreadSheetTasks - XLSB Read - v2' | 65K_R(...).xlsb [21] |  75.96 ms | 0.346 ms | 0.323 ms |  666.6667 |         - |         - |  13.66 MB |
 | 'Sylvan.Data.Excel - XLSB Read'     | 65K_R(...).xlsb [21] |  90.80 ms | 0.641 ms | 0.535 ms | 1000.0000 |         - |         - |  23.16 MB |
 
-  ### XLSB Write
+### XLSB Write
 | Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0     | Allocated |
 |-------------------------------- |----------- |---------:|--------:|--------:|---------:|----------:|
 | 'SpreadSheetTasks - XLSB Write' | GENERAL    | 178.8 ms | 1.25 ms | 1.11 ms | 500.0000 |  30.57 MB |

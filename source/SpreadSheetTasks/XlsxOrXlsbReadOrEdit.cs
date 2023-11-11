@@ -797,6 +797,11 @@ namespace SpreadSheetTasks
                             }
                             //valueX = _buffer.AsSpan(0, len).ToString();
                         }
+                        else if (TreatAllColumnsAsText)
+                        {
+                            valueX.type = ExcelDataType.String;
+                            valueX.strValue = xmlReader.ReadContentAsString();
+                        }
                         else
                         {
                             len = xmlReader.ReadValueChunk(_buffer, 0, _buffer.Length);
@@ -1001,9 +1006,17 @@ namespace SpreadSheetTasks
                             valueX.strValue = biffReader.stringValue;
                             break;
                         case CellType.boolVal:
-                            valueX.type = ExcelDataType.Boolean;
-                            //valueX.int32Value = biffReader.boolValue ? 1 : 0;
-                            valueX.boolValue = biffReader.boolValue;
+                            if (!TreatAllColumnsAsText)
+                            {
+                                valueX.type = ExcelDataType.Boolean;
+                                //valueX.int32Value = biffReader.boolValue ? 1 : 0;
+                                valueX.boolValue = biffReader.boolValue;
+                            }
+                            else
+                            {
+                                valueX.type = ExcelDataType.String;
+                                valueX.strValue = biffReader.boolValue.ToString();
+                            }
                             break;
                         case CellType.doubleVal:
                             {
@@ -1011,7 +1024,12 @@ namespace SpreadSheetTasks
                                 var styleIndex = biffReader.xfIndex;
                                 if (styleIndex == 0) // general
                                 {
-                                    XlsxOrXlsbReadOrEdit.SetValueForXlsb(doubleVal, ref valueX);
+                                    SetValueForXlsb(doubleVal, ref valueX);
+                                    if (TreatAllColumnsAsText)
+                                    {
+                                        valueX.type = ExcelDataType.String;
+                                        valueX.strValue = valueX.doubleValue.ToString();
+                                    }
                                 }
                                 else
                                 {
@@ -1020,10 +1038,20 @@ namespace SpreadSheetTasks
                                     {
                                         valueX.type = ExcelDataType.DateTime;
                                         valueX.dtValue = DateTime.FromOADate((double)doubleVal);
+                                        if (TreatAllColumnsAsText)
+                                        {
+                                            valueX.type = ExcelDataType.String;
+                                            valueX.strValue = valueX.dtValue.ToString();
+                                        }
                                     }
                                     else
                                     {
                                         XlsxOrXlsbReadOrEdit.SetValueForXlsb(doubleVal, ref valueX);
+                                        if (TreatAllColumnsAsText)
+                                        {
+                                            valueX.type = ExcelDataType.String;
+                                            valueX.strValue = valueX.doubleValue.ToString();
+                                        }
                                     }
                                 }
                                 break;

@@ -6,13 +6,8 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-
-//#if NET6_0_OR_GREATER
-//using System.Runtime.InteropServices;
-//#endif
 
 
 namespace SpreadSheetTasks
@@ -752,15 +747,14 @@ namespace SpreadSheetTasks
             {
                 var e6 = _excelArchiveFile.CreateEntry("docProps/core.xml", clvl);
                 string stringNow = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
-                string stringPerson = Environment.UserName;
 
                 using var writer = new FormattingStreamWriter(e6.Open(), CultureInfo.InvariantCulture.NumberFormat);
                 writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><cp:coreProperties ");
                 writer.Write("xmlns:cp=\"http://schemas.openxmlformats.org/package/2006/metadata/core-properties\" ");
                 writer.Write("xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:dcterms=\"http://purl.org/dc/terms/\" ");
                 writer.Write("xmlns:dcmitype=\"http://purl.org/dc/dcmitype/\" ");
-                writer.Write($"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><dc:creator>{DocPopertyProgramName} - used by {stringPerson}</dc:creator>");
-                writer.Write($"<cp:lastModifiedBy>{DocPopertyProgramName} - used by {stringPerson}</cp:lastModifiedBy>");
+                writer.Write($"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><dc:creator>{DocPopertyProgramName}</dc:creator>");
+                writer.Write($"<cp:lastModifiedBy>{DocPopertyProgramName}</cp:lastModifiedBy>");
                 writer.Write($"<dcterms:created xsi:type=\"dcterms:W3CDTF\">{stringNow}</dcterms:created><dcterms:modified ");
                 writer.Write($"xsi:type=\"dcterms:W3CDTF\">{stringNow}</dcterms:modified></cp:coreProperties>");
             }
