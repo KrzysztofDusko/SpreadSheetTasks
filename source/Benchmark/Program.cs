@@ -502,9 +502,10 @@ namespace Benchmark
             public static readonly MyPool Instance = new MyPool();
 
             private static readonly SimpleStringPool stringPool = new SimpleStringPool();
-            public override string ToString(ReadOnlySpan<char> chars)
+
+            public override string ToString(ReadOnlySpan<char> colSpan, int colIndex)
             {
-                return stringPool.GetString(chars);
+                return stringPool.GetString(colSpan);
             }
         }
 

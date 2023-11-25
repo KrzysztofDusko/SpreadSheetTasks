@@ -10,6 +10,7 @@ using SpreadSheetTasks;
 
 namespace SpreadSheetTasks.CsvWriter
 {
+    [Obsolete]
     public class CsvWriter
     {
         private readonly string _path;
