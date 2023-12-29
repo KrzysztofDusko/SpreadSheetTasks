@@ -756,7 +756,7 @@ namespace SpreadSheetTasks
 
 
                 sw.Write(workbookBinMiddle);
-                int cnt = _filteredDict.Count;
+                int? cnt = _filteredDict?.Count;
                 //temportary fix for https://github.com/KrzysztofDusko/SpreadSheetTasks/issues/2
                 if (autofilterIsOn && cnt >=0 && (0x80 + (cnt - 21) * 0x0c) < 256)
                 {

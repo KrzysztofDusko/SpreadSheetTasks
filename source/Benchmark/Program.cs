@@ -337,8 +337,11 @@ namespace Benchmark
         {
             using XlsbWriter xlsx = new XlsbWriter("file.xlsb", cLvl);
             xlsx.AddSheet("sheetName");
-            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-
+            //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            //xlsx.AddSheet("sheetName1");
+            //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            //xlsx.AddSheet("sheetName2");
+            //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
             //for (int i = 0; i < 25; i++)
             //{
             //    xlsx.AddSheet($"sheetNameX{i}");
