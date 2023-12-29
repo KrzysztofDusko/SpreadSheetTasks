@@ -226,6 +226,7 @@ namespace SpreadSheetTasks
 
         internal record FilterData
         {
+            public byte SheetIndex { get; set; }
             public int StartColumn { get; set; }
             public int EndColumn { get; set; }
             public int StartRow { get; set; }
@@ -356,6 +357,7 @@ namespace SpreadSheetTasks
 
                    _filteredDict.Add(new FilterData()
                     {
+                       SheetIndex = (byte)(_sheetList.Count - 1),
                         StartColumn = startingColumn,
                         EndColumn = startingColumn + ColumnCount - 1,
                         StartRow = startingRow,
@@ -780,8 +782,8 @@ namespace SpreadSheetTasks
                     for (int nm = 0; nm < cnt; nm++)
                     {
                         sw.Write(new byte[] { 0x00, 0x00, 0x00, 0x00 });
-                        sw.Write(new byte[] { (byte)nm, 0x00, 0x00, 0x00 });
-                        sw.Write(new byte[] { (byte)nm, 0x00, 0x00, 0x00 });
+                        sw.Write(new byte[] { (byte)(_filteredDict[nm].SheetIndex), 0x00, 0x00, 0x00 });
+                        sw.Write(new byte[] { (byte)(_filteredDict[nm].SheetIndex), 0x00, 0x00, 0x00 });
                     }
 
                     sw.Write(new byte[] { 0xE2, 0x02, 0x00 });
@@ -792,13 +794,13 @@ namespace SpreadSheetTasks
                         int endColumn = _filteredDict[sheetNum].EndColumn;
                         int startRow = _filteredDict[sheetNum].StartRow;
                         int endRow = _filteredDict[sheetNum].EndRow;
-
+                        byte sheetIndex = _filteredDict[sheetNum].SheetIndex;
                         byte[] filtered1 = new byte[]
                         {  
                             // repetation start
                             0x27,0x46,0x21 // sigle defined name ? 
                             ,0x00,0x00,0x00,0x00
-                            ,(byte)sheetNum // sheetNum?
+                            ,(byte)sheetIndex
                             ,0x00,0x00,0x00
                             ,0x0F
                             ,0x00,0x00,0x00
@@ -808,7 +810,7 @@ namespace SpreadSheetTasks
                             ,0x74,0x00,0x61,0x00,0x62,0x00,0x61,0x00   // FilterDatabase (UTF16) 
                             ,0x73,0x00,0x65,0x00                       // FilterDatabase (UTF16)  
                             ,0x0F,0x00,0x00,0x00,0x3B
-                            ,(byte)sheetNum // num ?  ??? !!!!!!!!!!!!!!!
+                            ,(byte)sheetNum
                             ,0x00
                         };
 

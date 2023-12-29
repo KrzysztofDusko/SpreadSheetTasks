@@ -6,9 +6,11 @@ using System.Data.Common;
 using System.IO.Compression;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.Intrinsics.Arm;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
+using CommunityToolkit.HighPerformance;
 using CommunityToolkit.HighPerformance.Buffers;
 using nietras.SeparatedValues;
 using SpreadSheetTasks;
@@ -337,11 +339,20 @@ namespace Benchmark
         {
             using XlsbWriter xlsx = new XlsbWriter("file.xlsb", cLvl);
             xlsx.AddSheet("sheetName");
-            //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            //xlsx.AddSheet($"SQL_0", hidden: true);
+            //xlsx.WriteSheet(new string[] {"word1","word2","word3"});
+
             //xlsx.AddSheet("sheetName1");
             //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            //xlsx.AddSheet($"SQL_1", hidden: true);
+            //xlsx.WriteSheet(new string[] { "word1", "word2", "word3" });
+
             //xlsx.AddSheet("sheetName2");
             //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            //xlsx.AddSheet($"SQL_2", hidden: true);
+            //xlsx.WriteSheet(new string[] { "word1", "word2", "word3" });
+
             //for (int i = 0; i < 25; i++)
             //{
             //    xlsx.AddSheet($"sheetNameX{i}");
