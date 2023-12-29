@@ -164,13 +164,19 @@ namespace SpreadSheetTasks
             0x31,0x00,0x31,0x00,0x33,0x00,0x31,0x00,0x35,0x00,0x36,0x00,0x37,0x00,0x7D,0x00,0x2F,0x00,0x00,0x00,0x2F,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x26,0x00,0x87,0x01,0x00,0x25,0x06,0x01,0x00,0x02,0x10,0x00,0x80,0x80,0x18,0x10,0x00,0x00,0x00,0x00,0x0D,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF,
             0x00,0x00,0x00,0x00,0x26,0x00,0x9E,0x01,0x1D,0x00,0x00,0x00,0x00,0x9E,0x16,0x00,0x00,0xB4,0x69,0x00,0x00,0xE8,0x26,0x00,0x00,0x58,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-            0x00,0x00,0x00,0x78,0x88,0x01,0x00,0x8F,0x01,0x00
-
+            0x00,0x00,0x00,0x78,0x88,0x01,0x00,
+            0x8F,0x01,0x00
         };
+
+        private readonly static byte[] workbookBinMiddle =
+        {
+            0x90,0x01,0x00
+        };
+
 
         private readonly static byte[] workbookBinEnd =
         {
-            0x90,0x01,0x00,0x9D,0x01,0x1A,0x35,0xEA,0x02,0x00,0x01,0x00,0x00,0x00,0x64,0x00,0x00,0x00,0xFC,0xA9,0xF1,0xD2,0x4D,0x62,0x50,0x3F,0x01,
+            0x9D,0x01,0x1A,0x35,0xEA,0x02,0x00,0x01,0x00,0x00,0x00,0x64,0x00,0x00,0x00,0xFC,0xA9,0xF1,0xD2,0x4D,0x62,0x50,0x3F,0x01,
             0x00,0x00,0x00,0x6A,0x00,0x9B,0x01,0x01,0x00,0x23,0x04,0x03,0x0F,0x00,0x00,0xAB,0x10,0x01,0x01,0x24,0x00,0x84,0x01,0x00
         };
 
@@ -218,8 +224,23 @@ namespace SpreadSheetTasks
             _sheetList.Add((sheetName, $"xl/worksheets/sheet{sheetCnt}.bin", null, hidden, $"sheet{sheetCnt}.bin", sheetCnt,null));
         }
 
+        internal record FilterData
+        {
+            public int StartColumn { get; set; }
+            public int EndColumn { get; set; }
+            public int StartRow { get; set; }
+            public int EndRow { get; set; }
+        }
+
+        private List<FilterData> _filteredDict;
+
         public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
+            if (doAutofilter)
+            {
+                autofilterIsOn = true;
+                _filteredDict ??= new();
+            }
             this.areHeaders = headers;
             _dataColReader = new DataColReader(dataReader, headers, overLimit);
 
@@ -332,6 +353,14 @@ namespace SpreadSheetTasks
                     Int32ToSpecificBuffer(buff, startingColumn + ColumnCount - 1, 4);
                     stream.Write(buff);
                     stream.Write(autoFilterEndBytes);
+
+                   _filteredDict.Add(new FilterData()
+                    {
+                        StartColumn = startingColumn,
+                        EndColumn = startingColumn + ColumnCount - 1,
+                        StartRow = startingRow,
+                        EndRow = startingRow + _rowsCount,
+                    });
                 }
 
                 stream.Write(sheet1Bytes[290..].AsSpan());
@@ -724,6 +753,74 @@ namespace SpreadSheetTasks
                         sw.Write((byte)(m >> 8));
                     }
                 }
+
+
+                sw.Write(workbookBinMiddle);
+                int cnt = _filteredDict.Count;
+                //temportary fix for https://github.com/KrzysztofDusko/SpreadSheetTasks/issues/2
+                if (autofilterIsOn && cnt >=0 && (0x80 + (cnt - 21) * 0x0c) < 256)
+                {
+                    sw.Write(new byte[]{ 0xE1, 0x02, 0x00, 0xE5, 0x02, 0x00, 0xEA, 0x02 });
+                    if (cnt<=10)
+                    {
+                        sw.Write(new byte[] { (byte)(0x10 + (cnt - 1) * 0x0c), (byte)cnt });// !!! ? for cnt <=10
+                        sw.Write(new byte[] { 0x00, 0x00, 0x00 });
+                    }
+                    else if (cnt <=20)
+                    {
+                        sw.Write(new byte[] { (byte)(0x10 + (cnt - 1) * 0x0c), (byte)((cnt-1) /10), (byte)cnt });
+                        sw.Write(new byte[] { 0x00, 0x00, 0x00 });
+                    }
+                    else // ???
+                    {
+                        sw.Write(new byte[] { (byte)(0x80 + (cnt - 21) * 0x0c), (byte)((cnt - 1) / 10), (byte)cnt });
+                        sw.Write(new byte[] { 0x00, 0x00, 0x00 });
+                    }
+
+                    for (int nm = 0; nm < cnt; nm++)
+                    {
+                        sw.Write(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+                        sw.Write(new byte[] { (byte)nm, 0x00, 0x00, 0x00 });
+                        sw.Write(new byte[] { (byte)nm, 0x00, 0x00, 0x00 });
+                    }
+
+                    sw.Write(new byte[] { 0xE2, 0x02, 0x00 });
+
+                    for (int sheetNum = 0; sheetNum < _filteredDict.Count; sheetNum++)
+                    {
+                        int startColumn = _filteredDict[sheetNum].StartColumn;
+                        int endColumn = _filteredDict[sheetNum].EndColumn;
+                        int startRow = _filteredDict[sheetNum].StartRow;
+                        int endRow = _filteredDict[sheetNum].EndRow;
+
+                        byte[] filtered1 = new byte[]
+                        {  
+                            // repetation start
+                            0x27,0x46,0x21 // sigle defined name ? 
+                            ,0x00,0x00,0x00,0x00
+                            ,(byte)sheetNum // sheetNum?
+                            ,0x00,0x00,0x00
+                            ,0x0F
+                            ,0x00,0x00,0x00
+                            ,0x5F,0x00                                 // _0
+                            ,0x46,0x00,0x69,0x00,0x6C,0x00,0x74,0x00   // FilterDatabase (UTF16) 
+                            ,0x65,0x00,0x72,0x00,0x44,0x00,0x61,0x00   // FilterDatabase (UTF16) 
+                            ,0x74,0x00,0x61,0x00,0x62,0x00,0x61,0x00   // FilterDatabase (UTF16) 
+                            ,0x73,0x00,0x65,0x00                       // FilterDatabase (UTF16)  
+                            ,0x0F,0x00,0x00,0x00,0x3B
+                            ,(byte)sheetNum // num ?  ??? !!!!!!!!!!!!!!!
+                            ,0x00
+                        };
+
+                        sw.Write(filtered1);
+                        sw.Write(BitConverter.GetBytes(startRow));
+                        sw.Write(BitConverter.GetBytes(endRow));
+                        sw.Write(BitConverter.GetBytes((Int16)startColumn));
+                        sw.Write(BitConverter.GetBytes((Int16)endColumn));
+                        sw.Write(new byte[] { 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF });
+                    }
+                }
+
                 sw.Write(workbookBinEnd);
             }
 

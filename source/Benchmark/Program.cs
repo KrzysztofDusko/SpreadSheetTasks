@@ -37,8 +37,8 @@ namespace Benchmark
             b.RowsCount = 120;
             b.Setup();
             b.ReaderType = "INT";
-            //b.XlsbWriteDefault();
-            b.XlsxWriteDefault();
+            b.XlsbWriteDefault();
+            //b.XlsxWriteDefault();
             //b.XlsbSylvanWrite();
             //micro.DoJob();
             //micro.DoM4();
@@ -338,6 +338,12 @@ namespace Benchmark
             using XlsbWriter xlsx = new XlsbWriter("file.xlsb", cLvl);
             xlsx.AddSheet("sheetName");
             xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+
+            //for (int i = 0; i < 25; i++)
+            //{
+            //    xlsx.AddSheet($"sheetNameX{i}");
+            //    xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            //}
         }
 
         [Benchmark]
