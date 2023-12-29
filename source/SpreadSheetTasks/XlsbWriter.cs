@@ -209,13 +209,13 @@ namespace SpreadSheetTasks
                 throw new Exception("creation file error");
             }
 
-            _sheetList = new List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId)>();
+            _sheetList = new List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string defName)>();
         }
 
         public override void AddSheet(string sheetName, bool hidden = false)
         {
             sheetCnt++;
-            _sheetList.Add((sheetName, $"xl/worksheets/sheet{sheetCnt}.bin", null, hidden, $"sheet{sheetCnt}.bin", sheetCnt));
+            _sheetList.Add((sheetName, $"xl/worksheets/sheet{sheetCnt}.bin", null, hidden, $"sheet{sheetCnt}.bin", sheetCnt,null));
         }
 
         public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
@@ -289,7 +289,7 @@ namespace SpreadSheetTasks
             stream = new BufferedStream(newEntry.Open());
             try
             {
-                InitSheet(doAutofilter);
+                InitSheet(doAutofilter); //lock first row
                 while (_dataColReader.Read())
                 {
                     if (rowNum == 0 || areHeaders && rowNum == 1)
@@ -696,7 +696,7 @@ namespace SpreadSheetTasks
 
                 for (int i = 0; i < _sheetList.Count; i++)
                 {
-                    var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId) = _sheetList[i];
+                    var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId, _) = _sheetList[i];
 
                     string rId = $"rId{sheetId}";
 
@@ -729,7 +729,7 @@ namespace SpreadSheetTasks
 
             for (int i = 0; i < _sheetList.Count; i++)
             {
-                var (_, _, _, _, _, sheetId) = _sheetList[i];
+                var (_, _, _, _, _, sheetId,_) = _sheetList[i];
                 newEntry = _excelArchiveFile.CreateEntry($@"xl/worksheets/binaryIndex{sheetId}.bin", _compressionLevel);
                 using var str = newEntry.Open();
                 using var sw = new BinaryWriter(str);
@@ -748,7 +748,7 @@ namespace SpreadSheetTasks
 
                 for (int i = 0; i < _sheetList.Count; i++)
                 {
-                    var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId) = _sheetList[i];
+                    var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId,_) = _sheetList[i];
 
                     sw.Write($@"<Override PartName=""/{pathInArchive}"" ContentType=""application/vnd.ms-excel.worksheet""/>");
                     sw.Write($@"<Override PartName=""/xl/worksheets/binaryIndex{sheetId}.bin"" ContentType=""application/vnd.ms-excel.binIndexWs""/>");
@@ -774,7 +774,7 @@ namespace SpreadSheetTasks
 
                 for (int i = 0; i < _sheetList.Count; i++)
                 {
-                    var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId) = _sheetList[i];
+                    var (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId,_) = _sheetList[i];
                     string rId = $"rId{sheetId}";
                     sw.Write($@"<Relationship Id=""{rId}"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"" Target=""worksheets/{nameInArchive}""/>");
                 }
@@ -814,7 +814,7 @@ namespace SpreadSheetTasks
                     sw.Write($"<vt:variant><vt:i4>{_sheetList.Count}</vt:i4></vt:variant></vt:vector></HeadingPairs>");
                     sw.Write("<TitlesOfParts>");
                     sw.Write($"<vt:vector size=\"{_sheetList.Count}\" baseType=\"lpstr\">");
-                    foreach (var (name, _, _, _, _, _) in _sheetList)
+                    foreach (var (name, _, _, _, _, _, _) in _sheetList)
                     {
                         sw.Write($"<vt:lpstr>{name}</vt:lpstr>");
                     }
@@ -842,7 +842,7 @@ namespace SpreadSheetTasks
                 }
             }
 
-            foreach (var (_, _, _, _, nameInArchive, sheetId) in _sheetList)
+            foreach (var (_, _, _, _, nameInArchive, sheetId, _) in _sheetList)
             {
                 newEntry = _excelArchiveFile.CreateEntry($"xl/worksheets/_rels/{nameInArchive}.rels", _compressionLevel);
                 using var str = newEntry.Open();

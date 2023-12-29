@@ -167,7 +167,7 @@ namespace SpreadSheetTasks
 
         internal FileStream _newExcelFileStream;
         internal ZipArchive _excelArchiveFile;
-        internal List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId)> _sheetList;
+        internal List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string filterHeaderRange)> _sheetList;
 
         internal string _path;
         internal const int _MAX_WIDTH = 80;
@@ -184,6 +184,8 @@ namespace SpreadSheetTasks
 
         protected int _rowsCount;
         public int RowsCount { get => _rowsCount; }
+
+        protected bool autofilterIsOn = false;
 
         internal abstract void FinalizeFile();
         public abstract void AddSheet(string sheetName, bool hidden = false);

@@ -37,7 +37,7 @@ namespace SpreadSheetTasks
             _inMemoryMode = InMemoryMode;
             TryToSpecifyWidthForMemoryMode = InMemoryMode;
 
-            _sheetList = new List<(string, string, string, bool, string, int)>();
+            _sheetList = new List<(string, string, string, bool, string, int, string)>();
             this._path = filePath;
             this._useTempPath = useTempPath;
             _useScharedStrings = useScharedStrings;
@@ -122,7 +122,7 @@ namespace SpreadSheetTasks
         public override void AddSheet(string sheetName, bool hidden = false)
         {
             string archveSheetName = "sheet" + (sheetCnt + 2);
-            _sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", archveSheetName), GetTempFileFullPath(), hidden, archveSheetName, (sheetCnt + 2)));
+            _sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", archveSheetName), GetTempFileFullPath(), hidden, archveSheetName, (sheetCnt + 2),null));
             //_sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", sheetName), getTempFileFullPath(), hidden, sheetName));
         }
         public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
@@ -222,6 +222,10 @@ namespace SpreadSheetTasks
         public bool TryToSpecifyWidthForMemoryMode { get; set; }
         private int WriteSheet(StreamWriter sheetWritter, int startingRow, int startingColumn, bool doAutofilter = false)
         {
+            if (doAutofilter)
+            {
+                autofilterIsOn = true;
+            }
             int rowNum = 0;
 
             int ColumnCount = _dataColReader.FieldCount;
@@ -360,6 +364,9 @@ namespace SpreadSheetTasks
             sheetWritter.Write("</sheetData>");
             if (doAutofilter)
             {
+                (string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string _) = this._sheetList[^1];
+                this._sheetList[^1] = (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId, $"{name}!${_letters[startingColumn]}${startingRow + 1}:${_letters[ColumnCount - 1 + startingColumn]}${rowNum}");
+
                 sheetWritter.Write($"<autoFilter ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader.DataTableRowsCount + 1 + startingRow}\"/>");
             }
             sheetWritter.Write("<pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>");
@@ -629,6 +636,7 @@ namespace SpreadSheetTasks
                 }
             }
         }
+        private const string filterDefinedName = "_xlnm._FilterDatabase";
         internal override void FinalizeFile()
         {
             var e1 = _excelArchiveFile.CreateEntry("[Content_Types].xml", clvl);
@@ -651,7 +659,7 @@ namespace SpreadSheetTasks
                 //}
                 writer.Write("<Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/>");
 
-                foreach (var (_, _, _, _, nameInArchive, _) in _sheetList)
+                foreach (var (_, _, _, _, nameInArchive, _, _) in _sheetList)
                 {
                     writer.Write($"<Override PartName=\"/xl/worksheets/{nameInArchive}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/>");
                 }
@@ -675,7 +683,7 @@ namespace SpreadSheetTasks
                 writer.Write("<TitlesOfParts>");
                 writer.Write($"<vt:vector size=\"{_sheetList.Count}\" baseType=\"lpstr\">");
 
-                foreach (var (name, _, _, _, _, _) in _sheetList)
+                foreach (var (name, _, _, _, _, _,_) in _sheetList)
                 {
                     writer.Write($"<vt:lpstr>{name}</vt:lpstr>");
                 }
@@ -702,7 +710,24 @@ namespace SpreadSheetTasks
                     var a = _sheetList[i].isHidden ? " state =\"hidden\"" : "";
                     writer.Write($"<sheet name=\"{_sheetList[i].name}\" sheetId=\"{i + 1}\"{a} r:id=\"rId{i + 1}\"/>");
                 }
-                writer.Write("</sheets><calcPr calcId=\"124519\" fullCalcOnLoad=\"1\"/></workbook>");
+                writer.Write("</sheets>");
+
+                if (autofilterIsOn)
+                {
+                    writer.Write("<definedNames>");
+                    foreach (var item in this._sheetList)
+                    {
+                        if (!string.IsNullOrWhiteSpace(item.filterHeaderRange))
+                        {
+                            int localSheetId = item.sheetId - 1;
+                            string filterHeaderRange = item.filterHeaderRange;
+                            writer.Write($"<definedName name=\"{filterDefinedName}\" localSheetId=\"{localSheetId}\" hidden=\"1\">{filterHeaderRange}</definedName>");
+                        }
+                    }
+                    writer.Write("</definedNames>");
+                }
+
+                writer.Write("<calcPr calcId=\"124519\" fullCalcOnLoad=\"1\"/></workbook>");
             }
 
             var e4 = _excelArchiveFile.CreateEntry("xl/_rels/workbook.xml.rels", clvl);

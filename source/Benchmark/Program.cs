@@ -34,9 +34,11 @@ namespace Benchmark
 #endif
 #if DEBUG
             var b = new WriteBenchExcel();
+            b.RowsCount = 120;
             b.Setup();
             b.ReaderType = "INT";
-            b.XlsbWriteDefault();
+            //b.XlsbWriteDefault();
+            b.XlsxWriteDefault();
             //b.XlsbSylvanWrite();
             //micro.DoJob();
             //micro.DoM4();
@@ -226,7 +228,7 @@ namespace Benchmark
     public class WriteBenchExcel
     {
 
-        private const int RowsCount = 200_000;
+        public int RowsCount = 200_000;
         private readonly Dictionary<string,DataTable> dataTables = new Dictionary<string, DataTable>
         {
             {"GENERAL", new DataTable() },
@@ -361,6 +363,10 @@ namespace Benchmark
         {
             using XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx");
             xlsx.AddSheet("sheetName");
+            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            xlsx.AddSheet("sheetNameX1");
+            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
+            xlsx.AddSheet("sheetNameX2");
             xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
         }
 
