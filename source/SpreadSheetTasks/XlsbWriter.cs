@@ -610,7 +610,7 @@ namespace SpreadSheetTasks
             //style
             //generalStyle.CopyTo(_buffer, 6); generalStyle = [0,0,0,0]
             buff[10] = (byte)(val ? 1 : 0); // 0 = false, 1 = true
-            buff[11] = 1;
+            //buff[11] = 1;
             stream.Write(buff);
         }
 
