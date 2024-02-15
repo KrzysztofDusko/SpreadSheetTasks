@@ -386,3 +386,6 @@ FodyWeavers.xsd
 # JetBrains Rider
 .idea/
 *.sln.iml
+*.xlsb
+*.xlsx
+/source/TestFiles/testExcel.xlsx
