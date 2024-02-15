@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
-using System.IO.Compression;
-using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics.Arm;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
@@ -27,8 +23,8 @@ namespace Benchmark
         {
 #if RELEASE
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
@@ -165,7 +161,6 @@ namespace Benchmark
             var totalCost = excelFile.GetDouble(12);
             var totalProfit = excelFile.GetDouble(13);
         }
-
     }
 
 
