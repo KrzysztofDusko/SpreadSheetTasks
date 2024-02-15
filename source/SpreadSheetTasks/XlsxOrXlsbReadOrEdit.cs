@@ -735,7 +735,12 @@ namespace SpreadSheetTasks
                     maxColNum = colNum;
                 }
 
-                ref FieldInfo valueX = ref innerRow[colNum - 1 - collDif];
+                int _tmpLen = colNum - 1 - collDif;
+                if (_tmpLen >= innerRow.Length)
+                {
+                    Array.Resize(ref innerRow, _tmpLen + 1);
+                }
+                ref FieldInfo valueX = ref innerRow[_tmpLen];
 
                 bool isEmptyElement = xmlReader.IsEmptyElement;
                 if (!isEmptyElement)
@@ -991,8 +996,12 @@ namespace SpreadSheetTasks
                         columnsCntFromFirstRow = maxColNum - minColNum + 1;
                         FieldCount = columnsCntFromFirstRow;
                     }
-
-                    ref FieldInfo valueX = ref innerRow[colNum - minColNum];
+                    int _tmpLen = colNum - minColNum;
+                    if (_tmpLen >= innerRow.Length)
+                    {
+                        Array.Resize(ref innerRow, _tmpLen + 1);
+                    }
+                    ref FieldInfo valueX = ref innerRow[_tmpLen];
 
                     valueX.type = ExcelDataType.String;
                     switch (biffReader.cellType)
