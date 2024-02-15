@@ -596,9 +596,8 @@ namespace SpreadSheetTasks
         int prevRowNum = -1;
         bool isFirstRow = true;
         int columnsCntFromFirstRow = -1;
-        int minColNum = -1;
-        int maxColNum = -1;
-        int collDif = 0;
+        int numberOfFirsColumnWithData = -1;
+        int numberOfLastColumnWithData = -1;
         int colNum = -1;
         int prevColNum = -1;
         int howManyEmptyRow = -1;
@@ -613,9 +612,8 @@ namespace SpreadSheetTasks
             prevRowNum = -1;
             //isFirstRow = true;
             columnsCntFromFirstRow = -1;
-            minColNum = -1;
-            maxColNum = -1;
-            collDif = 0;
+            numberOfFirsColumnWithData = -1;
+            numberOfLastColumnWithData = -1;
             colNum = -1;
             prevColNum = -1;
             howManyEmptyRow = -1;
@@ -668,6 +666,15 @@ namespace SpreadSheetTasks
                 emptyRowCnt++;
                 prevRowNum++;
                 return true;
+            }
+
+            //https://github.com/KrzysztofDusko/SpreadSheetTasks/issues/4
+            if (innerRow.Length > numberOfLastColumnWithData - numberOfFirsColumnWithData)
+            {
+                for (int i = numberOfFirsColumnWithData; i < numberOfLastColumnWithData; i++)
+                {
+                    innerRow[i - numberOfFirsColumnWithData].type = ExcelDataType.Null;
+                }
             }
 
             if (emptyRowCnt == -1)
@@ -725,21 +732,16 @@ namespace SpreadSheetTasks
                 }
                 colNum++;
 
-                if (isFirstRow && minColNum == -1)
+                if (isFirstRow && numberOfFirsColumnWithData == -1)
                 {
-                    minColNum = colNum;
-                    collDif = minColNum - 1;
+                    numberOfFirsColumnWithData = colNum;
                 }
-                if (isFirstRow && maxColNum < colNum)
+                if (isFirstRow && numberOfLastColumnWithData < colNum)
                 {
-                    maxColNum = colNum;
+                    numberOfLastColumnWithData = colNum;
                 }
 
-                int _tmpLen = colNum - 1 - collDif;
-                if (_tmpLen >= innerRow.Length)
-                {
-                    Array.Resize(ref innerRow, _tmpLen + 1);
-                }
+                int _tmpLen = ResizeRowIfNeeded();
                 ref FieldInfo valueX = ref innerRow[_tmpLen];
 
                 bool isEmptyElement = xmlReader.IsEmptyElement;
@@ -871,18 +873,18 @@ namespace SpreadSheetTasks
                     }
                 }
 
-                if (prevColNum >= colNum && colNum > minColNum)
+                if (prevColNum > colNum + 1 && colNum > numberOfFirsColumnWithData) // && rowNum == prevRowNum?
                 {
-                    for (int i = minColNum; i < colNum; i++)
+                    for (int i = numberOfFirsColumnWithData; i < colNum; i++)
                     {
-                        innerRow[i - 1 - collDif].type = ExcelDataType.Null;
+                        innerRow[i - numberOfFirsColumnWithData].type = ExcelDataType.Null;
                     }
                 }
-                else if (colNum - prevColNum > 1 && prevColNum != -1)
+                else if (colNum > prevColNum + 1 && prevColNum != -1)
                 {
-                    for (int i = 0; i < colNum - prevColNum - collDif - 1; i++)
+                    for (int i = 0; i < colNum - prevColNum - numberOfFirsColumnWithData; i++)
                     {
-                        innerRow[prevColNum - collDif + i].type = ExcelDataType.Null;
+                        innerRow[prevColNum - (numberOfFirsColumnWithData - 1) + i].type = ExcelDataType.Null;
                     }
                 }
                 prevColNum = colNum;
@@ -900,21 +902,30 @@ namespace SpreadSheetTasks
             if (isFirstRow)
             {
                 isFirstRow = false;
-                columnsCntFromFirstRow = maxColNum - minColNum + 1;
+                columnsCntFromFirstRow = numberOfLastColumnWithData - numberOfFirsColumnWithData + 1;
                 Array.Resize<FieldInfo>(ref innerRow, columnsCntFromFirstRow);
                 FieldCount = columnsCntFromFirstRow;
             }
-            if (colNum < maxColNum)
+            if (colNum < numberOfLastColumnWithData)
             {
-                for (int i = colNum; i < maxColNum; i++)
+                for (int i = colNum; i < numberOfLastColumnWithData; i++)
                 {
-                    innerRow[i - collDif].type = ExcelDataType.Null;
+                    innerRow[i - (numberOfFirsColumnWithData - 1)].type = ExcelDataType.Null;
                 }
             }
 
             return true;
         }
 
+        private int ResizeRowIfNeeded()
+        {
+            int _tmpLen = colNum - numberOfFirsColumnWithData;
+            if (_tmpLen >= innerRow.Length)
+            {
+                Array.Resize(ref innerRow, _tmpLen + 1);
+            }
+            return _tmpLen;
+        }
 
         private void InitSheetXlsbReader()
         {
@@ -951,11 +962,11 @@ namespace SpreadSheetTasks
             }
 
             //last row is not complete
-            if (!isFirstRow && colNum > minColNum)
+            if (!isFirstRow && colNum > numberOfFirsColumnWithData)
             {
-                for (int i = minColNum; i < colNum; i++)
+                for (int i = numberOfFirsColumnWithData; i < colNum; i++)
                 {
-                    innerRow[i - minColNum].type = ExcelDataType.Null;
+                    innerRow[i - numberOfFirsColumnWithData].type = ExcelDataType.Null;
                 }
             }
             //previous read = false
@@ -988,19 +999,16 @@ namespace SpreadSheetTasks
                     //determine first row length
                     if (isFirstRow)
                     {
-                        if (minColNum == -1)
+                        if (numberOfFirsColumnWithData == -1)
                         {
-                            minColNum = colNum;
+                            numberOfFirsColumnWithData = colNum;
                         }
-                        maxColNum = colNum;
-                        columnsCntFromFirstRow = maxColNum - minColNum + 1;
+                        numberOfLastColumnWithData = colNum;
+                        columnsCntFromFirstRow = numberOfLastColumnWithData - numberOfFirsColumnWithData + 1;
                         FieldCount = columnsCntFromFirstRow;
                     }
-                    int _tmpLen = colNum - minColNum;
-                    if (_tmpLen >= innerRow.Length)
-                    {
-                        Array.Resize(ref innerRow, _tmpLen + 1);
-                    }
+
+                    int _tmpLen = ResizeRowIfNeeded();
                     ref FieldInfo valueX = ref innerRow[_tmpLen];
 
                     valueX.type = ExcelDataType.String;
@@ -1085,16 +1093,20 @@ namespace SpreadSheetTasks
                 {
                     if (colNum > prevColNum + 1 && rowNum == prevRowNum)
                     {
+                        //prevColNum  = prev not null
+                        //colNum = current
+                        // A B !NULL! !NULL! C
                         for (int i = prevColNum + 1; i < colNum; i++)
                         {
-                            innerRow[i - minColNum].type = ExcelDataType.Null;
+                            innerRow[i - numberOfFirsColumnWithData].type = ExcelDataType.Null;
                         }
                     }
-                    else if (rowNum > prevRowNum && prevColNum < maxColNum)
+                    // A B C !NULL! !NULL!
+                    else if (rowNum > prevRowNum && prevColNum < numberOfLastColumnWithData)
                     {
-                        for (int i = 1; i <= maxColNum - prevColNum; i++)
+                        for (int i = 1; i <= numberOfLastColumnWithData - prevColNum; i++)
                         {
-                            innerRow[prevColNum + i - minColNum].type = ExcelDataType.Null;
+                            innerRow[prevColNum + i - numberOfFirsColumnWithData].type = ExcelDataType.Null;
                         }
                     }
                 }

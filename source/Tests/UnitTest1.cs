@@ -3,25 +3,66 @@ using System.Text;
 
 namespace Tests;
 
+[Collection("Sequential")]
 public class UnitTest1
 {
     [Fact]
     public void XlsbRead1()
     {
         var path = @"E:\source\repos\SpreadSheetTasks\source\TestFiles\testExcel.xlsb";
-        using XlsxOrXlsbReadOrEdit excelFile = ReadFileAndCompare(path);
+        var res = ReadFileAndCompare(path);
+
+        Assert.Equal("""
+            A|B||D
+            ||ccc|
+            |b|ccc|
+            |121212||12
+            |||
+            |||
+            |||
+            A||1|False
+            """, res);
     }
-    
+
     [Fact]
     public void XlsxRead1()
     {
         var path = @"E:\source\repos\SpreadSheetTasks\source\TestFiles\testExcel.xlsx";
-        using XlsxOrXlsbReadOrEdit excelFile = ReadFileAndCompare(path);
+        var res = ReadFileAndCompare(path);
+
+        Assert.Equal("""
+            A|B||D
+            ||ccc|
+            |b|ccc|
+            |121212||12
+            |||
+            |||
+            |||
+            A||1|False
+            """, res);
     }
 
-    private static XlsxOrXlsbReadOrEdit ReadFileAndCompare(string path)
+    [Fact]
+    public void XlsxVsXlsx()
     {
-        XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+        var pathXlsx = @"E:\source\repos\SpreadSheetTasks\source\TestFiles\testExcel2.xlsx";
+        var resXlsx = ReadFileAndCompare(pathXlsx);
+        var pathXlsb = @"E:\source\repos\SpreadSheetTasks\source\TestFiles\testExcel2.xlsb";
+        var resXlsb = ReadFileAndCompare(pathXlsb);
+        Assert.Equal(resXlsx, resXlsb);
+
+
+        pathXlsx = @"E:\source\repos\SpreadSheetTasks\source\TestFiles\testExcel3.xlsx";
+        resXlsx = ReadFileAndCompare(pathXlsx);
+        pathXlsb = @"E:\source\repos\SpreadSheetTasks\source\TestFiles\testExcel3.xlsb";
+        resXlsb = ReadFileAndCompare(pathXlsb);
+        Assert.Equal(resXlsx, resXlsb);
+    }
+
+
+    private static string ReadFileAndCompare(string path)
+    {
+        using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
         var sheetNames = excelFile.GetScheetNames();
         excelFile.ActualSheetName = sheetNames[0];
@@ -34,18 +75,8 @@ public class UnitTest1
             sb.AppendLine(string.Join('|', row));
         }
 
-        Assert.Equal("""
-            A|B||D
-            ||ccc|
-            |b|ccc|
-            |121212||12
-            |||
-            |||
-            |||
-            A||1|False
-            """,
-sb.ToString().Trim());
-        return excelFile;
+
+        return sb.ToString().Trim();
     }
 
 }

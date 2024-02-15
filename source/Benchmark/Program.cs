@@ -22,8 +22,8 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
@@ -107,7 +107,7 @@ namespace Benchmark
             }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void Sylvan65K()
         {
             var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
