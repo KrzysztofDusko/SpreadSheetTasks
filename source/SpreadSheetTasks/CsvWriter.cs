@@ -69,8 +69,8 @@ namespace SpreadSheetTasks.CsvWriter
 
 
         static readonly CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
-        const int BUFFER_SIZE = 65_536;
-        const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
+        private int _buffer_size = 65_536;
+        private int _buffer_half_size => _buffer_size / 2;
         private char[] buffer;
         int currentBufferOffset = 0;
         public long Write(IDataReader datareader)
@@ -89,7 +89,7 @@ namespace SpreadSheetTasks.CsvWriter
             
             try
             {
-                buffer = ArrayPool<char>.Shared.Rent(BUFFER_SIZE);
+                buffer = ArrayPool<char>.Shared.Rent(_buffer_size);
 
                 int fieldCount = datareader.FieldCount;
 
@@ -202,7 +202,7 @@ namespace SpreadSheetTasks.CsvWriter
                         buffer[currentBufferOffset++] = _rowDelimiter[j];
                     }
 
-                    if (currentBufferOffset >= BUFFER_SIZE_HALF)
+                    if (currentBufferOffset >= _buffer_half_size)
                     {
                         fs.Write(buffer, 0, currentBufferOffset);
                         currentBufferOffset = 0;
@@ -272,9 +272,15 @@ namespace SpreadSheetTasks.CsvWriter
             bool escape = false;
             int orgOffset = currentBufferOffset;
 
-            if (temp.Length + orgOffset >= BUFFER_SIZE)
+            if (temp.Length + orgOffset >= _buffer_size)
             {
-                throw new Exception("buffers is too small");
+                if (temp.Length + orgOffset > 5 * 1024 * 1024)
+                {
+                    throw new Exception("this record is to large");
+                }
+                ArrayPool<char>.Shared.Return(buffer);
+                _buffer_size = temp.Length + orgOffset + 100;//100 arbitrary value
+                buffer = ArrayPool<char>.Shared.Rent(_buffer_size);
             }
 
             for (int i = 0; i < temp.Length; i++)
