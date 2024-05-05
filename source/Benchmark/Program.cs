@@ -22,9 +22,9 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-            //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+            var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary4 = BenchmarkRunner.Run<CsvReadBench>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
             //var sumary = BenchmarkRunner.Run<NumberParseTest>();
@@ -55,7 +55,7 @@ namespace Benchmark
         //[Benchmark]
         public void SpreadSheetTasks200K()
         {
-            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
 
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
@@ -78,7 +78,7 @@ namespace Benchmark
         //[Benchmark]
         public void Sylvan200k()
         {
-            var path = @$"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+            var path = @$"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
 
             var reader = ExcelDataReader.Create(path);
 
@@ -93,7 +93,7 @@ namespace Benchmark
         [Benchmark]
         public void SpreadSheetTasks65k()
         {
-            var path = @$"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+            var path = @$"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
 
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
@@ -110,7 +110,7 @@ namespace Benchmark
         //[Benchmark]
         public void Sylvan65K()
         {
-            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
 
             var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
 
@@ -174,7 +174,7 @@ namespace Benchmark
         [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v1")]
         public void ReadFile()
         {
-            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
             excelFile.ActualSheetName = "sheet1";
@@ -191,7 +191,7 @@ namespace Benchmark
         [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v2")]
         public void ReadFileInMemory()
         {
-            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
             excelFile.UseMemoryStreamInXlsb = false;
@@ -209,7 +209,7 @@ namespace Benchmark
         [Benchmark(Description = "Sylvan.Data.Excel - XLSB Read")]
         public void Sylvan()
         {
-            var path = $@"E:\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
             using ExcelDataReader reader = ExcelDataReader.Create(path);
             object[] row = new object[reader.FieldCount];
             while (reader.Read())
@@ -391,7 +391,7 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class CsvReadBench
     {
-        readonly string path = @$"E:\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
+        readonly string path = @$"D:\DEV\sqls\CsvReader\annual-enterprise-survey-2020-financial-year-provisional-csv.csv";
         int N = 20;
 
 
@@ -542,7 +542,7 @@ namespace Benchmark
         public int BufferSize { get; set; }
 
         readonly DataTable dt = new DataTable();
-        readonly string path = @$"E:\sqls\CsvReader\testWriter.txt";
+        readonly string path = @$"D:\DEV\sqls\CsvReader\testWriter.txt";
 
         [GlobalSetup]
         public void Setup()
