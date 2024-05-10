@@ -198,25 +198,28 @@ namespace SpreadSheetTasks
         private const int rRkIntegerUpperLimit = (1 << 29) - 1;
 
         private readonly CompressionLevel _compressionLevel = CompressionLevel.Fastest;
-        public XlsbWriter(string path, CompressionLevel compressionLevel = CompressionLevel.Fastest)
+        public XlsbWriter(string path, CompressionLevel compressionLevel = CompressionLevel.Fastest) 
+            : this(new FileStream(path, FileMode.Create), compressionLevel, leaveExcelArchiveOpen: false)
         {
+            _excelStreamWasProvided = false;
+        }
+
+        public XlsbWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Fastest, bool leaveExcelArchiveOpen = true)
+        {
+            _excelStreamWasProvided = true;
             sheetCnt = 0;
-            _sstDic = new Dictionary<string, int>();
-            _path = path;
             _compressionLevel = compressionLevel;
             try
             {
-                _newExcelFileStream = new FileStream(_path, FileMode.Create);
-                _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create);
+                _newExcelFileStream = stream;
+                _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create, leaveExcelArchiveOpen);
             }
             catch (Exception)
             {
-                this._path += "WARNING";
                 throw new Exception("creation file error");
             }
-
-            _sheetList = new List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string defName)>();
         }
+
 
         public override void AddSheet(string sheetName, bool hidden = false)
         {
@@ -701,15 +704,13 @@ namespace SpreadSheetTasks
             buff[1] = 12;//8+4
             BitConverter.TryWriteBytes(buff[2..], (int)colNum);
             //generalStyle.CopyTo(buff, 6); generalStyle = [0,0,0,0]
-            
+
             buff[6] = (byte)(bolded ? 3 : 0);
-            
+
 
             BitConverter.TryWriteBytes(buff[10..], (int)val);
             stream.Write(buff);
         }
-
-
 
         internal override void FinalizeFile()
         {

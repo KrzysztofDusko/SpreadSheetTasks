@@ -31,15 +31,7 @@ namespace Benchmark
             //var summary7 = BenchmarkRunner.Run<StringPoolSylvanTest>();
 #endif
 #if DEBUG
-            var b = new WriteBenchExcel();
-            b.RowsCount = 120;
-            b.Setup();
-            b.ReaderType = "INT";
-            b.XlsbWriteDefault();
-            //b.XlsxWriteDefault();
-            //b.XlsbSylvanWrite();
-            //micro.DoJob();
-            //micro.DoM4();
+            Console.WriteLine("PLEASE RUN IN RELEASE MODE");
 #endif
         }
     }
@@ -107,7 +99,7 @@ namespace Benchmark
             }
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Sylvan65K()
         {
             var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
@@ -371,18 +363,6 @@ namespace Benchmark
             using XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false);
             xlsx.AddSheet("sheetName");
             xlsx.WriteSheet(Dt.CreateDataReader());
-        }
-
-        //[Benchmark(Description = "SpreadSheetTasks - XLSX Write - v2")]
-        public void XlsxWriteDefault()
-        {
-            using XlsxWriter xlsx = new XlsxWriter("fileLowMemory.xlsx");
-            xlsx.AddSheet("sheetName");
-            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-            xlsx.AddSheet("sheetNameX1");
-            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-            xlsx.AddSheet("sheetNameX2");
-            xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
         }
 
     }

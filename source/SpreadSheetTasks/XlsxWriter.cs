@@ -24,22 +24,21 @@ namespace SpreadSheetTasks
         private const double _dateTimeWidth = 16.0;
         private const double _dateWidth = 10.140625;
 
-        private readonly bool _useTempPath;
 
-
-        public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool useTempPath = true)
+        public XlsxWriter(string filePath, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal)
+            : this(new FileStream(filePath, FileMode.Create), bufferSize, InMemoryMode, useScharedStrings, _clvl, leaveExcelArchiveOpen:false)
         {
-            if (filePath == "")
-            {
-                return;
-            }
+            _excelStreamWasProvided = false;
+        }
+
+        public XlsxWriter(Stream stream, int bufferSize = 4096, bool InMemoryMode = true, bool useScharedStrings = true, CompressionLevel _clvl = CompressionLevel.Optimal, bool leaveExcelArchiveOpen = true) 
+        {
+            _excelStreamWasProvided = true;
+            _newExcelFileStream = stream;
             _bufferSize = bufferSize;
             _inMemoryMode = InMemoryMode;
             TryToSpecifyWidthForMemoryMode = InMemoryMode;
 
-            _sheetList = new List<(string, string, string, bool, string, int, string)>();
-            this._path = filePath;
-            this._useTempPath = useTempPath;
             _useScharedStrings = useScharedStrings;
             if (_useScharedStrings)
             {
@@ -49,15 +48,17 @@ namespace SpreadSheetTasks
 
             try
             {
-                _newExcelFileStream = new FileStream(filePath, FileMode.Create);
-                _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create);
+                _newExcelFileStream = stream;
+                _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create,leaveOpen:true);
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
-                this._path += "WARNING";
             }
+
         }
+
+
         static XlsxWriter()
         {
             var lettersX = new List<string>();
@@ -97,14 +98,7 @@ namespace SpreadSheetTasks
         }
         private string GetTempFileFullPath()
         {
-            if (_useTempPath)
-            {
-                return $"{Path.GetTempPath()}\\{Path.GetRandomFileName()}";
-            }
-            else
-            {
-                return Path.GetDirectoryName(_path) + @"\" + Path.GetRandomFileName();
-            }
+            return $"{Path.GetTempPath()}\\{Path.GetRandomFileName()}";
         }
         public override void Save()
         {
@@ -138,8 +132,8 @@ namespace SpreadSheetTasks
             }
             else
             {
-                using StreamWriter daneZakladkiX = new FormattingStreamWriter(_sheetList[sheetCnt].pathOnDisc, false, Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
-                _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn, doAutofilter: doAutofilter) - 1;
+                using StreamWriter sheedData = new FormattingStreamWriter(_sheetList[sheetCnt].pathOnDisc, false, Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
+                _rowsCount = WriteSheet(sheedData, startingRow, startingColumn, doAutofilter: doAutofilter) - 1;
             }
         }
         public override void WriteSheet(DataTable dataTable, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)

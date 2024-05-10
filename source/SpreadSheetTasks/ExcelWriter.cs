@@ -165,9 +165,9 @@ namespace SpreadSheetTasks
             }
         }
 
-        internal FileStream _newExcelFileStream;
+        internal Stream _newExcelFileStream;
         internal ZipArchive _excelArchiveFile;
-        internal List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string filterHeaderRange)> _sheetList;
+        internal List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string filterHeaderRange)> _sheetList = new();
 
         internal string _path;
         internal const int _MAX_WIDTH = 80;
@@ -176,7 +176,7 @@ namespace SpreadSheetTasks
         internal int sheetCnt = -1;
         internal DataColReader _dataColReader;
         internal bool areHeaders = false;
-        internal Dictionary<string, int> _sstDic;
+        internal Dictionary<string, int> _sstDic = new Dictionary<string, int>();
 
         internal double[] colWidesArray;
         internal int[] typesArray;
@@ -198,11 +198,15 @@ namespace SpreadSheetTasks
 
         public abstract void WriteSheet(string[] oneColumn);
 
+        internal bool _excelStreamWasProvided = false;
         public virtual void Save()
         {
             FinalizeFile();
             _excelArchiveFile.Dispose();
-            _newExcelFileStream.Dispose();
+            if (!_excelStreamWasProvided)
+            {
+                _newExcelFileStream.Dispose();
+            }
         }
 
         public event Action OnCompress;
