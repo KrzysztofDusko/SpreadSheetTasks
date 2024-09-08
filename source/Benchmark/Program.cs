@@ -5,7 +5,6 @@ using System.Data.Common;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
-using CommunityToolkit.HighPerformance;
 using SpreadSheetTasks;
 using Sylvan.Data.Excel;
 using SylvanCsv = Sylvan.Data.Csv;

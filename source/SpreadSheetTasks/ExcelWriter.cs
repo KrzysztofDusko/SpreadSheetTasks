@@ -169,7 +169,6 @@ namespace SpreadSheetTasks
         internal ZipArchive _excelArchiveFile;
         internal List<(string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string filterHeaderRange)> _sheetList = new();
 
-        internal string _path;
         internal const int _MAX_WIDTH = 80;
         internal int _sstCntUnique = 0;
         internal int _sstCntAll = 0;
