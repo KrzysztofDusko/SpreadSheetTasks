@@ -5,16 +5,16 @@
     <!--<TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
 	<RootNamespace>SpreadSheetTasks</RootNamespace>
     <Authors>Krzysztof Duśko</Authors>
+	<Company>Krzysztof Duśko</Company>
     <Description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
+	 <Version>0.3.2</Version>
 	<LangVersion>latest</LangVersion>
     <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>
-    <Company>Krzysztof Duśko</Company>
-    <Version>0.3.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>
