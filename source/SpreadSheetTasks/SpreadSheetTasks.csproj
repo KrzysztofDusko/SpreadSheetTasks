@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	<TargetFrameworks>net8.0;net6.0</TargetFrameworks>
-    <RootNamespace>SpreadSheetTasks</RootNamespace>
+	<TargetFrameworks>net9.0;net8.0;net6.0</TargetFrameworks>
+	<Nullable>enable</Nullable>
+    <!--<TreatWarningsAsErrors>true</TreatWarningsAsErrors>-->
+	<RootNamespace>SpreadSheetTasks</RootNamespace>
     <Authors>Krzysztof Duśko</Authors>
     <Description>The .NET library for fast reading and writing Excel files (.xlsx, .xlsb)</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -12,7 +14,7 @@
     <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>
     <Company>Krzysztof Duśko</Company>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KrzysztofDusko/SpreadSheetTasks</PackageProjectUrl>

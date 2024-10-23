@@ -624,8 +624,8 @@ namespace SpreadSheetTasks
     internal class DataColReader
     {
         internal IDataReader dataReader;
-        internal DataTable DataTable;
-        private readonly object[,] daneTabelaryczne;
+        internal DataTable _dataTable;
+        private readonly object[,] _tabelarData;
         private readonly bool _isDataReader;
         private readonly bool _isDataTable;
         internal int DataTableRowsCount;
@@ -651,26 +651,26 @@ namespace SpreadSheetTasks
 
         public DataColReader(DataTable dataTable, Boolean headers = false, int overLimit = -1)
         {
-            this.DataTable = dataTable;
+            this._dataTable = dataTable;
             this._headers = headers;
             this._isDataTable = true;
             this.overLimit = overLimit;
             this.DataTableRowsCount = dataTable.Rows.Count;
 
-            DatabaseTypes = new string[DataTable.Columns.Count];
+            DatabaseTypes = new string[_dataTable.Columns.Count];
 
             // WORK TO DO !!
             for (int i = 0; i < DatabaseTypes.Length; i++)
             {
-                DatabaseTypes[i] = DataTable.Columns[i].DataType.ToString();
+                DatabaseTypes[i] = _dataTable.Columns[i].DataType.ToString();
             }
         }
 
-        public DataColReader(string[,] daneZtabeli)
+        public DataColReader(string[,] tabelarData)
         {
-            this.daneTabelaryczne = daneZtabeli;
+            this._tabelarData = tabelarData;
             _isDataReader = false;
-            DatabaseTypes = new string[daneZtabeli.Length];
+            DatabaseTypes = new string[tabelarData.Length];
             for (int i = 0; i < DatabaseTypes.Length; i++)
             {
                 DatabaseTypes[i] = "-1";
@@ -692,11 +692,11 @@ namespace SpreadSheetTasks
                 }
                 else if (_isDataTable)
                 {
-                    return DataTable.Columns.Count;
+                    return _dataTable.Columns.Count;
                 }
                 else
                 {
-                    return daneTabelaryczne.GetUpperBound(1) + 1;
+                    return _tabelarData.GetUpperBound(1) + 1;
                 }
             }
         }
@@ -729,7 +729,7 @@ namespace SpreadSheetTasks
             {
                 if (_rowNum >= 2 && _rowNum < DataTableRowsCount + 2)
                 {
-                    _dataTableRow = DataTable.Rows[_rowNum - 2].ItemArray;
+                    _dataTableRow = _dataTable.Rows[_rowNum - 2].ItemArray;
                     return true;
                 }
                 else if (_rowNum == 1)
@@ -740,11 +740,11 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (_rowNum < daneTabelaryczne.GetUpperBound(0) + 2);
+                return (_rowNum < _tabelarData.GetUpperBound(0) + 2);
             }
         }
 
-        private object[] _dataTableRow;
+        private object[]? _dataTableRow;
         public object GetValue(int j)
         {
             if (_isDataReader)
@@ -770,12 +770,12 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return DataTable.Columns[j].ColumnName;
+                    return _dataTable.Columns[j].ColumnName;
                 }
             }
             else
             {
-                return daneTabelaryczne[_rowNum - 1, j];
+                return _tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -811,7 +811,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (bool)daneTabelaryczne[_rowNum - 1, j];
+                return (bool)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -846,7 +846,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (char)daneTabelaryczne[_rowNum - 1, j];
+                return (char)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -881,7 +881,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (byte)daneTabelaryczne[_rowNum - 1, j];
+                return (byte)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -916,7 +916,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (sbyte)daneTabelaryczne[_rowNum - 1, j];
+                return (sbyte)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -951,7 +951,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (Int16)daneTabelaryczne[_rowNum - 1, j];
+                return (Int16)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -986,7 +986,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (Int32)daneTabelaryczne[_rowNum - 1, j];
+                return (Int32)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -1021,7 +1021,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (Int32)daneTabelaryczne[_rowNum - 1, j];
+                return (Int32)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -1056,7 +1056,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (float)daneTabelaryczne[_rowNum - 1, j];
+                return (float)_tabelarData[_rowNum - 1, j];
             }
         }
         public double GetDouble(int j)
@@ -1090,7 +1090,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (double)daneTabelaryczne[_rowNum - 1, j];
+                return (double)_tabelarData[_rowNum - 1, j];
             }
         }
         public decimal GetDecimal(int j)
@@ -1124,7 +1124,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (decimal)daneTabelaryczne[_rowNum - 1, j];
+                return (decimal)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -1158,7 +1158,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                return (DateTime)daneTabelaryczne[_rowNum - 1, j];
+                return (DateTime)_tabelarData[_rowNum - 1, j];
             }
         }
 
@@ -1188,12 +1188,12 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return DataTable.Columns[j].ColumnName;
+                    return _dataTable.Columns[j].ColumnName;
                 }
             }
             else
             {
-                return daneTabelaryczne[_rowNum - 1, j].ToString();
+                return _tabelarData[_rowNum - 1, j].ToString();
             }
         }
 
@@ -1223,12 +1223,12 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return DataTable.Columns[j].ColumnName == null;
+                    return _dataTable.Columns[j].ColumnName == null;
                 }
             }
             else
             {
-                return daneTabelaryczne[_rowNum - 1, j] == null || daneTabelaryczne[_rowNum - 1, j] == DBNull.Value;
+                return _tabelarData[_rowNum - 1, j] == null || _tabelarData[_rowNum - 1, j] == DBNull.Value;
             }
         }
 
@@ -1239,7 +1239,7 @@ namespace SpreadSheetTasks
 
             for (int j = 0; j < m; j++)
             {
-                double valTemp = 1.25 * DataTable.Columns[j].ToString().Length + 2;
+                double valTemp = 1.25 * _dataTable.Columns[j].ToString().Length + 2;
                 if (doAutofilter)
                 {
                     valTemp += 2;
@@ -1260,7 +1260,7 @@ namespace SpreadSheetTasks
             {
                 for (int j = 0; j < m; j++)
                 {
-                    double valTemp = 1.25 * DataTable.Rows[i][j].ToString().Length + 2;
+                    double valTemp = 1.25 * _dataTable.Rows[i][j].ToString().Length + 2;
                     if (valTemp > maxWidth)
                     {
                         valTemp = maxWidth;

@@ -289,7 +289,7 @@ namespace SpreadSheetTasks
                     }
                     sheetWritter.Write("</cols>");
                 }
-                else if (TryToSpecifyWidthForMemoryMode && _dataColReader.DataTable != null)
+                else if (TryToSpecifyWidthForMemoryMode && _dataColReader._dataTable != null)
                 {
                     sheetWritter.Write($"<dimension ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader.DataTableRowsCount + 1 + startingRow}\"/>");
 
@@ -397,7 +397,7 @@ namespace SpreadSheetTasks
                     }
                 }
 
-                List<double> colWidth2 = colWidesArray.ToArray().ToList();
+                List<double> colWidth2 = colWidesArray.ToArray().ToList();//??
                 List<double> colWidth3 = colWidth2.FindAll(x => x != 1.0);
 
                 if (colWidth3.Count > 0)
@@ -455,7 +455,7 @@ namespace SpreadSheetTasks
 
                 if (newTypes[column] == TypeCode.String || newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
                 {
-                    string stringValue;
+                    string? stringValue = null;
                     if (newTypes[column] == TypeCode.String)
                     {
                         stringValue = _dataColReader.GetString(column);
@@ -466,7 +466,7 @@ namespace SpreadSheetTasks
                     }
                     else
                     {
-                        stringValue = _dataColReader.GetValue(column).ToString();
+                        stringValue = _dataColReader.GetValue(column).ToString()!;
                     }                    
 
                     if (!_inMemoryMode)
@@ -586,7 +586,7 @@ namespace SpreadSheetTasks
                     writeStringToBuffer(_letters[column + startingColumn]);
                     writeInt32ToBuffer((rowNum + 1 + startingRow));
                     writeStringToBuffer("\" s=\"1\"><v>");
-                    writeDoubleToBuffer((double)(dtVal as DateTime?)?.ToOADate());
+                    writeDoubleToBuffer((double)(dtVal as DateTime?)?.ToOADate()!);
                     writeStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
@@ -605,7 +605,7 @@ namespace SpreadSheetTasks
                     writeStringToBuffer(_letters[column + startingColumn]);
                     writeInt32ToBuffer((rowNum + 1 + startingRow));
                     writeStringToBuffer("\" s=\"2\"><v>");
-                    writeDoubleToBuffer((double)((dtVal) as DateTime?)?.ToOADate());
+                    writeDoubleToBuffer((double)((dtVal) as DateTime?)?.ToOADate()!);
                     writeStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
@@ -907,7 +907,8 @@ namespace SpreadSheetTasks
 
                     if (typesArray[j] == 0 || typesArray[j] == -1)
                     {
-                        string stringValue = rawValue.ToString();
+ 
+                        string stringValue = rawValue.ToString()!;
 
                         if (stringValue.Contains('&'))
                         {
@@ -973,7 +974,7 @@ namespace SpreadSheetTasks
                     }
                     else if (typesArray[j] == 3) //datetime
                     {
-                        if (rawValue is DateTime && (rawValue as DateTime?).Value.Year == 1000)//1000-xx-xx
+                        if (rawValue is DateTime valDateTime && valDateTime.Year == 1000)//1000-xx-xx
                         {
                             continue;
                         }

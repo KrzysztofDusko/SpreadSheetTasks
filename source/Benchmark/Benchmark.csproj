@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-	<TargetFrameworks>net8.0</TargetFrameworks>
+	<TargetFrameworks>net8.0;net9.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageReference Include="Sep" Version="0.5.3" />
+    <PackageReference Include="Sep" Version="0.5.5" />
     <PackageReference Include="Sylvan.Data.Csv" Version="1.3.9" />
     <PackageReference Include="Sylvan.Data.Excel" Version="0.4.25" />
   </ItemGroup>

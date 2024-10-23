@@ -28,6 +28,7 @@ namespace Benchmark
         }
     }
     [SimpleJob(RuntimeMoniker.Net80)]
+    [SimpleJob(RuntimeMoniker.Net90)]
     [MemoryDiagnoser]
     public class ReadBenchXlsx
     {
@@ -146,6 +147,7 @@ namespace Benchmark
     }
 
     [SimpleJob(RuntimeMoniker.Net80)]
+    [SimpleJob(RuntimeMoniker.Net90)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
@@ -201,6 +203,7 @@ namespace Benchmark
     }
 
     [SimpleJob(RuntimeMoniker.Net80)]
+    [SimpleJob(RuntimeMoniker.Net90)]
     [MemoryDiagnoser]
     public class WriteBenchExcel
     {

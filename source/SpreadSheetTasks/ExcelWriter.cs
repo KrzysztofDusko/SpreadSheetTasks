@@ -85,9 +85,9 @@ namespace SpreadSheetTasks
                     }
                 }
             }
-            else if (_dataColReader.DataTable != null)
+            else if (_dataColReader._dataTable != null)
             {
-                var dt = _dataColReader.DataTable;
+                var dt = _dataColReader._dataTable;
                 for (int j = 0; j < ColumnCount; j++)
                 {
                     newTypes[j] = Type.GetTypeCode(dt.Columns[j].DataType);       

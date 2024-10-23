@@ -185,7 +185,7 @@ public class UnitTest1
         excelFile.Open(path);
         var sheetNames = excelFile.GetScheetNames();
         excelFile.ActualSheetName = sheetNames[0];
-        object[] row = null;
+        object[]? row = null;
         StringBuilder sb = new StringBuilder();
         while (excelFile.Read())
         {

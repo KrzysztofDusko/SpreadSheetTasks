@@ -226,7 +226,7 @@ namespace SpreadSheetTasks
         /// <param name="path"></param>
         /// <param name="readSharedStrings"></param>
         /// <param name="updateMode"></param>
-        public override void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding encoding = null)
+        public override void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding? encoding = null)
         {
             if (path.EndsWith("xlsb", StringComparison.OrdinalIgnoreCase))
             {
@@ -484,7 +484,7 @@ namespace SpreadSheetTasks
                         {
                             if (reader.IsStartElement("numFmt"))
                             {
-                                string formatCode = reader.GetAttribute("formatCode");
+                                string? formatCode = reader.GetAttribute("formatCode");
                                 _ = int.TryParse(reader.GetAttribute("numFmtId"), out var numFmtId);
 
                                 if (!_numberFormatsTypeDic.TryGetValue(numFmtId, out var type))

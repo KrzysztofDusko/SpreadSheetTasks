@@ -16,7 +16,7 @@ namespace SpreadSheetTasks
         public virtual int ResultsCount { get; }
         public virtual string ActualSheetName { get; set; }
         public virtual int RowCount { get => 123123123; }
-        public abstract void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding encoding = null);
+        public abstract void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding? encoding = null);
         public abstract bool Read();
         public virtual double RelativePositionInStream() => 50.0;
 
@@ -73,12 +73,12 @@ namespace SpreadSheetTasks
 
         public ref FieldInfo GetNativeValue(int i)
         {
-            return ref innerRow[i];
+            return ref innerRow![i];
         }
 
         public ref FieldInfo[] GetNativeValues()
         {
-            return ref innerRow;
+            return ref innerRow!;
         }
 
         public bool TreatAllColumnsAsText { get; set; } = false;
