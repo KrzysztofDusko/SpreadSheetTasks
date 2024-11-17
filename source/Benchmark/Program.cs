@@ -17,8 +17,8 @@ namespace Benchmark
         static void Main(string[] args)
         {
 #if RELEASE
-            var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
-            //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
+            //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+            var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
             //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 #endif
@@ -27,7 +27,6 @@ namespace Benchmark
 #endif
         }
     }
-    [SimpleJob(RuntimeMoniker.Net80)]
     [SimpleJob(RuntimeMoniker.Net90)]
     [MemoryDiagnoser]
     public class ReadBenchXlsx
@@ -146,7 +145,6 @@ namespace Benchmark
         }
     }
 
-    [SimpleJob(RuntimeMoniker.Net80)]
     [SimpleJob(RuntimeMoniker.Net90)]
     [MemoryDiagnoser]
     public class ReadBenchXlsb
@@ -202,7 +200,6 @@ namespace Benchmark
         }
     }
 
-    [SimpleJob(RuntimeMoniker.Net80)]
     [SimpleJob(RuntimeMoniker.Net90)]
     [MemoryDiagnoser]
     public class WriteBenchExcel
