@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.Common;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using SpreadSheetTasks;
 using Sylvan.Data.Excel;
-using SylvanCsv = Sylvan.Data.Csv;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
+using System.IO.Compression;
 
 
 namespace Benchmark
@@ -20,7 +20,6 @@ namespace Benchmark
             //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
             var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
             //var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
-            //var summary5 = BenchmarkRunner.Run<CsvWriterBench>();
 #endif
 #if DEBUG
             Console.WriteLine("PLEASE RUN IN RELEASE MODE");
@@ -31,13 +30,14 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class ReadBenchXlsx
     {
+        private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
         readonly string filename65k = "65K_Records_Data.xlsx";
         readonly string filename200k = "200kFile.xlsx";
 
         [Benchmark]
         public void SpreadSheetTasks200K()
         {
-            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+            var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{filename200k}";
 
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
@@ -60,7 +60,7 @@ namespace Benchmark
         [Benchmark]
         public void Sylvan200k()
         {
-            var path = @$"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename200k}";
+            var path = @$"{_baseFilePath}/source/Benchmark/FilesToTest/{filename200k}";
 
             var reader = ExcelDataReader.Create(path);
 
@@ -75,7 +75,7 @@ namespace Benchmark
         [Benchmark]
         public void SpreadSheetTasks65k()
         {
-            var path = @$"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+            var path = @$"{_baseFilePath}/source/Benchmark/FilesToTest/{filename65k}";
 
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
@@ -92,7 +92,7 @@ namespace Benchmark
         [Benchmark]
         public void Sylvan65K()
         {
-            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{filename65k}";
+            var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{filename65k}";
 
             var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
 
@@ -149,13 +149,14 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class ReadBenchXlsb
     {
+        private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
         [Params("65K_Records_Data.xlsb", "200kFile.xlsb")]
         public string FileName { get; set; }
 
         [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v1")]
         public void ReadFile()
         {
-            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{FileName}";
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
             excelFile.ActualSheetName = "sheet1";
@@ -172,7 +173,7 @@ namespace Benchmark
         [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v2")]
         public void ReadFileInMemory()
         {
-            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{FileName}";
             using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
             excelFile.Open(path);
             excelFile.UseMemoryStreamInXlsb = false;
@@ -190,7 +191,7 @@ namespace Benchmark
         [Benchmark(Description = "Sylvan.Data.Excel - XLSB Read")]
         public void Sylvan()
         {
-            var path = $@"D:\DEV\source\repos\SpreadSheetTasks\source\Benchmark\FilesToTest\{FileName}";
+            var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{FileName}";
             using ExcelDataReader reader = ExcelDataReader.Create(path);
             object[] row = new object[reader.FieldCount];
             while (reader.Read())
@@ -204,7 +205,6 @@ namespace Benchmark
     [MemoryDiagnoser]
     public class WriteBenchExcel
     {
-
         public int RowsCount = 200_000;
         private readonly Dictionary<string,DataTable> dataTables = new Dictionary<string, DataTable>
         {
@@ -307,50 +307,42 @@ namespace Benchmark
             }
         }
 
-        System.IO.Compression.CompressionLevel cLvl = System.IO.Compression.CompressionLevel.Fastest;
+        private readonly CompressionLevel _cLvl = CompressionLevel.Fastest;
 
         [Benchmark(Description = "SpreadSheetTasks - XLSB Write")]
         public void XlsbWriteDefault()
         {
-            using XlsbWriter xlsx = new XlsbWriter("file.xlsb", cLvl);
+            using XlsbWriter xlsx = new XlsbWriter("file.xlsb", _cLvl);
             xlsx.AddSheet("sheetName");
             xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-            //xlsx.AddSheet($"SQL_0", hidden: true);
-            //xlsx.WriteSheet(new string[] {"word1","word2","word3"});
-
-            //xlsx.AddSheet("sheetName1");
-            //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-            //xlsx.AddSheet($"SQL_1", hidden: true);
-            //xlsx.WriteSheet(new string[] { "word1", "word2", "word3" });
-
-            //xlsx.AddSheet("sheetName2");
-            //xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-            //xlsx.AddSheet($"SQL_2", hidden: true);
-            //xlsx.WriteSheet(new string[] { "word1", "word2", "word3" });
-
-            //for (int i = 0; i < 25; i++)
-            //{
-            //    xlsx.AddSheet($"sheetNameX{i}");
-            //    xlsx.WriteSheet(Dt.CreateDataReader(), doAutofilter: true);
-            //}
         }
 
         [Benchmark]
         public void XlsbSylvanWrite()
         {
-            using var edw = ExcelDataWriter.Create("fileSylvan.xlsb", new ExcelDataWriterOptions() {  CompressionLevel = cLvl});
+            using var edw = ExcelDataWriter.Create("fileSylvan.xlsb", new ExcelDataWriterOptions() {  CompressionLevel = _cLvl });
             DbDataReader dr;
             dr = Dt.CreateDataReader();
             edw.Write(dr, "sheetName");
         }
 
 
-        [Benchmark(Description = "SpreadSheetTasks - XLSX Write - v2")]
+        [Benchmark(Description = "SpreadSheetTasks - XLSX Write")]
         public void XlsxWriteLowMemory()
         {
-            using XlsxWriter xlsx = new XlsxWriter("file.xlsx", bufferSize: 4096, InMemoryMode: false, useScharedStrings: false);
+            using XlsxWriter xlsx = new XlsxWriter("file.xlsx");
             xlsx.AddSheet("sheetName");
             xlsx.WriteSheet(Dt.CreateDataReader());
         }
+
+        [Benchmark(Description = "Sylvan - XLSX Write")]
+        public void XlsxSylvanWrite()
+        {
+            using var edw = ExcelDataWriter.Create("fileSylvan.xlsx");
+            DbDataReader dr;
+            dr = Dt.CreateDataReader();
+            edw.Write(dr, "sheetName");
+        }
+
     }
  }

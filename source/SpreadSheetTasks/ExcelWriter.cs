@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SpreadSheetTasks.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -195,6 +196,12 @@ namespace SpreadSheetTasks
             WriteSheet(dataTable.CreateDataReader(), headers, overLimit, startingRow, startingColumn, doAutofilter);
         }
 
+        public void WriteSheet(List<string> headersList,List<TypeCode> typeCodes, List<object?[]> rows, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
+        {
+            using var reader = new ReaderFromList(rows, headersList, typeCodes);
+            WriteSheet(reader, headers, overLimit, startingRow, startingColumn, doAutofilter);  
+        }
+
         public abstract void WriteSheet(string[] oneColumn);
 
         internal bool _excelStreamWasProvided = false;
@@ -245,6 +252,21 @@ namespace SpreadSheetTasks
             }
         }
 
+        public static ExcelWriter CreateWriter(string path)
+        {
+            if (path.EndsWith(".xlsb", StringComparison.OrdinalIgnoreCase))
+            {
+                return new XlsbWriter(path);
+            }
+            else if (path.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                return new XlsxWriter(path);
+            }
+            else
+            {
+                throw new Exception("Unknown file type !");
+            }
+        }
     }
 
 }

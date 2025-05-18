@@ -623,7 +623,7 @@ namespace SpreadSheetTasks
 
     internal class DataColReader
     {
-        internal IDataReader dataReader;
+        internal readonly IDataReader dataReader;
         internal DataTable _dataTable;
         private readonly object[,] _tabelarData;
         private readonly bool _isDataReader;

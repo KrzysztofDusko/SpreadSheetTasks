@@ -11,7 +11,7 @@
 	<PackageReadmeFile>README.md</PackageReadmeFile>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <FileVersion>1.0.0.0</FileVersion>
-	 <Version>0.3.2</Version>
+	 <Version>0.4.0</Version>
 	<LangVersion>latest</LangVersion>
     <PackageReleaseNotes>Performance improvements, Csv writer preview</PackageReleaseNotes>
     <PackageTags>xlsx;xlsb;excel;spreadsheets</PackageTags>

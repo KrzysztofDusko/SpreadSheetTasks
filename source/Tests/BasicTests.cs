@@ -6,12 +6,30 @@ using System.Text;
 namespace Tests;
 
 [Collection("Sequential")]
-public class UnitTest1
+public class BasicTests
 {
+    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
+    [Fact]
+    public void WriteFromList()
+    {
+        var path = @$"{_baseFilePath}/source/TestFiles/created1.xlsb";
+        List<string> headers = new List<string> { "col1", "col2" };
+        List<TypeCode> typeCodes = new List<TypeCode> { TypeCode.Int32, TypeCode.String };
+        List<object?[]> data = [ [1,"x"], [2,"y"], [3,"z"], [4,null], [null,"dda"]];
+        
+        using XlsbWriter xlsbWriter = new XlsbWriter(path);
+        xlsbWriter.AddSheet("sheetName");
+        xlsbWriter.WriteSheet(headers, typeCodes, data, doAutofilter: true);
+
+        // Replace the incorrect Assert.FileExists with a valid assertion to check if the file exists.
+        var fileExists = File.Exists(path);
+        Assert.True(fileExists, $"The file at path '{path}' does not exist.");
+    }
+
     [Fact]
     public void XlsbRead1()
     {
-        var path = @"D:\DEV\source\repos\SpreadSheetTasks\source\TestFiles\testExcel.xlsb";
+        var path = @$"{_baseFilePath}//source/TestFiles/testExcel.xlsb";
         var res = ReadFileAndCompare(path);
 
         Assert.Equal("""
@@ -29,7 +47,7 @@ public class UnitTest1
     [Fact]
     public void XlsxRead1()
     {
-        var path = @"D:\DEV\source\repos\SpreadSheetTasks\source\TestFiles\testExcel.xlsx";
+        var path = @$"{_baseFilePath}//source/TestFiles/testExcel.xlsx";
         var res = ReadFileAndCompare(path);
 
         Assert.Equal("""
@@ -47,20 +65,18 @@ public class UnitTest1
     [Fact]
     public void XlsxVsXlsx()
     {
-        var pathXlsx = @"D:\DEV\source\repos\SpreadSheetTasks\source\TestFiles\testExcel2.xlsx";
+        var pathXlsx = @$"{_baseFilePath}//source/TestFiles/testExcel2.xlsx";
         var resXlsx = ReadFileAndCompare(pathXlsx);
-        var pathXlsb = @"D:\DEV\source\repos\SpreadSheetTasks\source\TestFiles\testExcel2.xlsb";
+        var pathXlsb = @$"{_baseFilePath}//source/TestFiles/testExcel2.xlsb";
         var resXlsb = ReadFileAndCompare(pathXlsb);
         Assert.Equal(resXlsx, resXlsb);
 
-
-        pathXlsx = @"D:\DEV\source\repos\SpreadSheetTasks\source\TestFiles\testExcel3.xlsx";
+        pathXlsx = @$"{_baseFilePath}/source/TestFiles/testExcel3.xlsx";
         resXlsx = ReadFileAndCompare(pathXlsx);
-        pathXlsb = @"D:\DEV\source\repos\SpreadSheetTasks\source\TestFiles\testExcel3.xlsb";
+        pathXlsb = @$"{_baseFilePath}//source/TestFiles/testExcel3.xlsb";
         resXlsb = ReadFileAndCompare(pathXlsb);
         Assert.Equal(resXlsx, resXlsb);
     }
-
 
     [Fact]
     public void XlsxWriteT1()
@@ -178,6 +194,59 @@ public class UnitTest1
         //Assert.Equal(sha2, sha3);
     }
 
+    [Fact]
+    public void XlsbWriteT3()
+    {
+        DataTable dataTable = new DataTable();
+        dataTable.Columns.Add("COL1_INT64", typeof(Int64));
+        dataTable.Columns.Add("COL2_TXT", typeof(string));
+        dataTable.Columns.Add("COL3_DATE", typeof(DateTime));
+        dataTable.Columns.Add("COL4_DOUBLE", typeof(double));
+
+        // Add some data
+        dataTable.Rows.Add(1, "Text1", DateTime.Today, 1.23);
+        dataTable.Rows.Add(2, "Text2", DateTime.Today.AddDays(1), 4.56);
+
+
+        string[] extensions = [".xlsb"];
+
+        foreach (var ext in extensions)
+        {
+            // Write to Excel
+            using (var excel = ExcelWriter.CreateWriter($"output{ext}"))
+            {
+                excel.AddSheet("sheetName");
+                excel.WriteSheet(dataTable.CreateDataReader(), doAutofilter: true);
+            }
+
+            //read from Excel
+            using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
+            {
+                excelFile.Open($"output{ext}");
+                excelFile.ActualSheetName = "sheetName";
+                object[]? row = null;
+                int rowNum = -1;
+                while (excelFile.Read())
+                {
+                    row ??= new object[excelFile.FieldCount];
+                    excelFile.GetValues(row);
+                    if (rowNum == -1) // skip header
+                    {
+                        var headers = dataTable.Columns.Cast<DataColumn>()
+                                              .Select(col => col.ColumnName)
+                                              .ToList();
+                        Assert.Equal(headers, row);
+                    }
+                    else
+                    {
+                        var arr1 = dataTable.Rows[rowNum].ItemArray;
+                        Assert.Equal(arr1, row);
+                    }
+                    rowNum++;
+                }
+            }
+        }
+    }
 
     private static string ReadFileAndCompare(string path)
     {
@@ -193,7 +262,6 @@ public class UnitTest1
             excelFile.GetValues(row);
             sb.AppendLine(string.Join('|', row));
         }
-
 
         return sb.ToString().Trim();
     }
