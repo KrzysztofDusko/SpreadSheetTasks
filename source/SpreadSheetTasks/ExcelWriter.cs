@@ -11,21 +11,21 @@ namespace SpreadSheetTasks
 {
     public abstract class ExcelWriter : IDisposable
     {
-        internal static readonly string[] _stringDb = { "nvarchar", "varchar", "char" };
-        internal static readonly Type[] _stringTypes = { typeof(String), typeof(Char), typeof(Boolean) };
+        internal static readonly string[] _stringDb = ["nvarchar", "varchar", "char"];
+        internal static readonly Type[] _stringTypes = [typeof(String), typeof(Char), typeof(Boolean)];
 
-        internal static readonly Type[] _numberTypes = 
-        {
+        internal static readonly Type[] _numberTypes =
+        [
             typeof(sbyte), typeof(byte)
             , typeof(Int16), typeof(UInt16)
             , typeof(Int32), typeof(UInt32)
             , typeof(Int64), typeof(UInt64)
             , typeof(Single), typeof(Double)
             , typeof(Decimal)
-        };
+        ];
 
-        private static readonly string[] _DbNumbers = 
-        {
+        private static readonly string[] _DbNumbers =
+        [
             "integer", "bigint"
             , "numeric", "Decimal"
             , "Double", "Single"
@@ -33,15 +33,15 @@ namespace SpreadSheetTasks
             , "Int16", "Int32"
             , "Int64", "UInt16"
             , "UInt32", "UInt64"
-        };
+        ];
 
-        public string DocPopertyProgramName { get; set; }
+        public string? DocPopertyProgramName { get; set; }
 
         internal static void SetTypes(DataColReader _dataColReader, int[] typesArray, TypeCode[] newTypes, int ColumnCount, bool detectBoolenaType = false)
         {
-            if (_dataColReader.dataReader != null)
+            if (_dataColReader._dataReader != null)
             {
-                var rdr = _dataColReader.dataReader;
+                var rdr = _dataColReader._dataReader;
                 for (int j = 0; j < ColumnCount; j++)
                 {
                     var tempType = rdr.GetFieldType(j);
@@ -58,14 +58,14 @@ namespace SpreadSheetTasks
                     {
                         typesArray[j] = 1;
                     }
-                    else if (tempType == typeof(System.DateTime) && _dataColReader.DatabaseTypes[j].EndsWith("Date", StringComparison.OrdinalIgnoreCase))
+                    else if (tempType == typeof(System.DateTime) && _dataColReader._databaseTypes[j].EndsWith("Date", StringComparison.OrdinalIgnoreCase))
                     {
                         typesArray[j] = 2;
                     }
                     else if (tempType == typeof(System.DateTime)
-                        && (_dataColReader.DatabaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) ||
-                        _dataColReader.DatabaseTypes[j].EndsWith("DateTime", StringComparison.OrdinalIgnoreCase) ||
-                         _dataColReader.DatabaseTypes[j].EndsWith("abstime", StringComparison.OrdinalIgnoreCase)
+                        && (_dataColReader._databaseTypes[j].Equals("timestamp", StringComparison.OrdinalIgnoreCase) ||
+                        _dataColReader._databaseTypes[j].EndsWith("DateTime", StringComparison.OrdinalIgnoreCase) ||
+                         _dataColReader._databaseTypes[j].EndsWith("abstime", StringComparison.OrdinalIgnoreCase)
                         ))
                     {
                         typesArray[j] = 3;
@@ -133,19 +133,19 @@ namespace SpreadSheetTasks
                     {
                         typesArray[j] = 4;
                     }
-                    else if (_stringTypes.Contains(_dataColReader.GetValue(j).GetType()) || _stringDb.Contains(_dataColReader.DatabaseTypes[j]))
+                    else if (_stringTypes.Contains(_dataColReader.GetValue(j).GetType()) || _stringDb.Contains(_dataColReader._databaseTypes[j]))
                     {
                         typesArray[j] = 0;
                     }
-                    else if (_numberTypes.Contains(_dataColReader.GetValue(j).GetType()) || _DbNumbers.Contains(_dataColReader.DatabaseTypes[j]))
+                    else if (_numberTypes.Contains(_dataColReader.GetValue(j).GetType()) || _DbNumbers.Contains(_dataColReader._databaseTypes[j]))
                     {
                         typesArray[j] = 1;
                     }
-                    else if (_dataColReader.DatabaseTypes[j].Equals("Date", StringComparison.OrdinalIgnoreCase))
+                    else if (_dataColReader._databaseTypes[j].Equals("Date", StringComparison.OrdinalIgnoreCase))
                     {
                         typesArray[j] = 2;
                     }
-                    else if (_dataColReader.GetValue(j).GetType() == typeof(System.DateTime) || _dataColReader.DatabaseTypes[j] == "timestamp" || _dataColReader.DatabaseTypes[j] == "DateTime" /*|| kolekcjaDanych.typyBazy[j] == "TimeSpan"*/)
+                    else if (_dataColReader.GetValue(j).GetType() == typeof(System.DateTime) || _dataColReader._databaseTypes[j] == "timestamp" || _dataColReader._databaseTypes[j] == "DateTime" /*|| kolekcjaDanych.typyBazy[j] == "TimeSpan"*/)
                     {
                         typesArray[j] = 3;
                     }
@@ -175,17 +175,17 @@ namespace SpreadSheetTasks
         internal int _sstCntAll = 0;
         internal int sheetCnt = -1;
         internal DataColReader _dataColReader;
-        internal bool areHeaders = false;
-        internal Dictionary<string, int> _sstDic = new Dictionary<string, int>();
+        internal bool _areHeaders = false;
+        internal Dictionary<string, int> _sstDic = [];
 
-        internal double[] colWidesArray;
-        internal int[] typesArray;
-        internal TypeCode[] newTypes;
+        internal double[] _colWidesArray;
+        internal int[]? typesArray;
+        internal TypeCode[] _newTypes;
 
         protected int _rowsCount;
         public int RowsCount { get => _rowsCount; }
 
-        protected bool autofilterIsOn = false;
+        protected bool _autofilterIsOn = false;
 
         internal abstract void FinalizeFile();
         public abstract void AddSheet(string sheetName, bool hidden = false);
@@ -215,12 +215,12 @@ namespace SpreadSheetTasks
             }
         }
 
-        public event Action OnCompress;
+        public event Action? OnCompress;
         internal void DoOnCompress()
         {
             OnCompress?.Invoke();
         }
-        public event Action<int> On10k;
+        public event Action<int>? On10k;
         internal void DoOn10k(int arg)
         {
             On10k?.Invoke(arg);
@@ -244,9 +244,9 @@ namespace SpreadSheetTasks
                     {
                         lenn = arr[l - 1].ToString().Length;
                     }
-                    if (colWidesArray[l - 1] < 1.25 * lenn + 2)
+                    if (_colWidesArray[l - 1] < 1.25 * lenn + 2)
                     {
-                        colWidesArray[l - 1] = 1.25 * lenn + 2;
+                        _colWidesArray[l - 1] = 1.25 * lenn + 2;
                     }
                 }
             }

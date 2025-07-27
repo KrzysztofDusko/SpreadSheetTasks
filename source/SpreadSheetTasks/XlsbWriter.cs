@@ -11,11 +11,11 @@ namespace SpreadSheetTasks
 {
     public sealed class XlsbWriter : ExcelWriter, IDisposable
     {
-        private readonly static byte[] generalStyle = { 0, 0, 0, 0 }; //number of style
-        private readonly static byte[] autoFilterStartBytes = { 0xA1, 0x01, 0x10 };
-        private readonly static byte[] autoFilterEndBytes = { 0xA2, 0x01, 0x00 };
-        private readonly static byte[] sheet1Bytes =
-        {
+        private readonly static byte[] _generalStyle = [0, 0, 0, 0]; //number of style
+        private readonly static byte[] _autoFilterStartBytes = [0xA1, 0x01, 0x10];
+        private readonly static byte[] _autoFilterEndBytes = [0xA2, 0x01, 0x00];
+        private readonly static byte[] _sheet1Bytes =
+        [
             //sheet1Bytes[0..84]
             0x81,0x01,0x00,0x93,0x01,0x17,0xCB,0x04, //0 ..7
             0x02,0x00,0x40,0x00,0x00,0x00,0x00,0x00, //8 ..15
@@ -72,18 +72,18 @@ namespace SpreadSheetTasks
             0x80,0x18,0x10,0x00,0x00,0x00,0x00,0x01,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x26,0x00,0x82,0x01,0x00
-        };
+        ];
 
-        private readonly static byte[] stickHeaderA1bytes =
-        {
+        private readonly static byte[] _stickHeaderA1bytes =
+        [
             0x97,0x01,0x1D,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0xF0,0x3F,0x01,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x03,
-        };
+        ];
 
-        private readonly static byte[] stylesBin =
-        {
+        private readonly static byte[] _stylesBin =
+        [
             0x96,0x02,0x00,0xE7,0x04,0x04,0x02,
             0x00,0x00,0x00,0x2C,0x2C,0xA4,0x00,0x13,
             0x00,0x00,0x00,0x79,0x00,0x79,0x00,0x79,
@@ -150,10 +150,10 @@ namespace SpreadSheetTasks
             0x00,0xB2,0x10,0x32,0x00,0x00,0x00,0x00,0x15,0x00,0x00,0x00,0x54,0x00,0x69,0x00,0x6D,0x00,0x65,0x00,0x53,0x00,0x6C,
             0x00,0x69,0x00,0x63,0x00,0x65,0x00,0x72,0x00,0x53,0x00,0x74,0x00,0x79,0x00,0x6C,0x00,0x65,0x00,0x4C,0x00,0x69,0x00,
             0x67,0x00,0x68,0x00,0x74,0x00,0x31,0x00,0xB3,0x10,0x00,0xB1,0x10,0x00,0x24,0x00,0x97,0x02,0x00
-        };
+        ];
 
-        private readonly static byte[] workbookBinStart =
-        {
+        private readonly static byte[] _workbookBinStart =
+        [
             0x83,0x01,0x00,0x80,0x01,0x32,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x00,0x00,0x00,0x78,0x00,0x6C,0x00,0x01,0x00,0x00,0x00,
             0x37,0x00,0x01,0x00,0x00,0x00,0x36,0x00,0x05,0x00,0x00,0x00,0x32,0x00,0x34,0x00,0x33,0x00,0x32,0x00,0x36,0x00,0x99,0x01,0x0C,0x20,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x25,0x06,0x01,0x00,0x03,0x0F,0x00,0x80,0x97,0x10,0x34,0x18,0x00,0x00,0x00,0x43,0x00,0x3A,0x00,0x5C,0x00,0x73,0x00,0x71,0x00,0x6C,0x00,0x73,0x00,0x5C,0x00,
@@ -166,36 +166,35 @@ namespace SpreadSheetTasks
             0x00,0x00,0x00,0x00,0x26,0x00,0x9E,0x01,0x1D,0x00,0x00,0x00,0x00,0x9E,0x16,0x00,0x00,0xB4,0x69,0x00,0x00,0xE8,0x26,0x00,0x00,0x58,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
             0x00,0x00,0x00,0x78,0x88,0x01,0x00,
             0x8F,0x01,0x00
-        };
+        ];
 
-        private readonly static byte[] workbookBinMiddle =
-        {
+        private readonly static byte[] _workbookBinMiddle =
+        [
             0x90,0x01,0x00
-        };
+        ];
 
-
-        private readonly static byte[] workbookBinEnd =
-        {
+        private readonly static byte[] _workbookBinEnd =
+        [
             0x9D,0x01,0x1A,0x35,0xEA,0x02,0x00,0x01,0x00,0x00,0x00,0x64,0x00,0x00,0x00,0xFC,0xA9,0xF1,0xD2,0x4D,0x62,0x50,0x3F,0x01,
             0x00,0x00,0x00,0x6A,0x00,0x9B,0x01,0x01,0x00,0x23,0x04,0x03,0x0F,0x00,0x00,0xAB,0x10,0x01,0x01,0x24,0x00,0x84,0x01,0x00
-        };
+        ];
 
-        private readonly static byte[] binaryIndexBin =
-        {
+        private readonly static byte[] _binaryIndexBin =
+        [
             0x2A,0x18,0x00,0x00,0x00,0x00,0x20,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x95,
             0x02,0x00
-        };
+        ];
 
-        private BufferedStream stream;
+        private BufferedStream _stream;
 
-        private int ColumnCount;
-        private uint startCol;
-        private uint endCol;
-        private byte[] colA;
-        private byte[] colZ;
+        private int _columnCount;
+        private uint _startCol;
+        private uint _endCol;
+        private byte[] _colA;
+        private byte[] _colZ;
 
-        private const int rRkIntegerLowerLimit = -1 << 29;
-        private const int rRkIntegerUpperLimit = (1 << 29) - 1;
+        private const int _rRkIntegerLowerLimit = -1 << 29;
+        private const int _rRkIntegerUpperLimit = (1 << 29) - 1;
 
         private readonly CompressionLevel _compressionLevel = CompressionLevel.Fastest;
         public XlsbWriter(string path, CompressionLevel compressionLevel = CompressionLevel.Fastest) 
@@ -220,7 +219,6 @@ namespace SpreadSheetTasks
             }
         }
 
-
         public override void AddSheet(string sheetName, bool hidden = false)
         {
             sheetCnt++;
@@ -242,26 +240,26 @@ namespace SpreadSheetTasks
         {
             if (doAutofilter)
             {
-                autofilterIsOn = true;
+                _autofilterIsOn = true;
                 _filteredDict ??= new();
             }
-            this.areHeaders = headers;
+            this._areHeaders = headers;
             _dataColReader = new DataColReader(dataReader, headers, overLimit);
 
             int rowNum = 0;
-            ColumnCount = _dataColReader.FieldCount;
+            _columnCount = _dataColReader.FieldCount;
 
-            startCol = (uint)startingColumn;
-            endCol = (uint)(startCol + ColumnCount);
+            _startCol = (uint)startingColumn;
+            _endCol = (uint)(_startCol + _columnCount);
 
-            colWidesArray = new double[ColumnCount];
-            Array.Fill<double>(colWidesArray, -1.0);
+            _colWidesArray = new double[_columnCount];
+            Array.Fill<double>(_colWidesArray, -1.0);
 
-            typesArray = new int[ColumnCount];
-            newTypes = new TypeCode[ColumnCount];
+            typesArray = new int[_columnCount];
+            _newTypes = new TypeCode[_columnCount];
 
-            var rdr = _dataColReader.dataReader;
-            for (int l = 1; l <= ColumnCount; l++)
+            var rdr = _dataColReader._dataReader;
+            for (int l = 1; l <= _columnCount; l++)
             {
                 int lenn = rdr.GetName(l - 1).Length + (doAutofilter?2:0);
                 double tempWidth = 1.25 * lenn + 2;
@@ -269,9 +267,9 @@ namespace SpreadSheetTasks
                 {
                     tempWidth = _MAX_WIDTH;
                 }
-                if (colWidesArray[l - 1] < tempWidth)
+                if (_colWidesArray[l - 1] < tempWidth)
                 {
-                    colWidesArray[l - 1] = tempWidth;
+                    _colWidesArray[l - 1] = tempWidth;
                 }
             }
 
@@ -301,35 +299,35 @@ namespace SpreadSheetTasks
 
                 _dataColReader.top100.Add(arr);
                 nr++;
-                SetColsLengtth(ColumnCount, arr);
+                SetColsLengtth(_columnCount, arr);
             }
             areNextRows = rdr.Read();
             _dataColReader.AreNextRows = areNextRows;
 
             if (sheetCnt != 1)
             {
-                sheet1Bytes[54] = 0x9C; // only first is selected
+                _sheet1Bytes[54] = 0x9C; // only first is selected
             }
             var newEntry = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt - 1].pathInArchive, _compressionLevel);
-            stream = new BufferedStream(newEntry.Open());
+            _stream = new BufferedStream(newEntry.Open());
             try
             {
                 InitSheet(doAutofilter); //lock first row
                 while (_dataColReader.Read())
                 {
-                    if (rowNum == 0 || areHeaders && rowNum == 1)
+                    if (rowNum == 0 || _areHeaders && rowNum == 1)
                     {
-                        if (rowNum == 0 && areHeaders)
+                        if (rowNum == 0 && _areHeaders)
                         {
-                            for (int i = 0; i < ColumnCount; i++)
+                            for (int i = 0; i < _columnCount; i++)
                             {
                                 typesArray[i] = 0;
-                                newTypes[i] = TypeCode.String;
+                                _newTypes[i] = TypeCode.String;
                             }
                         }
                         else
                         {
-                            ExcelWriter.SetTypes(_dataColReader, typesArray, newTypes, ColumnCount, detectBoolenaType: true);
+                            ExcelWriter.SetTypes(_dataColReader, typesArray, _newTypes, _columnCount, detectBoolenaType: true);
                         }
                     }
 
@@ -344,31 +342,31 @@ namespace SpreadSheetTasks
                 }
                 _rowsCount = rowNum - 1;
                 
-                stream.Write(sheet1Bytes[218..290].AsSpan());
+                _stream.Write(_sheet1Bytes[218..290].AsSpan());
 
                 if (doAutofilter)
                 {
                     Span<byte> buff = stackalloc byte[8];
-                    stream.Write(autoFilterStartBytes);
+                    _stream.Write(_autoFilterStartBytes);
                     Int32ToSpecificBuffer(buff, startingRow, 0);
                     Int32ToSpecificBuffer(buff, startingRow + _rowsCount, 4);
-                    stream.Write(buff);
+                    _stream.Write(buff);
                     Int32ToSpecificBuffer(buff, startingColumn, 0);
-                    Int32ToSpecificBuffer(buff, startingColumn + ColumnCount - 1, 4);
-                    stream.Write(buff);
-                    stream.Write(autoFilterEndBytes);
+                    Int32ToSpecificBuffer(buff, startingColumn + _columnCount - 1, 4);
+                    _stream.Write(buff);
+                    _stream.Write(_autoFilterEndBytes);
 
                    _filteredDict.Add(new FilterData()
                     {
                        SheetIndex = (byte)(_sheetList.Count - 1),
                         StartColumn = startingColumn,
-                        EndColumn = startingColumn + ColumnCount - 1,
+                        EndColumn = startingColumn + _columnCount - 1,
                         StartRow = startingRow,
                         EndRow = startingRow + _rowsCount,
                     });
                 }
 
-                stream.Write(sheet1Bytes[290..].AsSpan());
+                _stream.Write(_sheet1Bytes[290..].AsSpan());
 
                 //stream.Write(new byte[] 
                 //{ 
@@ -386,19 +384,19 @@ namespace SpreadSheetTasks
             }
             finally
             {
-                stream.Dispose();
+                _stream.Dispose();
             }
             //throw new NotImplementedException();
         }
 
         private void WriteRow(bool boldedStyle)
         {
-            for (int column = 0; column < ColumnCount; column++)
+            for (int column = 0; column < _columnCount; column++)
             {
                 if (_dataColReader.IsDBNull(column))
                     continue;
 
-                if (newTypes[column] == TypeCode.String) // string
+                if (_newTypes[column] == TypeCode.String) // string
                 {
                     string stringValue = _dataColReader.GetString(column);
                     WriteString(stringValue, column, boldedStyle);
@@ -408,19 +406,19 @@ namespace SpreadSheetTasks
                     var stringValue = Encoding.UTF8.GetString(((Memory<byte>)(_dataColReader.GetValue(column))).Span);
                     WriteString(stringValue, column, boldedStyle);
                 }
-                else if(newTypes[column] == TypeCode.Object)
+                else if(_newTypes[column] == TypeCode.Object)
                 {
                     string stringValue = _dataColReader.GetValue(column).ToString();
                     WriteString(stringValue, column);
                 }
-                else if (newTypes[column] == TypeCode.Boolean) // bool
+                else if (_newTypes[column] == TypeCode.Boolean) // bool
                 {
                     WriteBool(_dataColReader.GetBoolean(column), column);
                 }
                 else if (typesArray[column] == 1)//number
                 {
 
-                    switch (newTypes[column])
+                    switch (_newTypes[column])
                     {
                         case TypeCode.Byte:
                             byte byteValue = _dataColReader.GetByte(column);
@@ -437,7 +435,7 @@ namespace SpreadSheetTasks
                         case TypeCode.Int32:
 
                             Int32 int32Value = _dataColReader.GetInt32(column);
-                            if (int32Value >= rRkIntegerLowerLimit && int32Value <= rRkIntegerUpperLimit)
+                            if (int32Value >= _rRkIntegerLowerLimit && int32Value <= _rRkIntegerUpperLimit)
                             {
                                 WriteRkNumberInteger(int32Value, column);
                             }
@@ -488,10 +486,10 @@ namespace SpreadSheetTasks
         {
             if (sheetCnt != 1)
             {
-                sheet1Bytes[54] = 156; // only first is selected
+                _sheet1Bytes[54] = 156; // only first is selected
             }
             var newEntry = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt - 1].pathInArchive, _compressionLevel);
-            stream = new BufferedStream(newEntry.Open());
+            _stream = new BufferedStream(newEntry.Open());
             try
             {
                 InitSheet(false);
@@ -502,11 +500,11 @@ namespace SpreadSheetTasks
                     WriteString(txt, 0);
                 }
 
-                stream.Write(sheet1Bytes, 218, sheet1Bytes.Length - 218); // całkowity koniec
+                _stream.Write(_sheet1Bytes, 218, _sheet1Bytes.Length - 218); // całkowity koniec
             }
             finally
             {
-                stream.Dispose();
+                _stream.Dispose();
             }
         }
 
@@ -519,59 +517,59 @@ namespace SpreadSheetTasks
         private void WriteColsWidth()
         {
             //widths !!!
-            stream.WriteByte(134);
-            stream.WriteByte(3);
+            _stream.WriteByte(134);
+            _stream.WriteByte(3);
             int l = 0;
-            for (uint i = startCol; i < endCol; i++)
+            for (uint i = _startCol; i < _endCol; i++)
             {
                 // start of column definition   
-                stream.WriteByte(0);
-                stream.WriteByte(60);
-                stream.WriteByte(18);
+                _stream.WriteByte(0);
+                _stream.WriteByte(60);
+                _stream.WriteByte(18);
                 //column min
-                stream.Write(BitConverter.GetBytes(i));
+                _stream.Write(BitConverter.GetBytes(i));
                 // column max
-                stream.Write(BitConverter.GetBytes(i));
+                _stream.Write(BitConverter.GetBytes(i));
                 //width
-                stream.WriteByte(0);
-                stream.WriteByte((byte)(colWidesArray[l])); // .. x 7 = pixels
-                stream.WriteByte(0);
-                stream.WriteByte(0);
+                _stream.WriteByte(0);
+                _stream.WriteByte((byte)(_colWidesArray[l])); // .. x 7 = pixels
+                _stream.WriteByte(0);
+                _stream.WriteByte(0);
 
-                stream.WriteByte(0);
-                stream.WriteByte(0);
-                stream.WriteByte(0);
-                stream.WriteByte(0);
-                stream.WriteByte(2); // column properties /hidden etc, 2 = normal
+                _stream.WriteByte(0);
+                _stream.WriteByte(0);
+                _stream.WriteByte(0);
+                _stream.WriteByte(0);
+                _stream.WriteByte(2); // column properties /hidden etc, 2 = normal
                 // end of column definition   
                 l++;
             }
-            stream.WriteByte(0);
-            stream.WriteByte(135);
-            stream.WriteByte(3);
-            stream.WriteByte(0);
+            _stream.WriteByte(0);
+            _stream.WriteByte(135);
+            _stream.WriteByte(3);
+            _stream.WriteByte(0);
         }
 
         private void InitSheet(bool doAutofiler)
         {
-            colA = BitConverter.GetBytes(startCol); // start col
-            colZ = BitConverter.GetBytes(endCol); // end col
+            _colA = BitConverter.GetBytes(_startCol); // start col
+            _colZ = BitConverter.GetBytes(_endCol); // end col
 
-            colA.CopyTo(sheet1Bytes, 40);
-            colZ.CopyTo(sheet1Bytes, 44);
+            _colA.CopyTo(_sheet1Bytes, 40);
+            _colZ.CopyTo(_sheet1Bytes, 44);
 
-            stream.Write(sheet1Bytes.AsSpan()[0..84]); // start of file
+            _stream.Write(_sheet1Bytes.AsSpan()[0..84]); // start of file
             if (doAutofiler)
             {
-                stream.Write(stickHeaderA1bytes);
+                _stream.Write(_stickHeaderA1bytes);
             }
 
-            stream.Write(sheet1Bytes.AsSpan()[84..159]); // start of file
+            _stream.Write(_sheet1Bytes.AsSpan()[84..159]); // start of file
 
             WriteColsWidth();
-            stream.Write(sheet1Bytes, 159, 175 - 159); // BrtACBegin
-            stream.WriteByte(38); // pos. 175 ?
-            stream.WriteByte(0); // pos. 176 // BrtACEnd
+            _stream.Write(_sheet1Bytes, 159, 175 - 159); // BrtACBegin
+            _stream.WriteByte(38); // pos. 175 ?
+            _stream.WriteByte(0); // pos. 176 // BrtACEnd
         }
 
         //private readonly static byte[] rowNeededBytes = { 0, 0, 0, 0, 44, 1, 0, 0, 0, 1, 0, 0, 0 };
@@ -584,10 +582,10 @@ namespace SpreadSheetTasks
             buff[10] = 44;
             buff[11] = 1;
             buff[15] = 1;
-            BitConverter.TryWriteBytes(buff[(6 + 13)..], (int)startCol);
-            BitConverter.TryWriteBytes(buff[(6 + 13 + 4)..], (int)endCol);
+            BitConverter.TryWriteBytes(buff[(6 + 13)..], (int)_startCol);
+            BitConverter.TryWriteBytes(buff[(6 + 13 + 4)..], (int)_endCol);
             
-            stream.Write(buff);// 6 + 13 + 4 + 4 = 27
+            _stream.Write(buff);// 6 + 13 + 4 + 4 = 27
         }
 
         private void WriteDouble(double val, int colNum/*, int offset = 0*/, byte styleNum = 0)
@@ -601,7 +599,7 @@ namespace SpreadSheetTasks
             //_buffer[8] = 0;
             //_buffer[9] = 0;
             BitConverter.TryWriteBytes(buff[10..], val);
-            stream.Write(buff);
+            _stream.Write(buff);
         }
 
         private void WriteBool(bool val, int colNum)
@@ -614,7 +612,7 @@ namespace SpreadSheetTasks
             //generalStyle.CopyTo(_buffer, 6); generalStyle = [0,0,0,0]
             buff[10] = (byte)(val ? 1 : 0); // 0 = false, 1 = true
             //buff[11] = 1;
-            stream.Write(buff);
+            _stream.Write(buff);
         }
 
         private void WriteRkNumberInteger(int val, int colNum/*, int offset = 0*/, byte styleNum = 0)
@@ -632,7 +630,7 @@ namespace SpreadSheetTasks
             val |= 0b00000010; // = integer flag
 
             BitConverter.TryWriteBytes(buff[10..], val);
-            stream.Write(buff);
+            _stream.Write(buff);
         }
 
         // 
@@ -693,7 +691,7 @@ namespace SpreadSheetTasks
                 buff[8] = 0;
                 buff[9] = 0;
                 RkNumberGeneralWrite(buff[10..],d1);
-                stream.Write(buff);
+                _stream.Write(buff);
             }
         }
 
@@ -709,7 +707,7 @@ namespace SpreadSheetTasks
 
 
             BitConverter.TryWriteBytes(buff[10..], (int)val);
-            stream.Write(buff);
+            _stream.Write(buff);
         }
 
         internal override void FinalizeFile()
@@ -719,14 +717,14 @@ namespace SpreadSheetTasks
             using (var str = newEntry.Open())
             {
                 using var sw = new BinaryWriter(str);
-                sw.Write(stylesBin);
+                sw.Write(_stylesBin);
             }
 
             newEntry = _excelArchiveFile.CreateEntry(@"xl/workbook.bin", _compressionLevel);
             using (var str = newEntry.Open())
             {
                 using var sw = new BinaryWriter(str);
-                sw.Write(workbookBinStart);
+                sw.Write(_workbookBinStart);
 
                 for (int i = 0; i < _sheetList.Count; i++)
                 {
@@ -760,10 +758,10 @@ namespace SpreadSheetTasks
                 }
 
 
-                sw.Write(workbookBinMiddle);
+                sw.Write(_workbookBinMiddle);
                 WriteFilterDefinedNames(sw);
 
-                sw.Write(workbookBinEnd);
+                sw.Write(_workbookBinEnd);
             }
 
             for (int i = 0; i < _sheetList.Count; i++)
@@ -772,7 +770,7 @@ namespace SpreadSheetTasks
                 newEntry = _excelArchiveFile.CreateEntry($@"xl/worksheets/binaryIndex{sheetId}.bin", _compressionLevel);
                 using var str = newEntry.Open();
                 using var sw = new BinaryWriter(str);
-                sw.Write(binaryIndexBin);
+                sw.Write(_binaryIndexBin);
             }
 
             newEntry = _excelArchiveFile.CreateEntry(@"[Content_Types].xml", _compressionLevel);
@@ -894,7 +892,8 @@ namespace SpreadSheetTasks
 
         }
 
-        private static readonly byte[] magicFilterExcel2016Fix1 = [
+        private static readonly byte[] _magicFilterExcel2016Fix0 = [0xE1, 0x02, 0x00, 0xE5, 0x02, 0x00, 0xEA, 0x02];
+        private static readonly byte[] _magicFilterExcel2016Fix1 = [
             0x27,
             0x46,
             0x21,
@@ -948,15 +947,15 @@ namespace SpreadSheetTasks
             255,//->(byte)sheetNum,
             0x00
         ];
-        private static readonly byte[] magicFilterExcel2016Fix2 = [0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF];
-        private static readonly byte[] magicFilterExcel2016Fix0 = [0xE1, 0x02, 0x00, 0xE5, 0x02, 0x00, 0xEA, 0x02];
+        private static readonly byte[] _magicFilterExcel2016Fix2 = [0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF];
+        
         private void WriteFilterDefinedNames(BinaryWriter sw)
         {
             int? filteredDictIntemsCnt = _filteredDict?.Count;
             //temportary fix for https://github.com/KrzysztofDusko/SpreadSheetTasks/issues/2
-            if (autofilterIsOn && filteredDictIntemsCnt >= 0 && (0x80 + (filteredDictIntemsCnt - 21) * 0x0c) <= Byte.MaxValue)
+            if (_autofilterIsOn && filteredDictIntemsCnt >= 0 && (0x80 + (filteredDictIntemsCnt - 21) * 0x0c) <= Byte.MaxValue)
             {
-                sw.Write(magicFilterExcel2016Fix0);
+                sw.Write(_magicFilterExcel2016Fix0);
                 if (filteredDictIntemsCnt <= 10)
                 {
                     sw.Write([(byte)(0x10 + (filteredDictIntemsCnt - 1) * 0x0c), (byte)filteredDictIntemsCnt]);// !!! ? for cnt <=10
@@ -989,16 +988,16 @@ namespace SpreadSheetTasks
                     int startRow = _filteredDict[sheetNum].StartRow;
                     int endRow = _filteredDict[sheetNum].EndRow;
                     byte sheetIndex = _filteredDict[sheetNum].SheetIndex;
-                    magicFilterExcel2016Fix1[7] = (byte)sheetIndex;
-                    magicFilterExcel2016Fix1[^2] = (byte)sheetNum;
+                    _magicFilterExcel2016Fix1[7] = (byte)sheetIndex;
+                    _magicFilterExcel2016Fix1[^2] = (byte)sheetNum;
 
 
-                    sw.Write(magicFilterExcel2016Fix1);
+                    sw.Write(_magicFilterExcel2016Fix1);
                     sw.Write(BitConverter.GetBytes(startRow));
                     sw.Write(BitConverter.GetBytes(endRow));
                     sw.Write(BitConverter.GetBytes((Int16)startColumn));
                     sw.Write(BitConverter.GetBytes((Int16)endColumn));
-                    sw.Write(magicFilterExcel2016Fix2);
+                    sw.Write(_magicFilterExcel2016Fix2);
                 }
             }
         }

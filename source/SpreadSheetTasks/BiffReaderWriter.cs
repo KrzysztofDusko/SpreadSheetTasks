@@ -8,35 +8,35 @@ namespace SpreadSheetTasks
     internal sealed class BiffReaderWriter : IDisposable
     {
         //private const int WorkbookPr = 0x99;
-        private const int Sheet = 0x9C; // 156
+        private const int _sheet = 0x9C; // 156
 
-        private const int Xf = 0x2f;
+        private const int _xf = 0x2f;
 
-        private const int CellXfStart = 0x269;
-        private const int CellXfEnd = 0x26a;
+        private const int _cellXfStart = 0x269;
+        private const int _cellXfEnd = 0x26a;
 
-        private const int CellStyleXfStart = 0x272;
-        private const int CellStyleXfEnd = 0x273;
+        private const int _cellStyleXfStart = 0x272;
+        private const int _cellStyleXfEnd = 0x273;
 
-        private const int NumberFormatStart = 0x267;
-        private const int NumberFormat = 0x2c;
-        private const int NumberFormatEnd = 0x268;
+        private const int _numberFormatStart = 0x267;
+        private const int _numberFormat = 0x2c;
+        private const int _numberFormatEnd = 0x268;
 
-        private const int SharedStringStart = 159;
-        private const int StringItem = 0x13; //19
+        private const int _sharedStringStart = 159;
+        private const int _stringItem = 0x13; //19
 
-        private const uint Row = 0x00;
-        private const uint Blank = 0x01;
-        private const uint Number = 0x02; // BrtCellRk
-        private const uint BoolError = 0x03;
-        private const uint Bool = 0x04;
-        private const uint Float = 0x05;
-        private const uint String = 0x06;
-        private const uint SharedString = 0x07;
-        private const uint FormulaString = 0x08;
-        private const uint FormulaNumber = 0x09;
-        private const uint FormulaBool = 0x0a;
-        private const uint FormulaError = 0x0b;
+        private const uint _row = 0x00;
+        private const uint _blank = 0x01;
+        private const uint _number = 0x02; // BrtCellRk
+        private const uint _boolError = 0x03;
+        private const uint _bool = 0x04;
+        private const uint _float = 0x05;
+        private const uint _string = 0x06;
+        private const uint _sharedString = 0x07;
+        private const uint _formulaString = 0x08;
+        private const uint _formulaNumber = 0x09;
+        private const uint _formulaBool = 0x0a;
+        private const uint _formulaError = 0x0b;
 
         // private const uint WorksheetBegin = 0x81;
         // private const uint WorksheetEnd = 0x82;
@@ -96,10 +96,10 @@ namespace SpreadSheetTasks
             VeryHidden = 0x2
         }
 
-        internal uint workbookId;
-        internal string recId;
-        internal string workbookName;
-        internal bool isSheet;
+        internal uint _workbookId;
+        internal string _recId;
+        internal string _workbookName;
+        internal bool _isSheet;
 
         internal bool ReadWorkbook()
         {
@@ -110,18 +110,18 @@ namespace SpreadSheetTasks
             if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
                 return false;
 
-            isSheet = false;
-            if (recordId == Sheet)
+            _isSheet = false;
+            if (recordId == _sheet)
             {
-                workbookId = GetDWord(buffer, 4);
+                _workbookId = GetDWord(buffer, 4);
 
                 uint offset = 8;
-                recId = GetNullableString(buffer, ref offset);
+                _recId = GetNullableString(buffer, ref offset);
 
                 // Must be between 1 and 31 characters
                 uint nameLength = GetDWord(buffer, offset);
-                workbookName = GetString(buffer, offset + 4, nameLength);
-                isSheet = true;
+                _workbookName = GetString(buffer, offset + 4, nameLength);
+                _isSheet = true;
             }
             return true;
         }
@@ -130,12 +130,12 @@ namespace SpreadSheetTasks
         internal bool _inCellStyleXf;
         internal bool _inNumberFormat;
 
-        internal ushort ParentCellStyleXf;
-        internal ushort NumberFormatIndex;
+        internal ushort _parentCellStyleXf;
+        internal ushort _numberFormatIndex;
         //public ushort FontIndex;
 
-        internal int format;
-        internal string formatString;
+        internal int _format;
+        internal string _formatString;
 
         public bool ReadStyles()
         {
@@ -150,41 +150,41 @@ namespace SpreadSheetTasks
 
             switch (recordId)
             {
-                case CellXfStart:
+                case _cellXfStart:
                     _inCellXf = true;
                     break;
-                case CellXfEnd:
+                case _cellXfEnd:
                     _inCellXf = false;
                     break;
-                case CellStyleXfStart:
+                case _cellStyleXfStart:
                     _inCellStyleXf = true;
                     break;
-                case CellStyleXfEnd:
+                case _cellStyleXfEnd:
                     _inCellStyleXf = false;
                     break;
-                case NumberFormatStart:
+                case _numberFormatStart:
                     _inNumberFormat = true;
                     break;
-                case NumberFormatEnd:
+                case _numberFormatEnd:
                     _inNumberFormat = false;
                     break;
 
-                case Xf when _inCellStyleXf:
+                case _xf when _inCellStyleXf:
                     break;
-                case Xf when _inCellXf:
+                case _xf when _inCellXf:
                     {
-                        ParentCellStyleXf = GetWord(buffer, 0);
-                        NumberFormatIndex = GetWord(buffer, 2);
+                        _parentCellStyleXf = GetWord(buffer, 0);
+                        _numberFormatIndex = GetWord(buffer, 2);
                         //var FontIndex = GetWord(buffer, 4);
                         break;
                     }
 
-                case NumberFormat when _inNumberFormat:
+                case _numberFormat when _inNumberFormat:
                     {
                         // Must be between 1 and 255 characters
-                        format = GetWord(buffer, 0);
+                        _format = GetWord(buffer, 0);
                         uint length = GetDWord(buffer, 2);
-                        formatString = GetString(buffer, 2 + 4, length);
+                        _formatString = GetString(buffer, 2 + 4, length);
 
                         break;
                     }
@@ -194,8 +194,8 @@ namespace SpreadSheetTasks
 
         }
 
-        internal string sharedStringValue;
-        internal uint sharedStringUniqueCount = 0;
+        internal string? _sharedStringValue;
+        internal uint _sharedStringUniqueCount = 0;
         public bool ReadSharedStrings()
         {
             if (!TryReadVariableValue(out var recordId) ||
@@ -217,36 +217,36 @@ namespace SpreadSheetTasks
                 }
             } while (readed < recordLength);
 
-            if (recordId == StringItem)
+            if (recordId == _stringItem)
             {
                 uint length = GetDWord(buffer, 1);
-                sharedStringValue = GetString(buffer, 1 + 4, length);
+                _sharedStringValue = GetString(buffer, 1 + 4, length);
             }
-            else if (recordId == SharedStringStart)
+            else if (recordId == _sharedStringStart)
             {
-                sharedStringUniqueCount = GetDWord(buffer, 4);
-                sharedStringValue = null;
+                _sharedStringUniqueCount = GetDWord(buffer, 4);
+                _sharedStringValue = null;
             }
             else
             {
-                sharedStringValue = null;
+                _sharedStringValue = null;
             }
 
             return true;
         }
 
         //public object cellValue;
-        internal CellType cellType;
-        internal int intValue;
-        internal double doubleVal;
-        internal bool boolValue;
-        internal string stringValue;
+        internal CellType _cellType;
+        internal int _intValue;
+        internal double _doubleVal;
+        internal bool _boolValue;
+        internal string _stringValue;
 
-        internal int columnNum = -1;
-        internal uint xfIndex;
+        internal int _columnNum = -1;
+        internal uint _xfIndex;
         //public bool isSharedStringVal = false;
-        internal bool readCell = false;
-        internal int rowIndex = -1;
+        internal bool _readCell = false;
+        internal int _rowIndex = -1;
 
         internal bool ReadWorksheet()
         {
@@ -258,8 +258,8 @@ namespace SpreadSheetTasks
             if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
                 return false;
 
-            readCell = false;
-            columnNum = -1;
+            _readCell = false;
+            _columnNum = -1;
             //isSharedStringVal = false;
 
             switch (recordId)
@@ -357,9 +357,9 @@ namespace SpreadSheetTasks
                 //int fromColumn = GetInt32(buffer, 8);
                 //int toColumn = GetInt32(buffer, 12);
                 //break;
-                case Row: // BrtRowHdr 0 = 0x0000
+                case _row: // BrtRowHdr 0 = 0x0000
                     {
-                        rowIndex = GetInt32(buffer, 0);
+                        _rowIndex = GetInt32(buffer, 0);
                         //    byte flags = buffer[11];
                         //    bool hidden = (flags & 0b10000) != 0;
                         //    bool unsynced = (flags & 0b100000) != 0;
@@ -376,63 +376,63 @@ namespace SpreadSheetTasks
                 //cellValue = null; 
                 //readCell = true;
                 //break;
-                case Blank: //BrtCellBlank (1 = 0x0001)
-                case BoolError:
-                case FormulaError: // BrtFmlaError (11 = 0x000B)
+                case _blank: //BrtCellBlank (1 = 0x0001)
+                case _boolError:
+                case _formulaError: // BrtFmlaError (11 = 0x000B)
                     //return ReadCell(null, (CellError)buffer[8]);
                     //cellValue = null;
-                    readCell = true;
-                    cellType = CellType.nullValue;
+                    _readCell = true;
+                    _cellType = CellType.nullValue;
                     break;
-                case Number:
+                case _number:
                     //return ReadCell(GetRkNumber(buffer, 8));
                     //cellValue = GetRkNumber(buffer, 8);
-                    doubleVal = GetRkNumber(buffer, 8);
-                    readCell = true;
-                    cellType = CellType.doubleVal;
+                    _doubleVal = GetRkNumber(buffer, 8);
+                    _readCell = true;
+                    _cellType = CellType.doubleVal;
                     break;
-                case Bool:
-                case FormulaBool:
+                case _bool:
+                case _formulaBool:
                     //return ReadCell(buffer[8] == 1);
                     //cellValue = (buffer[8] == 1);
-                    boolValue = (buffer[8] == 1);
-                    readCell = true;
-                    cellType = CellType.boolVal;
+                    _boolValue = (buffer[8] == 1);
+                    _readCell = true;
+                    _cellType = CellType.boolVal;
                     break;
-                case FormulaNumber:
-                case Float:
+                case _formulaNumber:
+                case _float:
                     //return ReadCell(GetDouble(buffer, 8));
                     //cellValue = GetDouble(buffer, 8);
-                    doubleVal = GetDouble(buffer, 8);
-                    readCell = true;
-                    cellType = CellType.doubleVal;
+                    _doubleVal = GetDouble(buffer, 8);
+                    _readCell = true;
+                    _cellType = CellType.doubleVal;
                     break;
-                case String:
-                case FormulaString:
+                case _string:
+                case _formulaString:
                     {
                         // Must be less than 32768 characters
                         var length = GetDWord(buffer, 8);
                         //return ReadCell(GetString(buffer, 8 + 4, length));
                         //cellValue = GetString(buffer, 8 + 4, length);
-                        stringValue = GetString(buffer, 8 + 4, length);
-                        readCell = true;
-                        cellType = CellType.stringVal;
+                        _stringValue = GetString(buffer, 8 + 4, length);
+                        _readCell = true;
+                        _cellType = CellType.stringVal;
                         break;
                     }
-                case SharedString:
+                case _sharedString:
                     //return ReadCell((int)GetDWord(buffer, 8));
                     //cellValue = (int)GetDWord(buffer, 8);
-                    intValue = (int)GetDWord(buffer, 8);
-                    readCell = true;
+                    _intValue = (int)GetDWord(buffer, 8);
+                    _readCell = true;
                     //isSharedStringVal = true;
-                    cellType = CellType.sharedString;
+                    _cellType = CellType.sharedString;
                     break;
             }
 
-            if (readCell)
+            if (_readCell)
             {
-                columnNum = (int)GetDWord(buffer, 0);
-                xfIndex = GetDWord(buffer, 4) & 0xffffff;
+                _columnNum = (int)GetDWord(buffer, 0);
+                _xfIndex = GetDWord(buffer, 4) & 0xffffff;
             }
 
             return true;
@@ -614,6 +614,12 @@ namespace SpreadSheetTasks
         {
             Stream.Dispose();
         }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is BiffReaderWriter writer &&
+                   _workbookId == writer._workbookId;
+        }
         //void Dispose(bool disposing)
         //{
         //    if (disposing)
@@ -623,29 +629,29 @@ namespace SpreadSheetTasks
 
     internal class DataColReader
     {
-        internal readonly IDataReader dataReader;
+        internal readonly IDataReader _dataReader;
         internal DataTable _dataTable;
         private readonly object[,] _tabelarData;
         private readonly bool _isDataReader;
         private readonly bool _isDataTable;
-        internal int DataTableRowsCount;
+        internal int _dataTableRowsCount;
 
         private readonly bool _headers;
         private int _rowNum = 0;
 
-        internal string[] DatabaseTypes;
+        internal string[] _databaseTypes;
 
         public DataColReader(IDataReader reader, Boolean headers = false, int overLimit = -1)
         {
-            this.dataReader = reader;
+            this._dataReader = reader;
             this._headers = headers;
             this._isDataReader = true;
-            this.overLimit = overLimit;
+            this._overLimit = overLimit;
 
-            DatabaseTypes = new string[dataReader.FieldCount];
-            for (int i = 0; i < DatabaseTypes.Length; i++)
+            _databaseTypes = new string[_dataReader.FieldCount];
+            for (int i = 0; i < _databaseTypes.Length; i++)
             {
-                DatabaseTypes[i] = dataReader.GetDataTypeName(i);
+                _databaseTypes[i] = _dataReader.GetDataTypeName(i);
             }
         }
 
@@ -654,15 +660,15 @@ namespace SpreadSheetTasks
             this._dataTable = dataTable;
             this._headers = headers;
             this._isDataTable = true;
-            this.overLimit = overLimit;
-            this.DataTableRowsCount = dataTable.Rows.Count;
+            this._overLimit = overLimit;
+            this._dataTableRowsCount = dataTable.Rows.Count;
 
-            DatabaseTypes = new string[_dataTable.Columns.Count];
+            _databaseTypes = new string[_dataTable.Columns.Count];
 
             // WORK TO DO !!
-            for (int i = 0; i < DatabaseTypes.Length; i++)
+            for (int i = 0; i < _databaseTypes.Length; i++)
             {
-                DatabaseTypes[i] = _dataTable.Columns[i].DataType.ToString();
+                _databaseTypes[i] = _dataTable.Columns[i].DataType.ToString();
             }
         }
 
@@ -670,25 +676,25 @@ namespace SpreadSheetTasks
         {
             this._tabelarData = tabelarData;
             _isDataReader = false;
-            DatabaseTypes = new string[tabelarData.Length];
-            for (int i = 0; i < DatabaseTypes.Length; i++)
+            _databaseTypes = new string[tabelarData.Length];
+            for (int i = 0; i < _databaseTypes.Length; i++)
             {
-                DatabaseTypes[i] = "-1";
+                _databaseTypes[i] = "-1";
             }
         }
 
-        private readonly int overLimit = -1;
+        private readonly int _overLimit = -1;
         public int FieldCount    // the Name property
         {
             get
             {
-                if (_isDataReader && overLimit > 0)
+                if (_isDataReader && _overLimit > 0)
                 {
-                    return overLimit;
+                    return _overLimit;
                 }
                 else if (_isDataReader)
                 {
-                    return dataReader.FieldCount;
+                    return _dataReader.FieldCount;
                 }
                 else if (_isDataTable)
                 {
@@ -710,10 +716,10 @@ namespace SpreadSheetTasks
                 {
                     return true;
                 }
-                else if (top100 != null && topNum <= top100.Count)
+                else if (top100 != null && _topNum <= top100.Count)
                 {
-                    topNum++;
-                    if (topNum == top100.Count + 1)
+                    _topNum++;
+                    if (_topNum == top100.Count + 1)
                     {
                         top100 = null;
                         return AreNextRows;
@@ -722,12 +728,12 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return dataReader.Read();
+                    return _dataReader.Read();
                 }
             }
             else if (_isDataTable)
             {
-                if (_rowNum >= 2 && _rowNum < DataTableRowsCount + 2)
+                if (_rowNum >= 2 && _rowNum < _dataTableRowsCount + 2)
                 {
                     _dataTableRow = _dataTable.Rows[_rowNum - 2].ItemArray;
                     return true;
@@ -751,15 +757,15 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetValue(j);
+                    return _dataReader.GetValue(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
-                    return dataReader.GetName(j);
+                    return _dataReader.GetName(j);
                 }
                 else
                 {
-                    return top100[topNum - 1][j];
+                    return top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -786,7 +792,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetBoolean(j);
+                    return _dataReader.GetBoolean(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -794,7 +800,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (bool)top100[topNum - 1][j];
+                    return (bool)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -821,7 +827,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetChar(j);
+                    return _dataReader.GetChar(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -829,7 +835,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (char)top100[topNum - 1][j];
+                    return (char)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -856,7 +862,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetByte(j);
+                    return _dataReader.GetByte(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -864,7 +870,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (byte)top100[topNum - 1][j];
+                    return (byte)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -891,7 +897,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return (sbyte)dataReader.GetValue(j);
+                    return (sbyte)_dataReader.GetValue(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -899,7 +905,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (sbyte)top100[topNum - 1][j];
+                    return (sbyte)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -926,7 +932,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetInt16(j);
+                    return _dataReader.GetInt16(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -934,7 +940,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (Int16)top100[topNum - 1][j];
+                    return (Int16)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -961,7 +967,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetInt32(j);
+                    return _dataReader.GetInt32(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -969,7 +975,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (Int32)top100[topNum - 1][j];
+                    return (Int32)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -996,7 +1002,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetInt64(j);
+                    return _dataReader.GetInt64(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -1004,7 +1010,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (Int64)top100[topNum - 1][j];
+                    return (Int64)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -1031,7 +1037,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetFloat(j);
+                    return _dataReader.GetFloat(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -1039,7 +1045,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (float)top100[topNum - 1][j];
+                    return (float)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -1065,7 +1071,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetDouble(j);
+                    return _dataReader.GetDouble(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -1073,7 +1079,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (double)top100[topNum - 1][j];
+                    return (double)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -1099,7 +1105,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetDecimal(j);
+                    return _dataReader.GetDecimal(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -1107,7 +1113,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (decimal)top100[topNum - 1][j];
+                    return (decimal)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -1134,7 +1140,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetDateTime(j);
+                    return _dataReader.GetDateTime(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -1142,7 +1148,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return (DateTime)top100[topNum - 1][j];
+                    return (DateTime)top100[_topNum - 1][j];
                 }
             }
             else if (_isDataTable)
@@ -1168,15 +1174,15 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.GetString(j);
+                    return _dataReader.GetString(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
-                    return dataReader.GetName(j);
+                    return _dataReader.GetName(j);
                 }
                 else
                 {
-                    return top100[topNum - 1][j].ToString();
+                    return top100[_topNum - 1][j].ToString();
                 }
             }
             else if (_isDataTable)
@@ -1203,7 +1209,7 @@ namespace SpreadSheetTasks
             {
                 if ((_rowNum > 1 || !_headers) && top100 == null)
                 {
-                    return dataReader.IsDBNull(j);
+                    return _dataReader.IsDBNull(j);
                 }
                 else if (_headers && _rowNum == 1)
                 {
@@ -1211,7 +1217,7 @@ namespace SpreadSheetTasks
                 }
                 else
                 {
-                    return top100[topNum - 1][j] == null || top100[topNum - 1][j] == DBNull.Value;
+                    return top100[_topNum - 1][j] == null || top100[_topNum - 1][j] == DBNull.Value;
                 }
             }
             else if (_isDataTable)
@@ -1234,7 +1240,7 @@ namespace SpreadSheetTasks
 
         public void GetWidthFromDataTable(Span<double> width, double maxWidth, bool doAutofilter)
         {
-            int n = DataTableRowsCount > 100 ? 100 : DataTableRowsCount;
+            int n = _dataTableRowsCount > 100 ? 100 : _dataTableRowsCount;
             int m = FieldCount;
 
             for (int j = 0; j < m; j++)
@@ -1274,7 +1280,7 @@ namespace SpreadSheetTasks
             }
         }
         public bool AreNextRows { get; set; }
-        int topNum = 0;
+        private int _topNum = 0;
         public List<object[]> top100;
     }
 

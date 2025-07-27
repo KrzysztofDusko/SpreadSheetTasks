@@ -19,7 +19,7 @@ namespace SpreadSheetTasks
         internal static readonly string[] _letters;
         private readonly bool _useScharedStrings;
 
-        private readonly CompressionLevel clvl;
+        private readonly CompressionLevel _clvl;
 
         private const double _dateTimeWidth = 16.0;
         private const double _dateWidth = 10.140625;
@@ -44,7 +44,7 @@ namespace SpreadSheetTasks
             {
                 _sstDic = new Dictionary<string, int>();
             }
-            clvl = _clvl;
+            this._clvl = _clvl;
 
             try
             {
@@ -96,7 +96,7 @@ namespace SpreadSheetTasks
             lettersX.AddRange(tempList2);
             _letters = lettersX.ToArray();
         }
-        private string GetTempFileFullPath()
+        private static string GetTempFileFullPath()
         {
             return $"{Path.GetTempPath()}\\{Path.GetRandomFileName()}";
         }
@@ -107,7 +107,7 @@ namespace SpreadSheetTasks
             {
                 for (int i = 0; i < sheetCnt + 1; i++)
                 {
-                    _excelArchiveFile.CreateEntryFromFile(_sheetList[i].pathOnDisc, _sheetList[i].pathInArchive, clvl);
+                    _excelArchiveFile.CreateEntryFromFile(_sheetList[i].pathOnDisc, _sheetList[i].pathInArchive, _clvl);
                     File.Delete(_sheetList[i].pathOnDisc);
                 }
             }
@@ -116,17 +116,17 @@ namespace SpreadSheetTasks
         public override void AddSheet(string sheetName, bool hidden = false)
         {
             string archveSheetName = "sheet" + (sheetCnt + 2);
-            _sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", archveSheetName), GetTempFileFullPath(), hidden, archveSheetName, (sheetCnt + 2),null));
+            _sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", archveSheetName), XlsxWriter.GetTempFileFullPath(), hidden, archveSheetName, (sheetCnt + 2),null));
             //_sheetList.Add((sheetName, String.Format(@"xl/worksheets/{0}.xml", sheetName), getTempFileFullPath(), hidden, sheetName));
         }
         public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
             sheetCnt++;
-            this.areHeaders = headers;
+            this._areHeaders = headers;
             _dataColReader = new DataColReader(dataReader, headers, overLimit);
             if (_inMemoryMode)
             {
-                var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, clvl);
+                var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, _clvl);
                 using StreamWriter daneZakladkiX = new FormattingStreamWriter(e1.Open(), Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
                 _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn, doAutofilter: doAutofilter) - 1;
             }
@@ -139,11 +139,11 @@ namespace SpreadSheetTasks
         public override void WriteSheet(DataTable dataTable, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
             sheetCnt++;
-            this.areHeaders = headers;
+            this._areHeaders = headers;
             _dataColReader = new DataColReader(dataTable, headers, overLimit);
             if (_inMemoryMode)
             {
-                var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, clvl);
+                var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, _clvl);
                 using StreamWriter daneZakladkiX = new FormattingStreamWriter(e1.Open(), Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
                 _rowsCount = WriteSheet(daneZakladkiX, startingRow, startingColumn,doAutofilter: doAutofilter) - 1;
             }
@@ -157,45 +157,45 @@ namespace SpreadSheetTasks
         private static readonly CultureInfo _invariantCulture = CultureInfo.InvariantCulture;
         private const int BUFFER_SIZE = 65_536;
         private const int BUFFER_SIZE_HALF = BUFFER_SIZE / 2;
-        private readonly char[] buffer = new char[BUFFER_SIZE];
-        private int currentBufferOffset = 0;
+        private readonly char[] _buffer = new char[BUFFER_SIZE];
+        private int _currentBufferOffset = 0;
 
-        private void writeByteToBuffer(byte val)
+        private void WriteByteToBuffer(byte val)
         {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
         }
-        private void writesByteToBuffer(sbyte val)
+        private void WritesByteToBuffer(sbyte val)
         {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
-        }
-
-        private void writeInt16ToBuffer(Int16 val)
-        {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
         }
 
-        private void writeInt32ToBuffer(Int32 val)
+        private void WriteInt16ToBuffer(Int16 val)
         {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
         }
-        private void writeInt64ToBuffer(Int64 val)
+
+        private void WriteInt32ToBuffer(Int32 val)
         {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
         }
-        private void writeDoubleToBuffer(double val)
+        private void WriteInt64ToBuffer(Int64 val)
         {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
         }
-        private void writeFloatToBuffer(float val)
+        private void WriteDoubleToBuffer(double val)
         {
-            val.TryFormat(buffer.AsSpan(currentBufferOffset), out int len, default, _invariantCulture);
-            currentBufferOffset += len;
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
+        }
+        private void WriteFloatToBuffer(float val)
+        {
+            val.TryFormat(_buffer.AsSpan(_currentBufferOffset), out int len, default, _invariantCulture);
+            _currentBufferOffset += len;
         }
 
         //private void writeStringToBuffer(string val)
@@ -207,10 +207,10 @@ namespace SpreadSheetTasks
         //    }
         //}
         //[MethodImpl(MethodImplOptions.AggressiveOptimization)]
-        private void writeStringToBuffer(ReadOnlySpan<char> val)
+        private void WriteStringToBuffer(ReadOnlySpan<char> val)
         {
-            val.CopyTo(buffer.AsSpan(currentBufferOffset));
-            currentBufferOffset += val.Length;
+            val.CopyTo(_buffer.AsSpan(_currentBufferOffset));
+            _currentBufferOffset += val.Length;
         }
 
         public bool TryToSpecifyWidthForMemoryMode { get; set; }
@@ -218,25 +218,25 @@ namespace SpreadSheetTasks
         {
             if (doAutofilter)
             {
-                autofilterIsOn = true;
+                _autofilterIsOn = true;
             }
             int rowNum = 0;
 
             int ColumnCount = _dataColReader.FieldCount;
-            colWidesArray = new double[ColumnCount];
-            Array.Fill<double>(colWidesArray, -1.0);
+            _colWidesArray = new double[ColumnCount];
+            Array.Fill<double>(_colWidesArray, -1.0);
 
             typesArray = new int[ColumnCount];
-            newTypes = new TypeCode[ColumnCount];
+            _newTypes = new TypeCode[ColumnCount];
 
             if (_inMemoryMode)
             {
                 sheetWritter.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
                 sheetWritter.Write("<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\">");
 
-                if (TryToSpecifyWidthForMemoryMode && _dataColReader.dataReader != null)
+                if (TryToSpecifyWidthForMemoryMode && _dataColReader._dataReader != null)
                 {
-                    var rdr = _dataColReader.dataReader;
+                    var rdr = _dataColReader._dataReader;
                     for (int l = 1; l <= ColumnCount; l++)
                     {
                         int lenn = rdr.GetName(l - 1).Length + (doAutofilter ?2:0);
@@ -245,9 +245,9 @@ namespace SpreadSheetTasks
                         {
                             tempWidth = _MAX_WIDTH;
                         }
-                        if (colWidesArray[l - 1] < tempWidth)
+                        if (_colWidesArray[l - 1] < tempWidth)
                         {
-                            colWidesArray[l - 1] = tempWidth;
+                            _colWidesArray[l - 1] = tempWidth;
                         }
                     }
 
@@ -285,24 +285,24 @@ namespace SpreadSheetTasks
                     sheetWritter.Write("<cols>");
                     for (int l = 1; l <= ColumnCount; l++)
                     {
-                        sheetWritter.Write(String.Format(CultureInfo.InvariantCulture.NumberFormat, "<col min=\"{0}\" max=\"{0}\" width=\"{1}\" bestFit = \"1\" customWidth=\"1\" />", l + startingColumn, colWidesArray[l - 1]));
+                        sheetWritter.Write(String.Format(CultureInfo.InvariantCulture.NumberFormat, "<col min=\"{0}\" max=\"{0}\" width=\"{1}\" bestFit = \"1\" customWidth=\"1\" />", l + startingColumn, _colWidesArray[l - 1]));
                     }
                     sheetWritter.Write("</cols>");
                 }
                 else if (TryToSpecifyWidthForMemoryMode && _dataColReader._dataTable != null)
                 {
-                    sheetWritter.Write($"<dimension ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader.DataTableRowsCount + 1 + startingRow}\"/>");
+                    sheetWritter.Write($"<dimension ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader._dataTableRowsCount + 1 + startingRow}\"/>");
 
-                    _dataColReader.GetWidthFromDataTable(colWidesArray, _MAX_WIDTH, doAutofilter);
+                    _dataColReader.GetWidthFromDataTable(_colWidesArray, _MAX_WIDTH, doAutofilter);
                     sheetWritter.Write("<cols>");
                     for (int l = 1; l <= ColumnCount; l++)
                     {
-                        sheetWritter.Write(String.Format(CultureInfo.InvariantCulture.NumberFormat, "<col min=\"{0}\" max=\"{0}\" width=\"{1}\" bestFit = \"1\" customWidth=\"1\" />", l + startingColumn, colWidesArray[l - 1]));
+                        sheetWritter.Write(String.Format(CultureInfo.InvariantCulture.NumberFormat, "<col min=\"{0}\" max=\"{0}\" width=\"{1}\" bestFit = \"1\" customWidth=\"1\" />", l + startingColumn, _colWidesArray[l - 1]));
                     }
                     sheetWritter.Write("</cols>");
                 }
                 sheetWritter.Write("<sheetData>");
-                colWidesArray = null;
+                _colWidesArray = null;
             }
             else
             {
@@ -315,44 +315,45 @@ namespace SpreadSheetTasks
 
             while (_dataColReader.Read())
             {
-                if (rowNum == 0 || this.areHeaders && rowNum == 1)
+                if (rowNum == 0 || this._areHeaders && rowNum == 1)
                 {
-                    if (rowNum == 0 && this.areHeaders)
+                    if (rowNum == 0 && this._areHeaders)
                     {
                         for (int i = 0; i < ColumnCount; i++)
                         {
                             typesArray[i] = 0;
-                            newTypes[i] = TypeCode.String;
+                            _newTypes[i] = TypeCode.String;
                         }
                     }
                     else
                     {
-                        ExcelWriter.SetTypes(_dataColReader, typesArray, newTypes, ColumnCount);
+                        ExcelWriter.SetTypes(_dataColReader, typesArray, _newTypes, ColumnCount);
                     }
                 }
 
-                writeStringToBuffer("<row r=\"");
-                writeInt32ToBuffer(rowNum + 1 + startingRow);
-                writeStringToBuffer("\">");
+                //writeStringToBuffer("<row r=\"");
+                //writeInt32ToBuffer(rowNum + 1 + startingRow);
+                //writeStringToBuffer("\">");
+                WriteStringToBuffer("<row>");
 
-                WriteRow(rowNum, ColumnCount, startingColumn, startingRow);
+                WriteRow(ColumnCount);
 
                 rowNum++;
-                writeStringToBuffer("</row>");
-                if (currentBufferOffset >= BUFFER_SIZE_HALF)
+                WriteStringToBuffer("</row>");
+                if (_currentBufferOffset >= BUFFER_SIZE_HALF)
                 {
-                    sheetWritter.Write(buffer, 0, currentBufferOffset);
-                    currentBufferOffset = 0;
+                    sheetWritter.Write(_buffer, 0, _currentBufferOffset);
+                    _currentBufferOffset = 0;
                 }
                 if (rowNum % 10000 == 0)
                 {
                     DoOn10k(rowNum);
                 }
             }
-            if (currentBufferOffset > 0)
+            if (_currentBufferOffset > 0)
             {
-                sheetWritter.Write(buffer, 0, currentBufferOffset);
-                currentBufferOffset = 0;
+                sheetWritter.Write(_buffer, 0, _currentBufferOffset);
+                _currentBufferOffset = 0;
             }
 
             sheetWritter.Write("</sheetData>");
@@ -361,7 +362,7 @@ namespace SpreadSheetTasks
                 (string name, string pathInArchive, string pathOnDisc, bool isHidden, string nameInArchive, int sheetId, string _) = this._sheetList[^1];
                 this._sheetList[^1] = (name, pathInArchive, pathOnDisc, isHidden, nameInArchive, sheetId, $"{name}!${_letters[startingColumn]}${startingRow + 1}:${_letters[ColumnCount - 1 + startingColumn]}${rowNum}");
 
-                sheetWritter.Write($"<autoFilter ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader.DataTableRowsCount + 1 + startingRow}\"/>");
+                sheetWritter.Write($"<autoFilter ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader._dataTableRowsCount + 1 + startingRow}\"/>");
             }
             sheetWritter.Write("<pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></worksheet>");
 
@@ -397,7 +398,7 @@ namespace SpreadSheetTasks
                     }
                 }
 
-                List<double> colWidth2 = colWidesArray.ToArray().ToList();//??
+                List<double> colWidth2 = _colWidesArray.ToArray().ToList();//??
                 List<double> colWidth3 = colWidth2.FindAll(x => x != 1.0);
 
                 if (colWidth3.Count > 0)
@@ -436,7 +437,7 @@ namespace SpreadSheetTasks
             _dataColReader = new DataColReader(dane);
             if (_inMemoryMode)
             {
-                var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, clvl);
+                var e1 = _excelArchiveFile.CreateEntry(_sheetList[sheetCnt].pathInArchive, _clvl);
                 using StreamWriter writter = new FormattingStreamWriter(e1.Open(), Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
                 WriteSheet(writter, 0, 0);
             }
@@ -446,17 +447,17 @@ namespace SpreadSheetTasks
                 WriteSheet(writter, 0, 0);
             }
         }
-        private void WriteRow(int rowNum, int columnCount, int startingColumn, int startingRow)
+        private void WriteRow(int columnCount)
         {
             for (int column = 0; column < columnCount; column++)
             {
                 if (_dataColReader.IsDBNull(column))
                     continue;
 
-                if (newTypes[column] == TypeCode.String || newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
+                if (_newTypes[column] == TypeCode.String || _newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
                 {
                     string? stringValue = null;
-                    if (newTypes[column] == TypeCode.String)
+                    if (_newTypes[column] == TypeCode.String)
                     {
                         stringValue = _dataColReader.GetString(column);
                     }
@@ -471,9 +472,9 @@ namespace SpreadSheetTasks
 
                     if (!_inMemoryMode)
                     {
-                        if (colWidesArray[column] < stringValue.Length * 1.25 + 2.0)
+                        if (_colWidesArray[column] < stringValue.Length * 1.25 + 2.0)
                         {
-                            colWidesArray[column] = stringValue.Length * 1.25 + 2.0;
+                            _colWidesArray[column] = stringValue.Length * 1.25 + 2.0;
                         }
                     }
 
@@ -500,19 +501,17 @@ namespace SpreadSheetTasks
 
                     if (!_useScharedStrings)
                     {
-                        writeStringToBuffer("<c r=\"");
-                        writeStringToBuffer(_letters[column + startingColumn]);
-                        writeInt32ToBuffer((rowNum + 1 + startingRow));
+                        WriteStringToBuffer("<c ");
                         if (stringValue.Length > 0 && (stringValue[0] == ' ' || stringValue[0] == '\t'))
                         {
-                            writeStringToBuffer("\" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
+                            WriteStringToBuffer(" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                         }
                         else
                         {
-                            writeStringToBuffer("\" t=\"inlineStr\"><is><t>");
+                            WriteStringToBuffer(" t=\"inlineStr\"><is><t>");
                         }
-                        writeStringToBuffer(stringValue);
-                        writeStringToBuffer("</t></is></c>");
+                        WriteStringToBuffer(stringValue);
+                        WriteStringToBuffer("</t></is></c>");
                     }
                     else
                     {
@@ -522,75 +521,75 @@ namespace SpreadSheetTasks
                             dicRefValue = _sstCntUnique;
                             _sstCntUnique++;
                         }
-                        writeStringToBuffer("<c r=\"");
-                        writeStringToBuffer(_letters[column + startingColumn]);
-                        writeInt32ToBuffer((rowNum + 1 + startingRow));
-                        writeStringToBuffer("\" t=\"s\"><v>");
-                        writeInt32ToBuffer(dicRefValue);
-                        writeStringToBuffer("</v></c>");
+                        WriteStringToBuffer("<c t=\"s\"><v>");
+                        WriteInt32ToBuffer(dicRefValue);
+                        WriteStringToBuffer("</v></c>");
                         _sstCntAll++;
                     }
                 }
                 else if (typesArray[column] == 1)//number
                 {
-                    writeStringToBuffer("<c r=\"");
-                    writeStringToBuffer(_letters[column + startingColumn]);
-                    writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    writeStringToBuffer("\"><v>");
+                    //writeStringToBuffer("<c r=\"");
+                    //writeStringToBuffer(_letters[column + startingColumn]);
+                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    //writeStringToBuffer("\"><v>");
+                    WriteStringToBuffer("<c><v>");
 
-                    switch (newTypes[column])
+                    switch (_newTypes[column])
                     {
                         case TypeCode.Byte:
                             byte byteValue = _dataColReader.GetByte(column);
-                            writeByteToBuffer(byteValue);
+                            WriteByteToBuffer(byteValue);
                             break;
                         case TypeCode.SByte:
                             sbyte sbyteValue = _dataColReader.GetSByte(column);
-                            writesByteToBuffer(sbyteValue);
+                            WritesByteToBuffer(sbyteValue);
                             break;
                         case TypeCode.Int16:
                             Int16 int16Value = _dataColReader.GetInt16(column);
-                            writeInt16ToBuffer(int16Value);
+                            WriteInt16ToBuffer(int16Value);
                             break;
                         case TypeCode.Int32:
                             Int32 int32Value = _dataColReader.GetInt32(column);
-                            writeInt32ToBuffer(int32Value);
+                            WriteInt32ToBuffer(int32Value);
                             break;
                         case TypeCode.Int64:
                             Int64 int64Value = _dataColReader.GetInt64(column);
-                            writeInt64ToBuffer(int64Value);
+                            WriteInt64ToBuffer(int64Value);
                             break;
                         case TypeCode.Single:
                             float doubleValue = _dataColReader.GetFloat(column);
-                            writeFloatToBuffer(doubleValue);
+                            WriteFloatToBuffer(doubleValue);
                             break;
                         case TypeCode.Double:
                             double doubleVal = _dataColReader.GetDouble(column);
-                            writeDoubleToBuffer(doubleVal);
+                            WriteDoubleToBuffer(doubleVal);
                             break;
                         case TypeCode.Decimal:
                             decimal decimalVal = _dataColReader.GetDecimal(column);
-                            writeDoubleToBuffer(decimal.ToDouble(decimalVal));
+                            WriteDoubleToBuffer(decimal.ToDouble(decimalVal));
                             break;
                         default:
                             throw new Exception("number format Excel error");
                     }
 
 
-                    writeStringToBuffer("</v></c>");
+                    WriteStringToBuffer("</v></c>");
                 }
                 else if (typesArray[column] == 2) //date
                 {
                     DateTime dtVal = _dataColReader.GetDateTime(column);
-                    writeStringToBuffer("<c r=\"");
-                    writeStringToBuffer(_letters[column + startingColumn]);
-                    writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    writeStringToBuffer("\" s=\"1\"><v>");
-                    writeDoubleToBuffer((double)(dtVal as DateTime?)?.ToOADate()!);
-                    writeStringToBuffer("</v></c>");
+                    //writeStringToBuffer("<c r=\"");
+                    //writeStringToBuffer(_letters[column + startingColumn]);
+                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    //writeStringToBuffer("\" s=\"1\"><v>");
+                    WriteStringToBuffer("<c s=\"1\"><v>");
+
+                    WriteDoubleToBuffer((double)(dtVal as DateTime?)?.ToOADate()!);
+                    WriteStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
-                        colWidesArray[column] = _dateWidth;
+                        _colWidesArray[column] = _dateWidth;
                     }
                 }
                 else if (typesArray[column] == 3) //datetime
@@ -600,40 +599,41 @@ namespace SpreadSheetTasks
                     {
                         continue;
                     }
-
-                    writeStringToBuffer("<c r=\"");
-                    writeStringToBuffer(_letters[column + startingColumn]);
-                    writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    writeStringToBuffer("\" s=\"2\"><v>");
-                    writeDoubleToBuffer((double)((dtVal) as DateTime?)?.ToOADate()!);
-                    writeStringToBuffer("</v></c>");
+                    //writeStringToBuffer("<c r=\"");
+                    //writeStringToBuffer(_letters[column + startingColumn]);
+                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    //writeStringToBuffer("\" s=\"2\"><v>");
+                    WriteStringToBuffer("<c s=\"2\"><v>");
+                    WriteDoubleToBuffer((double)((dtVal) as DateTime?)?.ToOADate()!);
+                    WriteStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
-                        colWidesArray[column] = _dateTimeWidth;
+                        _colWidesArray[column] = _dateTimeWidth;
                     }
                 }
-                else if (newTypes[column] == TypeCode.Boolean)
+                else if (_newTypes[column] == TypeCode.Boolean)
                 {
-                    writeStringToBuffer("<c r=\"");
-                    writeStringToBuffer(_letters[column + startingColumn]);
-                    writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    writeStringToBuffer("\" t=\"b\"><v>");
+                    //writeStringToBuffer("<c r=\"");
+                    //writeStringToBuffer(_letters[column + startingColumn]);
+                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
+                    //writeStringToBuffer("\" t=\"b\"><v>");
+                    WriteStringToBuffer("<c t=\"b\"><v>");
                     if (_dataColReader.GetBoolean(column))
                     {
-                        buffer[currentBufferOffset++] = '1';
+                        _buffer[_currentBufferOffset++] = '1';
                     }
                     else
                     {
-                        buffer[currentBufferOffset++] = '0';
+                        _buffer[_currentBufferOffset++] = '0';
                     }
-                    writeStringToBuffer("</v></c>");
+                    WriteStringToBuffer("</v></c>");
                 }
             }
         }
-        private const string filterDefinedName = "_xlnm._FilterDatabase";
+        private const string _filterDefinedName = "_xlnm._FilterDatabase";
         internal override void FinalizeFile()
         {
-            var e1 = _excelArchiveFile.CreateEntry("[Content_Types].xml", clvl);
+            var e1 = _excelArchiveFile.CreateEntry("[Content_Types].xml", _clvl);
 
             using (var writer = new FormattingStreamWriter(e1.Open(), CultureInfo.InvariantCulture.NumberFormat))
             {
@@ -666,7 +666,7 @@ namespace SpreadSheetTasks
 
             if (!String.IsNullOrWhiteSpace(DocPopertyProgramName))
             {
-                var e2 = _excelArchiveFile.CreateEntry("docProps/app.xml", clvl);
+                var e2 = _excelArchiveFile.CreateEntry("docProps/app.xml", _clvl);
                 using var writer = new FormattingStreamWriter(e2.Open(), CultureInfo.InvariantCulture.NumberFormat);
                 writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Properties ");
                 writer.Write("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\" ");
@@ -688,7 +688,7 @@ namespace SpreadSheetTasks
                 writer.Write("</AppVersion></Properties>");
             }
 
-            var e3 = _excelArchiveFile.CreateEntry("xl/workbook.xml", clvl);
+            var e3 = _excelArchiveFile.CreateEntry("xl/workbook.xml", _clvl);
             using (var writer = new FormattingStreamWriter(e3.Open(), CultureInfo.InvariantCulture.NumberFormat))
             {
 
@@ -706,7 +706,7 @@ namespace SpreadSheetTasks
                 }
                 writer.Write("</sheets>");
 
-                if (autofilterIsOn)
+                if (_autofilterIsOn)
                 {
                     writer.Write("<definedNames>");
                     foreach (var item in this._sheetList)
@@ -715,7 +715,7 @@ namespace SpreadSheetTasks
                         {
                             int localSheetId = item.sheetId - 1;
                             string filterHeaderRange = item.filterHeaderRange;
-                            writer.Write($"<definedName name=\"{filterDefinedName}\" localSheetId=\"{localSheetId}\" hidden=\"1\">{filterHeaderRange}</definedName>");
+                            writer.Write($"<definedName name=\"{_filterDefinedName}\" localSheetId=\"{localSheetId}\" hidden=\"1\">{filterHeaderRange}</definedName>");
                         }
                     }
                     writer.Write("</definedNames>");
@@ -724,7 +724,7 @@ namespace SpreadSheetTasks
                 writer.Write("<calcPr calcId=\"124519\" fullCalcOnLoad=\"1\"/></workbook>");
             }
 
-            var e4 = _excelArchiveFile.CreateEntry("xl/_rels/workbook.xml.rels", clvl);
+            var e4 = _excelArchiveFile.CreateEntry("xl/_rels/workbook.xml.rels", _clvl);
             using (var writer = new FormattingStreamWriter(e4.Open(), CultureInfo.InvariantCulture.NumberFormat))
             {
                 writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">");
@@ -740,7 +740,7 @@ namespace SpreadSheetTasks
                 writer.Write($"</Relationships>");
             }
 
-            var e5 = _excelArchiveFile.CreateEntry("_rels/.rels", clvl);
+            var e5 = _excelArchiveFile.CreateEntry("_rels/.rels", _clvl);
             using (var writer = new FormattingStreamWriter(e5.Open(), CultureInfo.InvariantCulture.NumberFormat))
             {
                 writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
@@ -764,7 +764,7 @@ namespace SpreadSheetTasks
 
             if (!String.IsNullOrWhiteSpace(DocPopertyProgramName))
             {
-                var e6 = _excelArchiveFile.CreateEntry("docProps/core.xml", clvl);
+                var e6 = _excelArchiveFile.CreateEntry("docProps/core.xml", _clvl);
                 string stringNow = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ");
 
                 using var writer = new FormattingStreamWriter(e6.Open(), CultureInfo.InvariantCulture.NumberFormat);
@@ -778,7 +778,7 @@ namespace SpreadSheetTasks
                 writer.Write($"xsi:type=\"dcterms:W3CDTF\">{stringNow}</dcterms:modified></cp:coreProperties>");
             }
 
-            var e7 = _excelArchiveFile.CreateEntry("xl/styles.xml", clvl);
+            var e7 = _excelArchiveFile.CreateEntry("xl/styles.xml", _clvl);
             using (var writer = new FormattingStreamWriter(e7.Open(), CultureInfo.InvariantCulture.NumberFormat))
             {
                 writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><styleSheet ");
@@ -803,7 +803,7 @@ namespace SpreadSheetTasks
 
             if (_useScharedStrings)
             {
-                var entry = _excelArchiveFile.CreateEntry("xl/sharedStrings.xml", clvl);
+                var entry = _excelArchiveFile.CreateEntry("xl/sharedStrings.xml", _clvl);
 
                 using var o = entry.Open();
                 using var _sharedStringWritter = new FormattingStreamWriter(o, Encoding.UTF8, bufferSize: _bufferSize, CultureInfo.InvariantCulture.NumberFormat);
@@ -869,9 +869,10 @@ namespace SpreadSheetTasks
                 }
             }
 
-            sheetWritter.Write("<row r=\"");
-            sheetWritter.Write(rowNum + 1 + startingRow);
-            sheetWritter.Write("\">");
+            //sheetWritter.Write("<row r=\"");
+            //sheetWritter.Write(rowNum + 1 + startingRow);
+            //sheetWritter.Write("\">");
+            sheetWritter.Write("<row>");
 
             for (int j = 0; j < colCnt; j++)
             {
@@ -879,13 +880,14 @@ namespace SpreadSheetTasks
                 sheetWritter.Write("<c r=\"");
                 sheetWritter.Write(_letters[j + startingColumn]);
                 sheetWritter.Write((rowNum + 1 + startingRow));
+                sheetWritter.Write("\"");
                 if (stringValue.Length > 0 && (stringValue[0] == ' ' || stringValue[0] == '\t'))
                 {
-                    sheetWritter.Write("\" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
+                    sheetWritter.Write(" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                 }
                 else
                 {
-                    sheetWritter.Write("\" t=\"inlineStr\"><is><t>");
+                    sheetWritter.Write(" t=\"inlineStr\"><is><t>");
                 }
                 sheetWritter.Write(stringValue);
                 sheetWritter.Write("</t></is></c>");
@@ -1001,39 +1003,39 @@ namespace SpreadSheetTasks
 
     public class FormattingStreamWriter : StreamWriter
     {
-        private readonly IFormatProvider formatProvider;
+        private readonly IFormatProvider _formatProvider;
 
         public FormattingStreamWriter(string path, bool append, Encoding encoding, int bufferSize, IFormatProvider formatProvider)
             : base(path, append, encoding, bufferSize)
         {
-            this.formatProvider = formatProvider;
+            this._formatProvider = formatProvider;
         }
 
         public FormattingStreamWriter(string path, bool append, Encoding encoding, IFormatProvider formatProvider)
         : base(path, append, encoding)
         {
-            this.formatProvider = formatProvider;
+            this._formatProvider = formatProvider;
         }
         public FormattingStreamWriter(string path, IFormatProvider formatProvider)
             : base(path)
         {
-            this.formatProvider = formatProvider;
+            this._formatProvider = formatProvider;
         }
         public FormattingStreamWriter(Stream stream, IFormatProvider formatProvider)
         : base(stream)
         {
-            this.formatProvider = formatProvider;
+            this._formatProvider = formatProvider;
         }
         public FormattingStreamWriter(Stream stream, Encoding encoding, int bufferSize, IFormatProvider formatProvider)
         : base(stream, encoding, bufferSize)
         {
-            this.formatProvider = formatProvider;
+            this._formatProvider = formatProvider;
         }
 
         public FormattingStreamWriter(Stream stream, Encoding encoding, IFormatProvider formatProvider)
         : base(stream, encoding)
         {
-            this.formatProvider = formatProvider;
+            this._formatProvider = formatProvider;
         }
 
 
@@ -1041,7 +1043,7 @@ namespace SpreadSheetTasks
         {
             get
             {
-                return this.formatProvider;
+                return this._formatProvider;
             }
         }
     }
