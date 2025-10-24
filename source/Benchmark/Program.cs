@@ -206,6 +206,7 @@ public class ReadBenchXlsb
 }
 
 [SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 [MemoryDiagnoser]
 public class WriteBenchExcel
 {
