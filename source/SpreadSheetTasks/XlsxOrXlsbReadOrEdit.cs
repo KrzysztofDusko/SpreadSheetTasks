@@ -698,8 +698,16 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             }
 
             _success = _xmlReader.MoveToAttribute("r");
-            _len = _xmlReader.ReadValueChunk(_buffer, 0, _buffer.Length);
-            _rowNum = ParseToUnsignedIntFromBuffer(_buffer, _len);
+            if (_success)
+            {
+                _len = _xmlReader.ReadValueChunk(_buffer, 0, _buffer.Length);
+                _rowNum = ParseToUnsignedIntFromBuffer(_buffer, _len);
+            }
+            else
+            {
+                // If "r" attribute is missing, increment from previous row
+                _rowNum = _prevRowNum + 1;
+            }
         }
         _howManyEmptyRow = -1;
         _emptyRowCnt = -1;
@@ -718,29 +726,39 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         }
 
         _prevRowNum = _rowNum;
+        int cellIndex = 0; // Track cell position sequentially
         while (_xmlReader.Read() && _xmlReader.IsStartElement("c"))
         {
-            //reader.MoveToAttribute("r");
-            _xmlReader.MoveToNextAttribute();
-
-            _len = _xmlReader.ReadValueChunk(_buffer, 0, _buffer.Length);
-            _colNum = -1;
-
-            //Sylvan
-            for (int j = 0; j < _len; j++)
+            // Try to get "r" attribute for column position
+            bool hasRAttribute = _xmlReader.MoveToAttribute("r");
+            
+            if (hasRAttribute)
             {
-                char c = _buffer[j];
-                if (c < 'A' || c > 'Z')
+                _len = _xmlReader.ReadValueChunk(_buffer, 0, _buffer.Length);
+                _colNum = -1;
+
+                //Sylvan
+                for (int j = 0; j < _len; j++)
                 {
-                    break;
+                    char c = _buffer[j];
+                    if (c < 'A' || c > 'Z')
+                    {
+                        break;
+                    }
+                    int v = c - 'A';
+                    if ((uint)v < 26u)
+                    {
+                        _colNum = ((_colNum + 1) * 26) + v;
+                    }
                 }
-                int v = c - 'A';
-                if ((uint)v < 26u)
-                {
-                    _colNum = ((_colNum + 1) * 26) + v;
-                }
+                _colNum++;
             }
-            _colNum++;
+            else
+            {
+                // If no "r" attribute, use sequential position
+                _colNum = cellIndex;
+            }
+            cellIndex++;
 
             if (_isFirstRow && _numberOfFirsColumnWithData == -1)
             {
