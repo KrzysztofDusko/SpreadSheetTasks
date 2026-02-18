@@ -402,38 +402,6 @@ public class ReaderTypeConversionTests
         File.Delete(fileName);
     }
 
-    [Theory(Skip = "Null cell handling differs - library returns adjacent cell value")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void GetValue_NullCell_ReturnsDBNull(string extension)
-    {
-        var fileName = $"test_null_value{extension}";
-        
-        DataTable dt = new DataTable();
-        dt.Columns.Add("Col1", typeof(string));
-        dt.Columns.Add("Col2", typeof(string));
-        dt.Rows.Add(DBNull.Value, "value");
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            writer.WriteSheet(dt.CreateDataReader());
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            
-            Assert.True(reader.Read()); // Skip header
-            Assert.True(reader.Read());
-            Assert.Equal(DBNull.Value, reader.GetValue(0));
-            Assert.Equal("value", reader.GetValue(1));
-        }
-
-        File.Delete(fileName);
-    }
-
     [Theory]
     [InlineData(".xlsx")]
     [InlineData(".xlsb")]

@@ -726,6 +726,14 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         }
 
         _prevRowNum = _rowNum;
+        
+        // Clear innerRow for the new row - set all cells to Null
+        for (int i = 0; i < _columnsCntFromFirstRow; i++)
+        {
+            innerRow[i].type = ExcelDataType.Null;
+        }
+
+        _prevColNum = -1;
         int cellIndex = 0; // Track cell position sequentially
         while (_xmlReader.Read() && _xmlReader.IsStartElement("c"))
         {
@@ -751,7 +759,6 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                         _colNum = ((_colNum + 1) * 26) + v;
                     }
                 }
-                _colNum++;
             }
             else
             {
@@ -844,7 +851,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                         {
                             valueX.type = ExcelDataType.Boolean;
                             //valueX.int32Value = (_buffer[0] - '0');
-                            valueX.boolValue = _buffer[0] == 1;
+                            valueX.boolValue = _buffer[0] == '1';
                         }
                         else if (sstMark == 'e') // 'b' = boolean, 'e' = error
                         {
@@ -901,18 +908,15 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 }
             }
 
-            if (_prevColNum > _colNum + 1 && _colNum > _numberOfFirsColumnWithData) // && rowNum == prevRowNum?
+            if (_prevColNum != -1 && _colNum > _prevColNum + 1)
             {
-                for (int i = _numberOfFirsColumnWithData; i < _colNum; i++)
+                for (int i = _prevColNum + 1; i < _colNum; i++)
                 {
-                    innerRow[i - _numberOfFirsColumnWithData].type = ExcelDataType.Null;
-                }
-            }
-            else if (_colNum > _prevColNum + 1 && _prevColNum != -1)
-            {
-                for (int i = 0; i < _colNum - _prevColNum - _numberOfFirsColumnWithData; i++)
-                {
-                    innerRow[_prevColNum - (_numberOfFirsColumnWithData - 1) + i].type = ExcelDataType.Null;
+                    int missingCellIndex = i - _numberOfFirsColumnWithData;
+                    if ((uint)missingCellIndex < (uint)innerRow.Length)
+                    {
+                        innerRow[missingCellIndex].type = ExcelDataType.Null;
+                    }
                 }
             }
             _prevColNum = _colNum;
@@ -1019,6 +1023,12 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             return true;
         }
         _prevRowNum = _rowNum;
+
+        // Clear innerRow for the new row - set all cells to Null
+        for (int i = 0; i < _columnsCntFromFirstRow; i++)
+        {
+            innerRow[i].type = ExcelDataType.Null;
+        }
 
         while (_rowNum == _prevRowNum && _returnValue)
         {
@@ -1184,6 +1194,10 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         //}
         //return start == 1 ? -res : res;
         int start = buff[0] == '-' ? 1 : 0;
+        if (len <= start)
+        {
+            return 0; // Invalid input - just a minus sign or empty
+        }
         Int64 res = buff[start] - '0';
         for (int i = start + 1; i < len; i++)
         {
@@ -1414,6 +1428,12 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             using var reader = new StreamReader(str);
             pivotTableXmlAsPlainTxt = reader.ReadToEnd();
         }
+        
+        if (pivotTableXmlAsPlainTxt == null)
+        {
+            throw new Exception("Pivot table cache source not found");
+        }
+        
         pivotCacheEntry.Delete();
 
         int firsPartIndex = pivotTableXmlAsPlainTxt.IndexOf(@"</cacheSource>");
@@ -1445,6 +1465,22 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         get => _actualSheetName;
         set
         {
+            // Reset reader state when switching sheets
+            if (_actualSheetName != value)
+            {
+                _isFirstRow = true;
+                _prevRowNum = -1;
+                _columnsCntFromFirstRow = -1;
+                _numberOfFirsColumnWithData = -1;
+                _numberOfLastColumnWithData = -1;
+                _colNum = -1;
+                _prevColNum = -1;
+                _howManyEmptyRow = -1;
+                _emptyRowCnt = -1;
+                _rowNum = 0;
+                _returnValue = true;
+                innerRow = new FieldInfo[4096];
+            }
             _rowCount = -2;
             _actualSheetName = value;
         }

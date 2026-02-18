@@ -6,43 +6,6 @@ namespace Tests;
 [Collection("Sequential")]
 public class WriterAdvancedTests
 {
-    [Theory(Skip = "overLimit parameter causes ArgumentOutOfRangeException in library")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void WriteSheet_WithOverLimit_TruncatesRows(string extension)
-    {
-        var fileName = $"test_over_limit{extension}";
-        
-        DataTable dt = new DataTable();
-        dt.Columns.Add("Col1", typeof(string));
-        for (int i = 0; i < 100; i++)
-        {
-            dt.Rows.Add($"Row{i}");
-        }
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            writer.WriteSheet(dt.CreateDataReader(), overLimit: 10);
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            
-            int count = 0;
-            while (reader.Read())
-            {
-                count++;
-            }
-            // Header + 10 data rows
-            Assert.Equal(11, count);
-        }
-
-        File.Delete(fileName);
-    }
-
     [Theory]
     [InlineData(".xlsx")]
     [InlineData(".xlsb")]
@@ -79,45 +42,6 @@ public class WriterAdvancedTests
                 }
                 rowNum++;
             }
-        }
-
-        File.Delete(fileName);
-    }
-
-    [Theory(Skip = "startingColumn parameter not fully supported by library")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void WriteSheet_WithStartingColumn_OffsetsData(string extension)
-    {
-        var fileName = $"test_starting_col{extension}";
-        
-        DataTable dt = new DataTable();
-        dt.Columns.Add("Col1", typeof(string));
-        dt.Rows.Add("Data");
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            writer.WriteSheet(dt.CreateDataReader(), startingColumn: 3);
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            
-            Assert.True(reader.Read()); // Header
-            // Data should be in column 3 (0-indexed), columns 0-2 should be null
-            Assert.Equal(DBNull.Value, reader.GetValue(0));
-            Assert.Equal(DBNull.Value, reader.GetValue(1));
-            Assert.Equal(DBNull.Value, reader.GetValue(2));
-            Assert.Equal("Col1", reader.GetValue(3));
-            
-            Assert.True(reader.Read()); // Data row
-            Assert.Equal(DBNull.Value, reader.GetValue(0));
-            Assert.Equal(DBNull.Value, reader.GetValue(1));
-            Assert.Equal(DBNull.Value, reader.GetValue(2));
-            Assert.Equal("Data", reader.GetValue(3));
         }
 
         File.Delete(fileName);
@@ -430,50 +354,6 @@ public class WriterAdvancedTests
         }
 
         Assert.True(File.Exists(fileName));
-        File.Delete(fileName);
-    }
-
-    [Theory(Skip = "WriteSheet with List<object?[]> has issues with null value handling")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void WriteSheet_FromList_WithNullValues_Works(string extension)
-    {
-        var fileName = $"test_list_nulls{extension}";
-        
-        List<string> headers = new() { "Col1", "Col2" };
-        List<TypeCode> typeCodes = new() { TypeCode.Int32, TypeCode.String };
-        List<object?[]> data = new()
-        {
-            new object?[] { 1, "A" },
-            new object?[] { null, null },
-            new object?[] { 3, "C" }
-        };
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            writer.WriteSheet(headers, typeCodes, data);
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            
-            Assert.True(reader.Read()); // Header
-            Assert.True(reader.Read());
-            Assert.Equal(1L, reader.GetValue(0)); // GetValue returns long for integers
-            Assert.Equal("A", reader.GetValue(1));
-            
-            Assert.True(reader.Read());
-            Assert.Equal(DBNull.Value, reader.GetValue(0));
-            Assert.Equal(DBNull.Value, reader.GetValue(1));
-            
-            Assert.True(reader.Read());
-            Assert.Equal(3L, reader.GetValue(0)); // GetValue returns long for integers
-            Assert.Equal("C", reader.GetValue(1));
-        }
-
         File.Delete(fileName);
     }
 

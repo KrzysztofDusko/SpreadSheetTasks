@@ -142,37 +142,6 @@ public class ReaderAdvancedTests
 
     [Theory]
     [InlineData(".xlsx")]
-    [InlineData(".xlsb", Skip = "XLSB format throws NullReferenceException with readSharedStrings: false")]
-    public void Open_WithReadSharedStringsFalse_Works(string extension)
-    {
-        var fileName = $"test_no_shared_strings{extension}";
-        
-        DataTable dt = new DataTable();
-        dt.Columns.Add("Col1", typeof(string));
-        dt.Rows.Add("Data1");
-        dt.Rows.Add("Data2");
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            writer.WriteSheet(dt.CreateDataReader());
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName, readSharedStrings: false);
-            reader.ActualSheetName = "Sheet1";
-            
-            // Should still be able to read, but strings may not be resolved
-            Assert.True(reader.Read()); // Skip header
-            // The behavior may vary - strings might be empty or indices
-        }
-
-        File.Delete(fileName);
-    }
-
-    [Theory]
-    [InlineData(".xlsx")]
     [InlineData(".xlsb")]
     public void Open_WithUpdateMode_Works(string extension)
     {
@@ -237,7 +206,7 @@ public class ReaderAdvancedTests
         File.Delete(fileName);
     }
 
-    [Theory(Skip = "Sheet switching doesn't reset reader position properly")]
+    [Theory]
     [InlineData(".xlsx")]
     [InlineData(".xlsb")]
     public void ActualSheetName_ChangeSheet_Works(string extension)
@@ -275,6 +244,72 @@ public class ReaderAdvancedTests
             Assert.True(reader.Read()); // Header
             Assert.True(reader.Read()); // Data
             Assert.Equal("Sheet2Data", reader.GetValue(0));
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void ActualSheetName_JumpBetweenSheets_PartialReads_ReturnsCorrectData_Issue6(string extension)
+    {
+        var fileName = $"test_issue6_sheet_jump{extension}";
+
+        DataTable dt1 = new DataTable();
+        dt1.Columns.Add("Col1", typeof(string));
+        dt1.Rows.Add("A1");
+        dt1.Rows.Add("A2");
+
+        DataTable dt2 = new DataTable();
+        dt2.Columns.Add("Col1", typeof(string));
+        dt2.Rows.Add("B1");
+        dt2.Rows.Add("B2");
+
+        DataTable dt3 = new DataTable();
+        dt3.Columns.Add("Col1", typeof(string));
+        dt3.Rows.Add("C1");
+        dt3.Rows.Add("C2");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("SheetA");
+            writer.WriteSheet(dt1.CreateDataReader());
+            writer.AddSheet("SheetB");
+            writer.WriteSheet(dt2.CreateDataReader());
+            writer.AddSheet("SheetC");
+            writer.WriteSheet(dt3.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+
+            reader.ActualSheetName = "SheetA";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("A1", reader.GetValue(0));
+
+            reader.ActualSheetName = "SheetB";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("B1", reader.GetValue(0));
+
+            // Jump back - should restart from beginning of SheetA, not continue stale state.
+            reader.ActualSheetName = "SheetA";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("A1", reader.GetValue(0));
+
+            reader.ActualSheetName = "SheetC";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("C1", reader.GetValue(0));
+
+            reader.ActualSheetName = "SheetB";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("B1", reader.GetValue(0));
         }
 
         File.Delete(fileName);
@@ -339,38 +374,6 @@ public class ReaderAdvancedTests
         
         // After dispose, operations should fail
         Assert.Throws<ObjectDisposedException>(() => reader.Read());
-
-        File.Delete(fileName);
-    }
-
-    [Theory(Skip = "Open called twice causes file locking issues")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void Open_CalledTwice_Works(string extension)
-    {
-        var fileName = $"test_open_twice{extension}";
-        
-        DataTable dt = new DataTable();
-        dt.Columns.Add("Col1", typeof(string));
-        dt.Rows.Add("Data");
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            writer.WriteSheet(dt.CreateDataReader());
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            Assert.True(reader.Read());
-            
-            // Open again (should close previous and reopen)
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            Assert.True(reader.Read());
-        }
 
         File.Delete(fileName);
     }

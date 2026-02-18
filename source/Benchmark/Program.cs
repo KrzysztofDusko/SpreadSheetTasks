@@ -17,8 +17,8 @@ class Program
     static void Main(string[] args)
     {
 #if RELEASE
-        //var summary2 = BenchmarkRunner.Run<ReadBenchXlsb>();
-        //var summary = BenchmarkRunner.Run<ReadBenchXlsx>();
+        //var summary1 = BenchmarkRunner.Run<ReadBenchXlsb>();
+        //var summary2 = BenchmarkRunner.Run<ReadBenchXlsx>();
         var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
 #endif
 #if DEBUG
@@ -30,7 +30,7 @@ class Program
 #endif
     }
 }
-[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 [MemoryDiagnoser]
 public class ReadBenchXlsx
 {
@@ -149,7 +149,7 @@ public class ReadBenchXlsx
     }
 }
 
-[SimpleJob(RuntimeMoniker.Net90)]
+[SimpleJob(RuntimeMoniker.Net10_0)]
 [MemoryDiagnoser]
 public class ReadBenchXlsb
 {
@@ -205,7 +205,6 @@ public class ReadBenchXlsb
     }
 }
 
-[SimpleJob(RuntimeMoniker.Net90)]
 [SimpleJob(RuntimeMoniker.Net10_0)]
 [MemoryDiagnoser]
 public class WriteBenchExcel

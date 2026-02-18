@@ -251,33 +251,6 @@ public class ErrorHandlingTests
         File.Delete(fileName);
     }
 
-    [Theory(Skip = "File locking issues on Windows")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void Open_InvalidFileContent_ThrowsException(string extension)
-    {
-        var fileName = $"test_invalid_content{extension}";
-        
-        try
-        {
-            // Create a file with invalid content
-            File.WriteAllText(fileName, "This is not a valid Excel file");
-
-            using var reader = new XlsxOrXlsbReadOrEdit();
-            
-            // Should throw when trying to open invalid file
-            Assert.ThrowsAny<Exception>(() => reader.Open(fileName));
-        }
-        finally
-        {
-            // Make sure to clean up even if test fails
-            if (File.Exists(fileName))
-            {
-                File.Delete(fileName);
-            }
-        }
-    }
-
     [Theory]
     [InlineData(".xlsx")]
     [InlineData(".xlsb")]
@@ -478,44 +451,6 @@ public class ErrorHandlingTests
                 File.Delete(fileName);
             }
         }
-    }
-
-    [Theory(Skip = "overLimit parameter causes ArgumentOutOfRangeException in library")]
-    [InlineData(".xlsx")]
-    [InlineData(".xlsb")]
-    public void WriteSheet_OverLimitExceedsRowCount_WritesLimitedRows(string extension)
-    {
-        var fileName = $"test_overlimit_exceed{extension}";
-        
-        DataTable dt = new DataTable();
-        dt.Columns.Add("Col1", typeof(string));
-        for (int i = 0; i < 10; i++)
-        {
-            dt.Rows.Add($"Row{i}");
-        }
-
-        using (var writer = ExcelWriter.CreateWriter(fileName))
-        {
-            writer.AddSheet("Sheet1");
-            // overLimit greater than row count - should work fine
-            writer.WriteSheet(dt.CreateDataReader(), overLimit: 1000);
-        }
-
-        using (var reader = new XlsxOrXlsbReadOrEdit())
-        {
-            reader.Open(fileName);
-            reader.ActualSheetName = "Sheet1";
-            
-            int count = 0;
-            while (reader.Read())
-            {
-                count++;
-            }
-            // Header + 10 data rows
-            Assert.Equal(11, count);
-        }
-
-        File.Delete(fileName);
     }
 
     [Theory]

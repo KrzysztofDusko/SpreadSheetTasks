@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
@@ -336,7 +336,7 @@ namespace SpreadSheetTasks
                 //writeStringToBuffer("\">");
                 WriteStringToBuffer("<row>");
 
-                WriteRow(ColumnCount);
+                WriteRow(ColumnCount, rowNum + 1 + startingRow);
 
                 rowNum++;
                 WriteStringToBuffer("</row>");
@@ -447,12 +447,34 @@ namespace SpreadSheetTasks
                 WriteSheet(writter, 0, 0);
             }
         }
-        private void WriteRow(int columnCount)
+        private void WriteRow(int columnCount, int rowNumber)
         {
+            int lastWrittenColumn = -1;
+            int lastNonNullColumn = -1;
+            for (int i = columnCount - 1; i >= 0; i--)
+            {
+                if (!_dataColReader.IsDBNull(i))
+                {
+                    lastNonNullColumn = i;
+                    break;
+                }
+            }
             for (int column = 0; column < columnCount; column++)
             {
+                bool hasGap = true; // Always emit explicit cell references for interoperability.
+                
                 if (_dataColReader.IsDBNull(column))
+                {
+                    if (column < lastNonNullColumn)
+                    {
+                        WriteStringToBuffer("<c r=\"");
+                        WriteStringToBuffer(_letters[column]);
+                        WriteInt32ToBuffer(rowNumber);
+                        WriteStringToBuffer("\"/>");
+                        lastWrittenColumn = column;
+                    }
                     continue;
+                }
 
                 if (_newTypes[column] == TypeCode.String || _newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
                 {
@@ -468,7 +490,7 @@ namespace SpreadSheetTasks
                     else
                     {
                         stringValue = _dataColReader.GetValue(column).ToString()!;
-                    }                    
+                    }
 
                     if (!_inMemoryMode)
                     {
@@ -501,8 +523,18 @@ namespace SpreadSheetTasks
 
                     if (!_useScharedStrings)
                     {
-                        WriteStringToBuffer("<c ");
-                        if (stringValue.Length > 0 && (stringValue[0] == ' ' || stringValue[0] == '\t'))
+                        if (hasGap)
+                        {
+                            WriteStringToBuffer("<c r=\"");
+                            WriteStringToBuffer(_letters[column]);
+                            WriteInt32ToBuffer(rowNumber);
+                            WriteStringToBuffer("\"");
+                        }
+                        else
+                        {
+                            WriteStringToBuffer("<c ");
+                        }
+                        if (ShouldPreserveWhitespace(stringValue))
                         {
                             WriteStringToBuffer(" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                         }
@@ -521,19 +553,36 @@ namespace SpreadSheetTasks
                             dicRefValue = _sstCntUnique;
                             _sstCntUnique++;
                         }
-                        WriteStringToBuffer("<c t=\"s\"><v>");
+                        if (hasGap)
+                        {
+                            WriteStringToBuffer("<c r=\"");
+                            WriteStringToBuffer(_letters[column]);
+                            WriteInt32ToBuffer(rowNumber);
+                            WriteStringToBuffer("\" t=\"s\"><v>");
+                        }
+                        else
+                        {
+                            WriteStringToBuffer("<c t=\"s\"><v>");
+                        }
                         WriteInt32ToBuffer(dicRefValue);
                         WriteStringToBuffer("</v></c>");
                         _sstCntAll++;
                     }
+                    lastWrittenColumn = column;
                 }
                 else if (typesArray[column] == 1)//number
                 {
-                    //writeStringToBuffer("<c r=\"");
-                    //writeStringToBuffer(_letters[column + startingColumn]);
-                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    //writeStringToBuffer("\"><v>");
-                    WriteStringToBuffer("<c><v>");
+                    if (hasGap)
+                    {
+                        WriteStringToBuffer("<c r=\"");
+                        WriteStringToBuffer(_letters[column]);
+                        WriteInt32ToBuffer(rowNumber);
+                        WriteStringToBuffer("\"><v>");
+                    }
+                    else
+                    {
+                        WriteStringToBuffer("<c><v>");
+                    }
 
                     switch (_newTypes[column])
                     {
@@ -575,15 +624,22 @@ namespace SpreadSheetTasks
 
 
                     WriteStringToBuffer("</v></c>");
+                    lastWrittenColumn = column;
                 }
                 else if (typesArray[column] == 2) //date
                 {
                     DateTime dtVal = _dataColReader.GetDateTime(column);
-                    //writeStringToBuffer("<c r=\"");
-                    //writeStringToBuffer(_letters[column + startingColumn]);
-                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    //writeStringToBuffer("\" s=\"1\"><v>");
-                    WriteStringToBuffer("<c s=\"1\"><v>");
+                    if (hasGap)
+                    {
+                        WriteStringToBuffer("<c r=\"");
+                        WriteStringToBuffer(_letters[column]);
+                        WriteInt32ToBuffer(rowNumber);
+                        WriteStringToBuffer("\" s=\"1\"><v>");
+                    }
+                    else
+                    {
+                        WriteStringToBuffer("<c s=\"1\"><v>");
+                    }
 
                     WriteDoubleToBuffer((double)(dtVal as DateTime?)?.ToOADate()!);
                     WriteStringToBuffer("</v></c>");
@@ -591,6 +647,7 @@ namespace SpreadSheetTasks
                     {
                         _colWidesArray[column] = _dateWidth;
                     }
+                    lastWrittenColumn = column;
                 }
                 else if (typesArray[column] == 3) //datetime
                 {
@@ -599,25 +656,38 @@ namespace SpreadSheetTasks
                     {
                         continue;
                     }
-                    //writeStringToBuffer("<c r=\"");
-                    //writeStringToBuffer(_letters[column + startingColumn]);
-                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    //writeStringToBuffer("\" s=\"2\"><v>");
-                    WriteStringToBuffer("<c s=\"2\"><v>");
+                    if (hasGap)
+                    {
+                        WriteStringToBuffer("<c r=\"");
+                        WriteStringToBuffer(_letters[column]);
+                        WriteInt32ToBuffer(rowNumber);
+                        WriteStringToBuffer("\" s=\"2\"><v>");
+                    }
+                    else
+                    {
+                        WriteStringToBuffer("<c s=\"2\"><v>");
+                    }
                     WriteDoubleToBuffer((double)((dtVal) as DateTime?)?.ToOADate()!);
                     WriteStringToBuffer("</v></c>");
                     if (!_inMemoryMode)
                     {
                         _colWidesArray[column] = _dateTimeWidth;
                     }
+                    lastWrittenColumn = column;
                 }
                 else if (_newTypes[column] == TypeCode.Boolean)
                 {
-                    //writeStringToBuffer("<c r=\"");
-                    //writeStringToBuffer(_letters[column + startingColumn]);
-                    //writeInt32ToBuffer((rowNum + 1 + startingRow));
-                    //writeStringToBuffer("\" t=\"b\"><v>");
-                    WriteStringToBuffer("<c t=\"b\"><v>");
+                    if (hasGap)
+                    {
+                        WriteStringToBuffer("<c r=\"");
+                        WriteStringToBuffer(_letters[column]);
+                        WriteInt32ToBuffer(rowNumber);
+                        WriteStringToBuffer("\" t=\"b\"><v>");
+                    }
+                    else
+                    {
+                        WriteStringToBuffer("<c t=\"b\"><v>");
+                    }
                     if (_dataColReader.GetBoolean(column))
                     {
                         _buffer[_currentBufferOffset++] = '1';
@@ -627,6 +697,7 @@ namespace SpreadSheetTasks
                         _buffer[_currentBufferOffset++] = '0';
                     }
                     WriteStringToBuffer("</v></c>");
+                    lastWrittenColumn = column;
                 }
             }
         }
@@ -813,7 +884,7 @@ namespace SpreadSheetTasks
 
                 foreach (string dana in _sstDic.Keys)
                 {
-                    if (dana.Length > 0 && (dana[0] == ' ' || dana[0] == '\t'))
+                    if (ShouldPreserveWhitespace(dana))
                     {
                         _sharedStringWritter.Write("<si><t xml:space=\"preserve\">");
                         _sharedStringWritter.Write(dana);
@@ -829,6 +900,17 @@ namespace SpreadSheetTasks
                 _sharedStringWritter.Write("</sst>");
             }
         }
+
+        private static bool ShouldPreserveWhitespace(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return false;
+            }
+
+            return char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[^1]);
+        }
+
         public override void Dispose()
         {
             this.Save();
@@ -881,7 +963,7 @@ namespace SpreadSheetTasks
                 sheetWritter.Write(_letters[j + startingColumn]);
                 sheetWritter.Write((rowNum + 1 + startingRow));
                 sheetWritter.Write("\"");
-                if (stringValue.Length > 0 && (stringValue[0] == ' ' || stringValue[0] == '\t'))
+                if (ShouldPreserveWhitespace(stringValue))
                 {
                     sheetWritter.Write(" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                 }
@@ -936,7 +1018,7 @@ namespace SpreadSheetTasks
                         sheetWritter.Write("<c r=\"");
                         sheetWritter.Write(_letters[j + startingColumn]);
                         sheetWritter.Write((rowNum + 1 + startingRow));
-                        if (stringValue.Length > 0 && (stringValue[0] == ' ' || stringValue[0] == '\t'))
+                        if (ShouldPreserveWhitespace(stringValue))
                         {
                             sheetWritter.Write("\" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                         }

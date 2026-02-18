@@ -58,7 +58,7 @@ namespace SpreadSheetTasks
                 ExcelDataType.String => innerRow[i].strValue,
                 //case ExcelDataType.Error:
                 //    return "error in cell";
-                _ => typeof(string),
+                _ => null,
             };
         }
 

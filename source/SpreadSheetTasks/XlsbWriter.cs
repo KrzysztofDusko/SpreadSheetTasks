@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
@@ -312,7 +312,8 @@ namespace SpreadSheetTasks
             _stream = new BufferedStream(newEntry.Open());
             try
             {
-                InitSheet(doAutofilter); //lock first row
+                InitSheet(doAutofilter);
+                int writtenRowNum = 0;
                 while (_dataColReader.Read())
                 {
                     if (rowNum == 0 || _areHeaders && rowNum == 1)
@@ -331,8 +332,9 @@ namespace SpreadSheetTasks
                         }
                     }
 
-                    InitRow(rowNum);
-                    WriteRow(rowNum==0);
+                    InitRow(writtenRowNum);
+                    WriteRow(writtenRowNum == 0);
+                    writtenRowNum++;
 
                     if (rowNum % 10000 == 0)
                     {
@@ -340,7 +342,7 @@ namespace SpreadSheetTasks
                     }
                     rowNum++;
                 }
-                _rowsCount = rowNum - 1;
+                _rowsCount = writtenRowNum - 1;
                 
                 _stream.Write(_sheet1Bytes[218..290].AsSpan());
 
@@ -391,10 +393,13 @@ namespace SpreadSheetTasks
 
         private void WriteRow(bool boldedStyle)
         {
+            bool wroteAnyCell = false;
             for (int column = 0; column < _columnCount; column++)
             {
                 if (_dataColReader.IsDBNull(column))
                     continue;
+
+                wroteAnyCell = true;
 
                 if (_newTypes[column] == TypeCode.String) // string
                 {
@@ -477,8 +482,13 @@ namespace SpreadSheetTasks
                         continue;
                     }
                     WriteDateTime(dtVal, column);
-                }
+                 }
                 
+            }
+
+            if (!wroteAnyCell)
+            {
+                WriteBlank(0, boldedStyle ? (byte)3 : (byte)0);
             }
         }
 
@@ -612,6 +622,16 @@ namespace SpreadSheetTasks
             //generalStyle.CopyTo(_buffer, 6); generalStyle = [0,0,0,0]
             buff[10] = (byte)(val ? 1 : 0); // 0 = false, 1 = true
             //buff[11] = 1;
+            _stream.Write(buff);
+        }
+
+        private void WriteBlank(int colNum, byte styleNum = 0)
+        {
+            Span<byte> buff = stackalloc byte[10];
+            buff[0] = 0x01;
+            buff[1] = 8;
+            BitConverter.TryWriteBytes(buff[2..], (int)colNum);
+            buff[6] = styleNum;
             _stream.Write(buff);
         }
 
