@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.Common;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -44,29 +45,42 @@ namespace SpreadSheetTasks
             };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public object GetValue(int i)
         {
-            return innerRow[i].type switch
+            ref var w = ref innerRow[i];
+            return w.type switch
             {
                 ExcelDataType.Null => DBNull.Value,
-                ExcelDataType.Int32 => innerRow[i].int32Value,
-                ExcelDataType.Int64 => innerRow[i].int64Value,
-                ExcelDataType.Double => innerRow[i].doubleValue,
-                ExcelDataType.DateTime => innerRow[i].dtValue,
-                //ExcelDataType.Boolean => (innerRow[i].int32Value == 1),
-                ExcelDataType.Boolean => innerRow[i].boolValue,
-                ExcelDataType.String => innerRow[i].strValue,
+                ExcelDataType.Int32 => w.int32Value,
+                ExcelDataType.Int64 => w.int64Value,
+                ExcelDataType.Double => w.doubleValue,
+                ExcelDataType.DateTime => w.dtValue,
+                ExcelDataType.Boolean => w.boolValue,
+                ExcelDataType.String => w.strValue,
                 //case ExcelDataType.Error:
                 //    return "error in cell";
                 _ => null,
             };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void GetValues(object[] row)
         {
             for (int i = 0; i < row.Length; i++)
             {
-                row[i] = GetValue(i);
+                ref var w = ref innerRow[i];
+                row[i] = w.type switch
+                {
+                    ExcelDataType.Null => DBNull.Value,
+                    ExcelDataType.Int32 => w.int32Value,
+                    ExcelDataType.Int64 => w.int64Value,
+                    ExcelDataType.Double => w.doubleValue,
+                    ExcelDataType.DateTime => w.dtValue,
+                    ExcelDataType.Boolean => w.boolValue,
+                    ExcelDataType.String => w.strValue,
+                    _ => null,
+                };
             }
         }
 
@@ -82,11 +96,30 @@ namespace SpreadSheetTasks
         }
 
         public bool TreatAllColumnsAsText { get; set; } = false;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual string GetString(int i)
         {
-            return GetValue(i).ToString();
+            ref var w = ref innerRow[i];
+            if (w.type == ExcelDataType.String)
+            {
+                return w.strValue ?? string.Empty;
+            }
+            if (w.type == ExcelDataType.Null)
+            {
+                return string.Empty;
+            }
+            return w.type switch
+            {
+                ExcelDataType.Int32 => w.int32Value.ToString(invariantCultureInfo),
+                ExcelDataType.Int64 => w.int64Value.ToString(invariantCultureInfo),
+                ExcelDataType.Double => w.doubleValue.ToString(invariantCultureInfo),
+                ExcelDataType.DateTime => w.dtValue.ToString(invariantCultureInfo),
+                ExcelDataType.Boolean => w.boolValue ? bool.TrueString : bool.FalseString,
+                _ => GetValue(i)?.ToString() ?? string.Empty,
+            };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public DateTime GetDateTime(int i)
         {
             ref var w = ref innerRow[i];
@@ -100,63 +133,55 @@ namespace SpreadSheetTasks
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Int64 GetInt64(int i)
         {
             ref var w = ref innerRow[i];
-            if (w.type == ExcelDataType.Int64)
+            switch (w.type)
             {
-                return w.int64Value;
-            }
-            else if (w.type == ExcelDataType.Double)
-            {
-                return Convert.ToInt64(w.doubleValue);
-            }
-            else
-            {
-                throw new InvalidCastException();
+                case ExcelDataType.Int64:
+                    return w.int64Value;
+                case ExcelDataType.Int32:
+                    return w.int32Value;
+                case ExcelDataType.Double:
+                    return Convert.ToInt64(w.doubleValue);
+                default:
+                    throw new InvalidCastException();
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Int32 GetInt32(int i)
         {
             ref var w = ref innerRow[i];
-            if (w.type == ExcelDataType.Int32)
+            switch (w.type)
             {
-                return w.int32Value;
-            }
-            else if (w.type == ExcelDataType.Int64)
-            {
-                return Convert.ToInt32(w.int64Value);
-            }
-            else if (w.type == ExcelDataType.Double)
-            {
-                return Convert.ToInt32(w.doubleValue);
-            }
-            else
-            {
-                throw new InvalidCastException();
+                case ExcelDataType.Int32:
+                    return w.int32Value;
+                case ExcelDataType.Int64:
+                    return checked((int)w.int64Value);
+                case ExcelDataType.Double:
+                    return Convert.ToInt32(w.doubleValue);
+                default:
+                    throw new InvalidCastException();
             }
         }
 
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public double GetDouble(int i)
         {
             ref var w = ref innerRow[i];
-            if (w.type == ExcelDataType.Double)
+            switch (w.type)
             {
-                return w.doubleValue;
-            }
-            else if (w.type == ExcelDataType.Int64)
-            {
-                return Convert.ToDouble(w.int64Value);
-            }
-            else if (w.type == ExcelDataType.Int32)
-            {
-                return Convert.ToDouble(w.int32Value);
-            }
-            else
-            {
-                throw new InvalidCastException();
+                case ExcelDataType.Double:
+                    return w.doubleValue;
+                case ExcelDataType.Int64:
+                    return w.int64Value;
+                case ExcelDataType.Int32:
+                    return w.int32Value;
+                default:
+                    throw new InvalidCastException();
             }
         }
 

@@ -745,18 +745,31 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 _len = _xmlReader.ReadValueChunk(_buffer, 0, _buffer.Length);
                 _colNum = -1;
 
-                //Sylvan
-                for (int j = 0; j < _len; j++)
+                // Fast path for most common references like "A12", "B3", etc.
+                if (_len > 1)
                 {
-                    char c = _buffer[j];
-                    if (c < 'A' || c > 'Z')
+                    int v = _buffer[0] - 'A';
+                    if ((uint)v < 26u && (uint)(_buffer[1] - '0') <= 9u)
                     {
-                        break;
+                        _colNum = v;
                     }
-                    int v = c - 'A';
-                    if ((uint)v < 26u)
+                }
+
+                if (_colNum == -1)
+                {
+                    //Sylvan
+                    for (int j = 0; j < _len; j++)
                     {
-                        _colNum = ((_colNum + 1) * 26) + v;
+                        char c = _buffer[j];
+                        if (c < 'A' || c > 'Z')
+                        {
+                            break;
+                        }
+                        int v = c - 'A';
+                        if ((uint)v < 26u)
+                        {
+                            _colNum = ((_colNum + 1) * 26) + v;
+                        }
                     }
                 }
             }
@@ -908,17 +921,6 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 }
             }
 
-            if (_prevColNum != -1 && _colNum > _prevColNum + 1)
-            {
-                for (int i = _prevColNum + 1; i < _colNum; i++)
-                {
-                    int missingCellIndex = i - _numberOfFirsColumnWithData;
-                    if ((uint)missingCellIndex < (uint)innerRow.Length)
-                    {
-                        innerRow[missingCellIndex].type = ExcelDataType.Null;
-                    }
-                }
-            }
             _prevColNum = _colNum;
 
             if (!isEmptyElement) // depth = ...
@@ -938,14 +940,6 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             Array.Resize<FieldInfo>(ref innerRow, _columnsCntFromFirstRow);
             FieldCount = _columnsCntFromFirstRow;
         }
-        if (_colNum < _numberOfLastColumnWithData)
-        {
-            for (int i = _colNum; i < _numberOfLastColumnWithData; i++)
-            {
-                innerRow[i - (_numberOfFirsColumnWithData - 1)].type = ExcelDataType.Null;
-            }
-        }
-
         return true;
     }
 

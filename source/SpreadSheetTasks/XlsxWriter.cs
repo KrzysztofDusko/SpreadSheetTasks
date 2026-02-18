@@ -450,31 +450,32 @@ namespace SpreadSheetTasks
         private void WriteRow(int columnCount, int rowNumber)
         {
             int lastWrittenColumn = -1;
-            int lastNonNullColumn = -1;
-            for (int i = columnCount - 1; i >= 0; i--)
-            {
-                if (!_dataColReader.IsDBNull(i))
-                {
-                    lastNonNullColumn = i;
-                    break;
-                }
-            }
+            int pendingNullStart = -1;
             for (int column = 0; column < columnCount; column++)
             {
-                bool hasGap = true; // Always emit explicit cell references for interoperability.
-                
                 if (_dataColReader.IsDBNull(column))
                 {
-                    if (column < lastNonNullColumn)
+                    if (pendingNullStart == -1)
                     {
-                        WriteStringToBuffer("<c r=\"");
-                        WriteStringToBuffer(_letters[column]);
-                        WriteInt32ToBuffer(rowNumber);
-                        WriteStringToBuffer("\"/>");
-                        lastWrittenColumn = column;
+                        pendingNullStart = column;
                     }
                     continue;
                 }
+
+                if (pendingNullStart != -1)
+                {
+                    for (int blankColumn = pendingNullStart; blankColumn < column; blankColumn++)
+                    {
+                        WriteStringToBuffer("<c r=\"");
+                        WriteStringToBuffer(_letters[blankColumn]);
+                        WriteInt32ToBuffer(rowNumber);
+                        WriteStringToBuffer("\"/>");
+                    }
+                    lastWrittenColumn = column - 1;
+                    pendingNullStart = -1;
+                }
+
+                bool hasGap = column > lastWrittenColumn + 1;
 
                 if (_newTypes[column] == TypeCode.String || _newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
                 {

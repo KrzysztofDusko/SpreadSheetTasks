@@ -17,9 +17,19 @@ class Program
     static void Main(string[] args)
     {
 #if RELEASE
-        //var summary1 = BenchmarkRunner.Run<ReadBenchXlsb>();
-        //var summary2 = BenchmarkRunner.Run<ReadBenchXlsx>();
-        var summary3 = BenchmarkRunner.Run<WriteBenchExcel>();
+        bool runFullBenchmarks = Array.Exists(args, a => string.Equals(a, "--full", StringComparison.OrdinalIgnoreCase));
+        if (runFullBenchmarks)
+        {
+            BenchmarkRunner.Run<ReadBenchXlsb>();
+            BenchmarkRunner.Run<ReadBenchXlsx>();
+            BenchmarkRunner.Run<WriteBenchExcel>();
+        }
+        else
+        {
+            BenchmarkRunner.Run<ReadBenchXlsbQuick>();
+            BenchmarkRunner.Run<ReadBenchXlsxQuick>();
+            BenchmarkRunner.Run<WriteBenchExcelQuick>();
+        }
 #endif
 #if DEBUG
         WriteBenchExcel writeBench = new WriteBenchExcel();
@@ -112,7 +122,7 @@ public class ReadBenchXlsx
 
     //method from
     //https://github.com/MarkPflug/Benchmarks/blob/main/source/Benchmarks/XlsxDataReaderBenchmarks.cs
-    static void ProcessRecordSylvan(IDataReader reader)
+    internal static void ProcessRecordSylvan(IDataReader reader)
     {
         var region = reader.GetString(0);
         var country = reader.GetString(1);
@@ -130,7 +140,7 @@ public class ReadBenchXlsx
         var totalProfit = reader.GetDouble(13);
     }
 
-    static void ProcessRecord(XlsxOrXlsbReadOrEdit excelFile)
+    internal static void ProcessRecord(XlsxOrXlsbReadOrEdit excelFile)
     {
         var region = excelFile.GetString(0);
         var country = excelFile.GetString(1);
@@ -345,6 +355,108 @@ public class WriteBenchExcel
         DbDataReader dr;
         dr = Dt.CreateDataReader();
         edw.Write(dr, "sheetName");
+    }
+}
+
+[SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 1, iterationCount: 3)]
+[MemoryDiagnoser]
+public class ReadBenchXlsxQuick
+{
+    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
+    readonly string _fileName65k = "65K_Records_Data.xlsx";
+
+    [Benchmark]
+    public void SpreadSheetTasks65k()
+    {
+        var path = @$"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName65k}";
+
+        using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+        excelFile.Open(path);
+        var sheetNames = excelFile.GetScheetNames();
+        excelFile.ActualSheetName = sheetNames[0];
+
+        excelFile.Read();
+        while (excelFile.Read())
+        {
+            ReadBenchXlsx.ProcessRecord(excelFile);
+        }
+    }
+
+    [Benchmark]
+    public void Sylvan65K()
+    {
+        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName65k}";
+
+        using var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
+        do
+        {
+            while (reader.Read())
+            {
+                ReadBenchXlsx.ProcessRecordSylvan(reader);
+            }
+
+        } while (reader.NextResult());
+    }
+}
+
+[SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 1, iterationCount: 3)]
+[MemoryDiagnoser]
+public class ReadBenchXlsbQuick
+{
+    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
+    private readonly string _fileName = "65K_Records_Data.xlsb";
+
+    [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v1 (quick)")]
+    public void ReadFile()
+    {
+        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName}";
+        using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+        excelFile.Open(path);
+        excelFile.ActualSheetName = "sheet1";
+        object[] row = null;
+        while (excelFile.Read())
+        {
+            row ??= new object[excelFile.FieldCount];
+            excelFile.GetValues(row);
+        }
+    }
+
+    [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v2 (quick)")]
+    public void ReadFileInMemory()
+    {
+        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName}";
+        using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
+        excelFile.Open(path);
+        excelFile.UseMemoryStreamInXlsb = false;
+        excelFile.ActualSheetName = "sheet1";
+        object[] row = null;
+        while (excelFile.Read())
+        {
+            row ??= new object[excelFile.FieldCount];
+            excelFile.GetValues(row);
+        }
+    }
+
+    [Benchmark(Description = "Sylvan.Data.Excel - XLSB Read (quick)")]
+    public void Sylvan()
+    {
+        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName}";
+        using ExcelDataReader reader = ExcelDataReader.Create(path);
+        object[] row = new object[reader.FieldCount];
+        while (reader.Read())
+        {
+            reader.GetValues(row);
+        }
+    }
+}
+
+[SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 1, iterationCount: 3)]
+[MemoryDiagnoser]
+public class WriteBenchExcelQuick : WriteBenchExcel
+{
+    public WriteBenchExcelQuick()
+    {
+        RowsCount = 50_000;
     }
 }
 
