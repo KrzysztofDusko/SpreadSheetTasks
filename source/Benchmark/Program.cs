@@ -347,15 +347,6 @@ public class WriteBenchExcel
         xlsx.AddSheet("sheetName");
         xlsx.WriteSheet(Dt.CreateDataReader());
     }
-
-    [Benchmark(Description = "Sylvan - XLSX Write")]
-    public void XlsxSylvanWrite()
-    {
-        using var edw = ExcelDataWriter.Create("fileSylvan.xlsx", new ExcelDataWriterOptions { CompressionLevel = _cLvl});
-        DbDataReader dr;
-        dr = Dt.CreateDataReader();
-        edw.Write(dr, "sheetName");
-    }
 }
 
 [SimpleJob(RuntimeMoniker.Net10_0, launchCount: 1, warmupCount: 1, iterationCount: 3)]
@@ -380,22 +371,6 @@ public class ReadBenchXlsxQuick
         {
             ReadBenchXlsx.ProcessRecord(excelFile);
         }
-    }
-
-    [Benchmark]
-    public void Sylvan65K()
-    {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName65k}";
-
-        using var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
-        do
-        {
-            while (reader.Read())
-            {
-                ReadBenchXlsx.ProcessRecordSylvan(reader);
-            }
-
-        } while (reader.NextResult());
     }
 }
 
@@ -434,18 +409,6 @@ public class ReadBenchXlsbQuick
         {
             row ??= new object[excelFile.FieldCount];
             excelFile.GetValues(row);
-        }
-    }
-
-    [Benchmark(Description = "Sylvan.Data.Excel - XLSB Read (quick)")]
-    public void Sylvan()
-    {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName}";
-        using ExcelDataReader reader = ExcelDataReader.Create(path);
-        object[] row = new object[reader.FieldCount];
-        while (reader.Read())
-        {
-            reader.GetValues(row);
         }
     }
 }
