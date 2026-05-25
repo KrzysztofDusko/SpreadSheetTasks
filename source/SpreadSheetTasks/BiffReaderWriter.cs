@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -106,24 +107,37 @@ namespace SpreadSheetTasks
             if (!TryReadVariableValue(out var recordId) ||
                 !TryReadVariableValue(out var recordLength))
                 return false;
-            byte[] buffer = recordLength < _buffer.Length ? _buffer : new byte[recordLength];
-            if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
-                return false;
-
-            _isSheet = false;
-            if (recordId == _sheet)
+            byte[]? rented = null;
+            byte[] buffer;
+            try
             {
-                _workbookId = GetDWord(buffer, 4);
+                if (recordLength <= _buffer.Length)
+                    buffer = _buffer;
+                else
+                    buffer = rented = ArrayPool<byte>.Shared.Rent((int)recordLength);
+                if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
+                    return false;
 
-                uint offset = 8;
-                _recId = GetNullableString(buffer, ref offset);
+                _isSheet = false;
+                if (recordId == _sheet)
+                {
+                    _workbookId = GetDWord(buffer, 4);
 
-                // Must be between 1 and 31 characters
-                uint nameLength = GetDWord(buffer, offset);
-                _workbookName = GetString(buffer, offset + 4, nameLength);
-                _isSheet = true;
+                    uint offset = 8;
+                    _recId = GetNullableString(buffer, ref offset);
+
+                    // Must be between 1 and 31 characters
+                    uint nameLength = GetDWord(buffer, offset);
+                    _workbookName = GetString(buffer, offset + 4, nameLength);
+                    _isSheet = true;
+                }
+                return true;
             }
-            return true;
+            finally
+            {
+                if (rented != null)
+                    ArrayPool<byte>.Shared.Return(rented);
+            }
         }
 
         internal bool _inCellXf;
@@ -143,10 +157,16 @@ namespace SpreadSheetTasks
                 !TryReadVariableValue(out var recordLength))
                 return false;
 
-            byte[] buffer = recordLength < _buffer.Length ? _buffer : new byte[recordLength];
-            if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
-                return false;
-
+            byte[]? rented = null;
+            byte[] buffer;
+            try
+            {
+                if (recordLength <= _buffer.Length)
+                    buffer = _buffer;
+                else
+                    buffer = rented = ArrayPool<byte>.Shared.Rent((int)recordLength);
+                if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
+                    return false;
 
             switch (recordId)
             {
@@ -191,7 +211,12 @@ namespace SpreadSheetTasks
             }
 
             return true;
-
+            }
+            finally
+            {
+                if (rented != null)
+                    ArrayPool<byte>.Shared.Return(rented);
+            }
         }
 
         internal string? _sharedStringValue;
@@ -202,20 +227,24 @@ namespace SpreadSheetTasks
                 !TryReadVariableValue(out var recordLength))
                 return false;
 
-            byte[] buffer = recordLength < _buffer.Length ? _buffer : new byte[recordLength];
-
-            //if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
-            //    return false;
-
-            uint readed = 0;
-            do
+            byte[]? rented = null;
+            byte[] buffer;
+            try
             {
-                readed += (uint)Stream.Read(buffer, (int)readed, (int)(recordLength - readed));
-                if (readed == 0)
+                if (recordLength <= _buffer.Length)
+                    buffer = _buffer;
+                else
+                    buffer = rented = ArrayPool<byte>.Shared.Rent((int)recordLength);
+
+                uint readed = 0;
+                do
                 {
-                    return false;
-                }
-            } while (readed < recordLength);
+                    readed += (uint)Stream.Read(buffer, (int)readed, (int)(recordLength - readed));
+                    if (readed == 0)
+                    {
+                        return false;
+                    }
+                } while (readed < recordLength);
 
             if (recordId == _stringItem)
             {
@@ -233,6 +262,12 @@ namespace SpreadSheetTasks
             }
 
             return true;
+            }
+            finally
+            {
+                if (rented != null)
+                    ArrayPool<byte>.Shared.Return(rented);
+            }
         }
 
         //public object cellValue;
@@ -254,9 +289,16 @@ namespace SpreadSheetTasks
                 !TryReadVariableValue(out var recordLength))
                 return false;
 
-            byte[] buffer = recordLength < _buffer.Length ? _buffer : new byte[recordLength];
-            if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
-                return false;
+            byte[]? rented = null;
+            byte[] buffer;
+            try
+            {
+                if (recordLength <= _buffer.Length)
+                    buffer = _buffer;
+                else
+                    buffer = rented = ArrayPool<byte>.Shared.Rent((int)recordLength);
+                if (Stream.Read(buffer, 0, (int)recordLength) != recordLength)
+                    return false;
 
             _readCell = false;
             _columnNum = -1;
@@ -436,6 +478,12 @@ namespace SpreadSheetTasks
             }
 
             return true;
+            }
+            finally
+            {
+                if (rented != null)
+                    ArrayPool<byte>.Shared.Return(rented);
+            }
         }
 
         //https://github.com/ExcelDataReader/ExcelDataReader
@@ -528,13 +576,14 @@ namespace SpreadSheetTasks
             if (length == uint.MaxValue)
                 return null;
 
-            char[] array = new char[length];
-            int l = 0;
-
-            uint end = offset + length * 2;
-            for (; offset < end; offset += 2)
-                array[l++] = (char)GetWord(buffer, offset);
-            return new string(array);
+            uint startOffset = offset;
+            offset += length * 2;
+            return string.Create((int)length, (buffer, startOffset), (chars, state) =>
+            {
+                int l = 0;
+                for (uint i = state.startOffset; i < state.startOffset + (uint)chars.Length * 2; i += 2)
+                    chars[l++] = (char)GetWord(state.buffer, i);
+            });
         }
 
         //https://github.com/ExcelDataReader/ExcelDataReader
@@ -551,7 +600,7 @@ namespace SpreadSheetTasks
             }
             else
             {
-                result = BitConverter.Int64BitsToDouble((GetDWord(buffer, offset) & -4) << 32);
+                result = BitConverter.Int64BitsToDouble((long)((ulong)(GetDWord(buffer, offset) & -4) << 32));
             }
 
             if ((flags & 0x01) != 0)

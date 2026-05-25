@@ -7,10 +7,29 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.IO;
 using System.IO.Compression;
 
 
 namespace Benchmark;
+
+internal static class Paths
+{
+    internal static readonly string FilesToTestDir = ResolveFilesToTestDir();
+
+    private static string ResolveFilesToTestDir()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            var filesToTest = new DirectoryInfo(Path.Combine(dir.FullName, "FilesToTest"));
+            if (filesToTest.Exists)
+                return filesToTest.FullName;
+            dir = dir.Parent;
+        }
+        throw new DirectoryNotFoundException("Cannot find FilesToTest directory. Run benchmarks from the SpreadSheetTasks repository root.");
+    }
+}
 
 class Program
 {
@@ -44,14 +63,13 @@ class Program
 [MemoryDiagnoser]
 public class ReadBenchXlsx
 {
-    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
     readonly string filename65k = "65K_Records_Data.xlsx";
     readonly string filename200k = "200kFile.xlsx";
 
     [Benchmark]
     public void SpreadSheetTasks200K()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{filename200k}";
+        var path = Path.Combine(Paths.FilesToTestDir, filename200k);
 
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
@@ -74,7 +92,7 @@ public class ReadBenchXlsx
     [Benchmark]
     public void Sylvan200k()
     {
-        var path = @$"{_baseFilePath}/source/Benchmark/FilesToTest/{filename200k}";
+        var path = Path.Combine(Paths.FilesToTestDir, filename200k);
 
         var reader = ExcelDataReader.Create(path);
 
@@ -89,7 +107,7 @@ public class ReadBenchXlsx
     [Benchmark]
     public void SpreadSheetTasks65k()
     {
-        var path = @$"{_baseFilePath}/source/Benchmark/FilesToTest/{filename65k}";
+        var path = Path.Combine(Paths.FilesToTestDir, filename65k);
 
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
@@ -106,7 +124,7 @@ public class ReadBenchXlsx
     [Benchmark]
     public void Sylvan65K()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{filename65k}";
+        var path = Path.Combine(Paths.FilesToTestDir, filename65k);
 
         var reader = Sylvan.Data.Excel.ExcelDataReader.Create(path);
 
@@ -163,14 +181,13 @@ public class ReadBenchXlsx
 [MemoryDiagnoser]
 public class ReadBenchXlsb
 {
-    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
     [Params("65K_Records_Data.xlsb", "200kFile.xlsb")]
     public string FileName { get; set; }
 
     [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v1")]
     public void ReadFile()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{FileName}";
+        var path = Path.Combine(Paths.FilesToTestDir, FileName);
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
         excelFile.ActualSheetName = "sheet1";
@@ -187,7 +204,7 @@ public class ReadBenchXlsb
     [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v2")]
     public void ReadFileInMemory()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{FileName}";
+        var path = Path.Combine(Paths.FilesToTestDir, FileName);
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
         excelFile.UseMemoryStreamInXlsb = false;
@@ -205,7 +222,7 @@ public class ReadBenchXlsb
     [Benchmark(Description = "Sylvan.Data.Excel - XLSB Read")]
     public void Sylvan()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{FileName}";
+        var path = Path.Combine(Paths.FilesToTestDir, FileName);
         using ExcelDataReader reader = ExcelDataReader.Create(path);
         object[] row = new object[reader.FieldCount];
         while (reader.Read())
@@ -353,13 +370,12 @@ public class WriteBenchExcel
 [MemoryDiagnoser]
 public class ReadBenchXlsxQuick
 {
-    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
     readonly string _fileName65k = "65K_Records_Data.xlsx";
 
     [Benchmark]
     public void SpreadSheetTasks65k()
     {
-        var path = @$"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName65k}";
+        var path = Path.Combine(Paths.FilesToTestDir, _fileName65k);
 
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
@@ -378,13 +394,12 @@ public class ReadBenchXlsxQuick
 [MemoryDiagnoser]
 public class ReadBenchXlsbQuick
 {
-    private readonly string _baseFilePath = @"D:/DEV/source/repos/PublicNuget/SpreadSheetTasks";
     private readonly string _fileName = "65K_Records_Data.xlsb";
 
     [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v1 (quick)")]
     public void ReadFile()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName}";
+        var path = Path.Combine(Paths.FilesToTestDir, _fileName);
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
         excelFile.ActualSheetName = "sheet1";
@@ -399,7 +414,7 @@ public class ReadBenchXlsbQuick
     [Benchmark(Description = "SpreadSheetTasks - XLSB Read - v2 (quick)")]
     public void ReadFileInMemory()
     {
-        var path = $@"{_baseFilePath}/source/Benchmark/FilesToTest/{_fileName}";
+        var path = Path.Combine(Paths.FilesToTestDir, _fileName);
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
         excelFile.UseMemoryStreamInXlsb = false;

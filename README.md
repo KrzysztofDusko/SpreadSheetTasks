@@ -38,40 +38,41 @@ using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
 }
  ```
  
- ## Benchamarks
+ ## Benchmarks
+
+Tested on: Windows 11, AMD Ryzen 7 7840HS, .NET 10.0.8 (10.0.8)
 
 ### XLSB Read
 | Method                              | FileName             | Mean      | Error    | StdDev   | Gen0      | Gen1      | Gen2      | Allocated |
 |------------------------------------ |--------------------- |----------:|---------:|---------:|----------:|----------:|----------:|----------:|
-| 'SpreadSheetTasks - XLSB Read - v1' | 200kFile.xlsb        |  99.03 ms | 1.925 ms | 1.607 ms | 5400.0000 | 3800.0000 | 1400.0000 |  68.48 MB |
-| 'SpreadSheetTasks - XLSB Read - v2' | 200kFile.xlsb        | 115.19 ms | 2.246 ms | 3.148 ms | 5000.0000 | 3500.0000 | 1000.0000 |  49.03 MB |
-| 'Sylvan.Data.Excel - XLSB Read'     | 200kFile.xlsb        | 127.57 ms | 2.508 ms | 3.433 ms | 6000.0000 | 3000.0000 | 1000.0000 |  50.82 MB |
-| 'SpreadSheetTasks - XLSB Read - v1' | 65K_R(...).xlsb [21] |  49.02 ms | 0.204 ms | 0.191 ms | 2363.6364 |  818.1818 |  727.2727 |  28.83 MB |
-| 'SpreadSheetTasks - XLSB Read - v2' | 65K_R(...).xlsb [21] |  64.47 ms | 0.833 ms | 0.696 ms | 1666.6667 |         - |         - |  13.66 MB |
-| 'Sylvan.Data.Excel - XLSB Read'     | 65K_R(...).xlsb [21] |  71.58 ms | 0.512 ms | 0.479 ms | 2875.0000 |  125.0000 |         - |  23.16 MB |
+| 'SpreadSheetTasks - XLSB Read - v1' | 200kFile.xlsb        | 106.01 ms | 2.088 ms | 3.922 ms | 5400.0000 | 3800.0000 | 1400.0000 |  68.59 MB |
+| 'SpreadSheetTasks - XLSB Read - v2' | 200kFile.xlsb        | 113.97 ms | 2.264 ms | 5.380 ms | 5000.0000 | 3500.0000 | 1000.0000 |  49.13 MB |
+| 'Sylvan.Data.Excel - XLSB Read'     | 200kFile.xlsb        | 129.04 ms | 2.820 ms | 8.137 ms | 5000.0000 | 2000.0000 | 1000.0000 |  50.82 MB |
+| 'SpreadSheetTasks - XLSB Read - v1' | 65K_R(...).xlsb [21] |  51.08 ms | 0.608 ms | 0.539 ms | 2400.0000 |  800.0000 |  700.0000 |  28.93 MB |
+| 'SpreadSheetTasks - XLSB Read - v2' | 65K_R(...).xlsb [21] |  56.47 ms | 1.055 ms | 0.987 ms | 1666.6667 |         - |         - |  13.76 MB |
+| 'Sylvan.Data.Excel - XLSB Read'     | 65K_R(...).xlsb [21] |  63.22 ms | 0.469 ms | 0.415 ms | 2875.0000 |  125.0000 |         - |  23.16 MB |
 
 
 ### XLSX Read
-| Method               | Mean     | Error   | StdDev  | Gen0      | Gen1      | Gen2      | Allocated   |
-|--------------------- |---------:|--------:|--------:|----------:|----------:|----------:|------------:|
-| SpreadSheetTasks200K | 244.0 ms | 1.03 ms | 0.91 ms | 5000.0000 | 3000.0000 | 1000.0000 | 35040.13 KB |
-| Sylvan200k           | 329.5 ms | 4.45 ms | 4.16 ms | 6000.0000 | 3000.0000 | 1000.0000 | 52319.76 KB |
-| SpreadSheetTasks65k  | 170.4 ms | 1.46 ms | 1.37 ms |         - |         - |         - |   491.09 KB |
-| Sylvan65K            | 172.8 ms | 1.13 ms | 1.06 ms |         - |         - |         - |   661.50 KB |
+| Method               | Mean     | Error   | StdDev   | Gen0      | Gen1      | Gen2      | Allocated   |
+|--------------------- |---------:|--------:|---------:|----------:|----------:|----------:|------------:|
+| SpreadSheetTasks200K | 267.5 ms | 6.57 ms | 19.18 ms | 5000.0000 | 3000.0000 | 1000.0000 | 35139.8 KB |
+| Sylvan200k           | 334.4 ms | 5.79 ms |  5.42 ms | 6000.0000 | 3000.0000 | 1000.0000 | 52327.52 KB |
+| SpreadSheetTasks65k  | 170.0 ms | 3.37 ms |  2.98 ms |         - |         - |         - |   593.92 KB |
+| Sylvan65K            | 166.6 ms | 2.86 ms |  2.68 ms |         - |         - |         - |   664.77 KB |
 
 
-### XLSB Write
-| Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Gen1      | Allocated |
-|-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|----------:|
-| 'SpreadSheetTasks - XLSB Write' | GENERAL    | 116.6 ms | 1.60 ms | 1.50 ms | 1600.0000 |         - |  30.57 MB |
-| XlsbSylvanWrite                 | GENERAL    | 162.4 ms | 2.27 ms | 2.12 ms | 1666.6667 |         - |  36.75 MB |
+### XLSB Write (200k rows, mixed types)
+| Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Allocated |
+|-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|
+| 'SpreadSheetTasks - XLSB Write' | GENERAL    | 127.1 ms | 3.33 ms | 9.76 ms | 1750.0000 |  30.57 MB |
+| XlsbSylvanWrite                 | GENERAL    | 178.6 ms | 3.49 ms | 5.12 ms | 1000.0000 |  36.75 MB |
 
 
-### XLSX Write
-| Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Gen1      | Allocated |
-|-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|----------:|
-| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 171.1 ms | 2.24 ms | 1.99 ms | 1500.0000 |         - |  30.74 MB |
-| 'Sylvan - XLSX Write'           | GENERAL    | 220.6 ms | 2.83 ms | 2.51 ms | 2500.0000 | 1000.0000 |  42.94 MB |
+### XLSX Write (200k rows, mixed types)
+| Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Allocated |
+|-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|
+| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 183.6 ms | 3.58 ms | 5.79 ms | 1500.0000 |  30.74 MB |
 
 
 https://github.com/KrzysztofDusko/SpreadSheetTasks

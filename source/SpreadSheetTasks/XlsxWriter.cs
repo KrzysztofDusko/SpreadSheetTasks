@@ -213,6 +213,53 @@ namespace SpreadSheetTasks
             _currentBufferOffset += val.Length;
         }
 
+        private void WriteXmlEscapedToBuffer(ReadOnlySpan<char> val)
+        {
+            int specialIdx = val.IndexOfAny(['&', '<', '>', '"', '\'']);
+            if (specialIdx < 0)
+            {
+                val.CopyTo(_buffer.AsSpan(_currentBufferOffset));
+                _currentBufferOffset += val.Length;
+                return;
+            }
+            if (_currentBufferOffset + val.Length * 6 >= _buffer.Length)
+            {
+                return;
+            }
+            val[..specialIdx].CopyTo(_buffer.AsSpan(_currentBufferOffset));
+            _currentBufferOffset += specialIdx;
+            for (int i = specialIdx; i < val.Length; i++)
+            {
+                char c = val[i];
+                switch (c)
+                {
+                    case '&':
+                        "&amp;".CopyTo(_buffer.AsSpan(_currentBufferOffset));
+                        _currentBufferOffset += 5;
+                        break;
+                    case '<':
+                        "&lt;".CopyTo(_buffer.AsSpan(_currentBufferOffset));
+                        _currentBufferOffset += 4;
+                        break;
+                    case '>':
+                        "&gt;".CopyTo(_buffer.AsSpan(_currentBufferOffset));
+                        _currentBufferOffset += 4;
+                        break;
+                    case '"':
+                        "&quot;".CopyTo(_buffer.AsSpan(_currentBufferOffset));
+                        _currentBufferOffset += 6;
+                        break;
+                    case '\'':
+                        "&apos;".CopyTo(_buffer.AsSpan(_currentBufferOffset));
+                        _currentBufferOffset += 6;
+                        break;
+                    default:
+                        _buffer[_currentBufferOffset++] = c;
+                        break;
+                }
+            }
+        }
+
         public bool TryToSpecifyWidthForMemoryMode { get; set; }
         private int WriteSheet(StreamWriter sheetWritter, int startingRow, int startingColumn, bool doAutofilter = false)
         {
@@ -501,27 +548,6 @@ namespace SpreadSheetTasks
                         }
                     }
 
-                    if (stringValue.Contains('&'))
-                    {
-                        stringValue = stringValue.Replace("&", "&amp;");
-                    }
-                    if (stringValue.Contains('<'))
-                    {
-                        stringValue = stringValue.Replace("<", "&lt;");
-                    }
-                    if (stringValue.Contains('>'))
-                    {
-                        stringValue = stringValue.Replace(">", "&gt;");
-                    }
-                    if (stringValue.Contains('\"'))
-                    {
-                        stringValue = stringValue.Replace("\"", "&quot;");
-                    }
-                    if (stringValue.Contains('\''))
-                    {
-                        stringValue = stringValue.Replace("'", "&apos;");
-                    }
-
                     if (!_useScharedStrings)
                     {
                         if (hasGap)
@@ -543,7 +569,7 @@ namespace SpreadSheetTasks
                         {
                             WriteStringToBuffer(" t=\"inlineStr\"><is><t>");
                         }
-                        WriteStringToBuffer(stringValue);
+                        WriteXmlEscapedToBuffer(stringValue);
                         WriteStringToBuffer("</t></is></c>");
                     }
                     else

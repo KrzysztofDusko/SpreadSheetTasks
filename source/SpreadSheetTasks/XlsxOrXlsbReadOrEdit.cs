@@ -26,7 +26,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     private string[] _sharedStringArray;
     private StyleInfo[] _stylesCellXfsArray;
 
-    private readonly static Dictionary<int, Type> _numberFormatsTypeDictionary = new Dictionary<int, Type>()
+    private readonly Dictionary<int, Type> _numberFormatsTypeDictionary = new Dictionary<int, Type>()
     {
         // to do
         {0,typeof(string)},
@@ -1516,7 +1516,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
 
     private static void SetValueForXlsb(double rawValue, ref FieldInfo fieldInfo)
     {
-        long l1 = Convert.ToInt64(rawValue);
+        long l1 = (long)rawValue;
         double res = l1 - /*(double)*/rawValue;
         if (res < 3 * double.Epsilon && res > -3 * double.Epsilon)
         {

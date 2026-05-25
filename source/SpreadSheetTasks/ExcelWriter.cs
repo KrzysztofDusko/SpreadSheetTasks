@@ -11,10 +11,10 @@ namespace SpreadSheetTasks
 {
     public abstract class ExcelWriter : IDisposable
     {
-        internal static readonly string[] _stringDb = ["nvarchar", "varchar", "char"];
-        internal static readonly Type[] _stringTypes = [typeof(String), typeof(Char), typeof(Boolean)];
+        internal static readonly HashSet<string> _stringDb = ["nvarchar", "varchar", "char"];
+        internal static readonly HashSet<Type> _stringTypes = [typeof(String), typeof(Char), typeof(Boolean)];
 
-        internal static readonly Type[] _numberTypes =
+        internal static readonly HashSet<Type> _numberTypes =
         [
             typeof(sbyte), typeof(byte)
             , typeof(Int16), typeof(UInt16)
@@ -24,7 +24,7 @@ namespace SpreadSheetTasks
             , typeof(Decimal)
         ];
 
-        private static readonly string[] _DbNumbers =
+        private static readonly HashSet<string> _DbNumbers =
         [
             "integer", "bigint"
             , "numeric", "Decimal"
