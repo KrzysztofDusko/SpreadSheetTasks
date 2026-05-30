@@ -14,6 +14,23 @@ namespace SpreadSheetTasks
         internal static readonly HashSet<string> _stringDb = ["nvarchar", "varchar", "char"];
         internal static readonly HashSet<Type> _stringTypes = [typeof(String), typeof(Char), typeof(Boolean)];
 
+        internal Dictionary<string, int> _formatRegistry = new();
+        internal Dictionary<string, int> _formatXfMap = new();
+        internal int _nextNumFmtId = 165;
+        internal int _nextXfIndex = 4;
+        internal bool _hasCustomFormats => _formatRegistry.Count > 0;
+
+        internal int RegisterFormat(string formatString)
+        {
+            if (_formatXfMap.TryGetValue(formatString, out int xfIndex))
+                return xfIndex;
+            int numFmtId = _nextNumFmtId++;
+            _formatRegistry[formatString] = numFmtId;
+            xfIndex = _nextXfIndex++;
+            _formatXfMap[formatString] = xfIndex;
+            return xfIndex;
+        }
+
         internal static readonly HashSet<Type> _numberTypes =
         [
             typeof(sbyte), typeof(byte)

@@ -328,7 +328,22 @@ namespace SpreadSheetTasks
                     }
                     areNextRows = rdr.Read();
                     _dataColReader.AreNextRows = areNextRows;
+                }
+                else if (TryToSpecifyWidthForMemoryMode && _dataColReader._dataTable != null)
+                {
+                    _dataColReader.GetWidthFromDataTable(_colWidesArray, _MAX_WIDTH, doAutofilter);
+                }
 
+                if (doAutofilter)
+                {
+                    if (sheetCnt == 0)
+                        sheetWritter.Write("<sheetViews><sheetView tabSelected=\"1\" workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\"/><selection pane=\"bottomLeft\"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                    else
+                        sheetWritter.Write("<sheetViews><sheetView workbookViewId=\"0\"><pane ySplit=\"1\" topLeftCell=\"A2\" activePane=\"bottomLeft\" state=\"frozen\"/><selection pane=\"bottomLeft\"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight=\"15\"/>");
+                }
+
+                if (TryToSpecifyWidthForMemoryMode && _dataColReader._dataReader != null)
+                {
                     sheetWritter.Write("<cols>");
                     for (int l = 1; l <= ColumnCount; l++)
                     {
@@ -340,7 +355,6 @@ namespace SpreadSheetTasks
                 {
                     sheetWritter.Write($"<dimension ref=\"{_letters[startingColumn]}{startingRow + 1}:{_letters[ColumnCount - 1 + startingColumn]}{_dataColReader._dataTableRowsCount + 1 + startingRow}\"/>");
 
-                    _dataColReader.GetWidthFromDataTable(_colWidesArray, _MAX_WIDTH, doAutofilter);
                     sheetWritter.Write("<cols>");
                     for (int l = 1; l <= ColumnCount; l++)
                     {
@@ -383,7 +397,7 @@ namespace SpreadSheetTasks
                 //writeStringToBuffer("\">");
                 WriteStringToBuffer("<row>");
 
-                WriteRow(ColumnCount, rowNum + 1 + startingRow);
+                WriteRow(ColumnCount, rowNum + 1 + startingRow, boldedStyle: _areHeaders && rowNum == 0);
 
                 rowNum++;
                 WriteStringToBuffer("</row>");
@@ -494,7 +508,7 @@ namespace SpreadSheetTasks
                 WriteSheet(writter, 0, 0);
             }
         }
-        private void WriteRow(int columnCount, int rowNumber)
+        private void WriteRow(int columnCount, int rowNumber, bool boldedStyle = false)
         {
             int lastWrittenColumn = -1;
             int pendingNullStart = -1;
@@ -523,6 +537,29 @@ namespace SpreadSheetTasks
                 }
 
                 bool hasGap = column > lastWrittenColumn + 1;
+
+                object rawVal = _dataColReader.GetValue(column);
+                if (rawVal is FormattedCell fc)
+                {
+                    int fmtXfIndex = RegisterFormat(fc.Format);
+                    object innerVal = fc.Value;
+                    if (pendingNullStart != -1)
+                    {
+                        for (int blankColumn = pendingNullStart; blankColumn < column; blankColumn++)
+                        {
+                            WriteStringToBuffer("<c r=\"");
+                            WriteStringToBuffer(_letters[blankColumn]);
+                            WriteInt32ToBuffer(rowNumber);
+                            WriteStringToBuffer("\"/>");
+                        }
+                        lastWrittenColumn = column - 1;
+                        pendingNullStart = -1;
+                    }
+                    hasGap = column > lastWrittenColumn + 1;
+                    WriteFormattedCell(innerVal, fmtXfIndex, column, rowNumber, hasGap);
+                    lastWrittenColumn = column;
+                    continue;
+                }
 
                 if (_newTypes[column] == TypeCode.String || _newTypes[column] == TypeCode.Object || typesArray[column] == 5) // string
                 {
@@ -563,11 +600,11 @@ namespace SpreadSheetTasks
                         }
                         if (ShouldPreserveWhitespace(stringValue))
                         {
-                            WriteStringToBuffer(" t=\"inlineStr\"><is><t xml:space=\"preserve\">");
+                            WriteStringToBuffer(boldedStyle ? " s=\"3\" t=\"inlineStr\"><is><t xml:space=\"preserve\">" : " t=\"inlineStr\"><is><t xml:space=\"preserve\">");
                         }
                         else
                         {
-                            WriteStringToBuffer(" t=\"inlineStr\"><is><t>");
+                            WriteStringToBuffer(boldedStyle ? " s=\"3\" t=\"inlineStr\"><is><t>" : " t=\"inlineStr\"><is><t>");
                         }
                         WriteXmlEscapedToBuffer(stringValue);
                         WriteStringToBuffer("</t></is></c>");
@@ -585,11 +622,11 @@ namespace SpreadSheetTasks
                             WriteStringToBuffer("<c r=\"");
                             WriteStringToBuffer(_letters[column]);
                             WriteInt32ToBuffer(rowNumber);
-                            WriteStringToBuffer("\" t=\"s\"><v>");
+                            WriteStringToBuffer(boldedStyle ? "\" s=\"3\" t=\"s\"><v>" : "\" t=\"s\"><v>");
                         }
                         else
                         {
-                            WriteStringToBuffer("<c t=\"s\"><v>");
+                            WriteStringToBuffer(boldedStyle ? "<c s=\"3\" t=\"s\"><v>" : "<c t=\"s\"><v>");
                         }
                         WriteInt32ToBuffer(dicRefValue);
                         WriteStringToBuffer("</v></c>");
@@ -728,6 +765,49 @@ namespace SpreadSheetTasks
                 }
             }
         }
+        private void WriteFormattedCell(object val, int xfIndex, int column, int rowNumber, bool hasGap)
+        {
+            WriteStringToBuffer(hasGap ? "<c r=\"" : "<c ");
+            if (hasGap)
+            {
+                WriteStringToBuffer(_letters[column]);
+                WriteInt32ToBuffer(rowNumber);
+                WriteStringToBuffer("\"");
+            }
+            if (val is string strVal)
+            {
+                WriteStringToBuffer(" t=\"inlineStr\" s=\"");
+                WriteInt32ToBuffer(xfIndex);
+                WriteStringToBuffer("\"><is><t>");
+                WriteXmlEscapedToBuffer(strVal);
+                WriteStringToBuffer("</t></is></c>");
+            }
+            else if (val is bool bVal)
+            {
+                WriteStringToBuffer(" t=\"b\" s=\"");
+                WriteInt32ToBuffer(xfIndex);
+                WriteStringToBuffer("\"><v>");
+                _buffer[_currentBufferOffset++] = bVal ? '1' : '0';
+                WriteStringToBuffer("</v></c>");
+            }
+            else if (val is DateTime dtVal)
+            {
+                WriteStringToBuffer(" s=\"");
+                WriteInt32ToBuffer(xfIndex);
+                WriteStringToBuffer("\"><v>");
+                WriteDoubleToBuffer(dtVal.ToOADate());
+                WriteStringToBuffer("</v></c>");
+            }
+            else
+            {
+                WriteStringToBuffer(" s=\"");
+                WriteInt32ToBuffer(xfIndex);
+                WriteStringToBuffer("\"><v>");
+                WriteDoubleToBuffer(Convert.ToDouble(val));
+                WriteStringToBuffer("</v></c>");
+            }
+        }
+
         private const string _filterDefinedName = "_xlnm._FilterDatabase";
         internal override void FinalizeFile()
         {
@@ -880,16 +960,45 @@ namespace SpreadSheetTasks
             using (var writer = new FormattingStreamWriter(e7.Open(), CultureInfo.InvariantCulture.NumberFormat))
             {
                 writer.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><styleSheet ");
-                writer.Write("xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><fonts count=\"1\"><font><sz ");
+                writer.Write("xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">");
+
+                if (_hasCustomFormats)
+                {
+                    writer.Write($"<numFmts count=\"{_formatRegistry.Count}\">");
+                    foreach (var kvp in _formatRegistry)
+                    {
+                        string escaped = kvp.Key
+                            .Replace("&", "&amp;")
+                            .Replace("\"", "&quot;")
+                            .Replace("<", "&lt;")
+                            .Replace(">", "&gt;");
+                        writer.Write($"<numFmt numFmtId=\"{kvp.Value}\" formatCode=\"{escaped}\"/>");
+                    }
+                    writer.Write("</numFmts>");
+                }
+
+                writer.Write("<fonts count=\"2\"><font><sz ");
                 writer.Write("val=\"11\"/><color theme=\"1\"/><name val=\"Calibri\"/><family val=\"2\"/><scheme ");
-                writer.Write("val=\"minor\"/></font></fonts><fills count=\"2\"><fill><patternFill ");
+                writer.Write("val=\"minor\"/></font><font><sz ");
+                writer.Write("val=\"11\"/><color theme=\"1\"/><name val=\"Calibri\"/><family val=\"2\"/><scheme ");
+                writer.Write("val=\"minor\"/><b/></font></fonts><fills count=\"2\"><fill><patternFill ");
                 writer.Write("patternType=\"none\"/></fill><fill><patternFill patternType=\"gray125\"/></fill></fills><borders ");
                 writer.Write("count=\"1\"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs ");
                 writer.Write("count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs>");
-                writer.Write("<cellXfs count=\"3\">");
+
+                int totalXf = 4 + _formatXfMap.Count;
+                writer.Write($"<cellXfs count=\"{totalXf}\">");
                 writer.Write("<xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/>");
                 writer.Write("<xf numFmtId=\"14\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>");  // date
                 writer.Write("<xf numFmtId=\"22\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>");  // datetime
+                writer.Write("<xf numFmtId=\"0\" fontId=\"1\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\"/>");  // bold header
+
+                foreach (var kvp in _formatXfMap.OrderBy(kvp => kvp.Value))
+                {
+                    int numFmtId = _formatRegistry[kvp.Key];
+                    writer.Write($"<xf numFmtId=\"{numFmtId}\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\"/>");
+                }
+
                 writer.Write("</cellXfs>");
                 writer.Write("<cellStyles ");
                 writer.Write("count=\"1\"><cellStyle name=\"Normal\" xfId=\"0\" builtinId=\"0\"/>");

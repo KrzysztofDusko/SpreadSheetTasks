@@ -349,4 +349,93 @@ public class MissingApiTests
 
         File.Delete(fileName);
     }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void WriteSheet_WithFormattedCell_CreatesFile(string extension)
+    {
+        var fileName = $"test_formatted_cell{extension}";
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            var dt = new DataTable();
+            dt.Columns.Add("Desc", typeof(string));
+            dt.Columns.Add("Value", typeof(object));
+            dt.Rows.Add("Number", new FormattedCell(1234567, F.THOUSANDS_SEP));
+            dt.Rows.Add("Currency", new FormattedCell(1234.56, F.CURRENCY_PLN));
+            dt.Rows.Add("Date", new FormattedCell(new DateTime(2026, 6, 1), F.DATE_SHORT));
+            dt.Rows.Add("DateTime", new FormattedCell(new DateTime(2026, 6, 1, 14, 34, 0), F.DATETIME_ISO));
+            dt.Rows.Add("Pct", new FormattedCell(0.25, F.PERCENTAGE));
+            dt.Rows.Add("Sci", new FormattedCell(12345.67, F.SCIENTIFIC));
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        Assert.True(File.Exists(fileName));
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+            reader.ActualSheetName = "Sheet1";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("Number", reader.GetValue(0));
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void WriteSheet_WithFormattedCellFromList_CreatesFile(string extension)
+    {
+        var fileName = $"test_formatted_list{extension}";
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            var headers = new List<string> { "Desc", "Value" };
+            var types = new List<TypeCode> { TypeCode.String, TypeCode.Object };
+            var rows = new List<object?[]>
+            {
+                new object?[] { "Thousands", new FormattedCell(1234567, F.THOUSANDS_SEP) },
+                new object?[] { "Date ISO", new FormattedCell(new DateTime(2026, 6, 1), F.DATE_ISO) },
+                new object?[] { "Custom", new FormattedCell(1234.56, "#,##0.00 \"USD\"") },
+                new object?[] { "Time", new FormattedCell(new DateTime(2026, 6, 1, 14, 34, 0), F.TIME_HH_MM) },
+            };
+            writer.WriteSheet(headers, types, rows, headers: true);
+        }
+
+        Assert.True(File.Exists(fileName));
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+            reader.ActualSheetName = "Sheet1";
+            Assert.True(reader.Read()); // header
+            Assert.True(reader.Read()); // first data row
+            Assert.Equal("Thousands", reader.GetValue(0));
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Fact]
+    public void FormattedCell_Constructed_CreatesValidInstance()
+    {
+        var cell = new FormattedCell(42, F.THOUSANDS_SEP);
+        Assert.Equal(42, cell.Value);
+        Assert.Equal(F.THOUSANDS_SEP, cell.Format);
+    }
+
+    [Fact]
+    public void F_FormatConstants_AllDefined()
+    {
+        Assert.Equal("#,##0", F.THOUSANDS_SEP);
+        Assert.Equal("dd.mm.yyyy", F.DATE_SHORT);
+        Assert.Equal("yyyy-mm-dd\"T\"hh:mm:ss", F.DATETIME_ISO);
+        Assert.Equal("hh:mm", F.TIME_HH_MM);
+    }
 }
