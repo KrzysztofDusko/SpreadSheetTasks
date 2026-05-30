@@ -1,44 +1,64 @@
 # SpreadSheetTasks
- The .NET library for fast reading and writing Excel files (.xlsx, .xlsb). 
- Some methods/ideas based on great libraries : 
- * https://github.com/MarkPflug/Sylvan.Data.Excel
- * https://github.com/MarkPflug/Sylvan
- * https://github.com/ExcelDataReader/ExcelDataReader
 
- ## Installation
- https://www.nuget.org/packages/SpreadSheetTasks/
- 
- ```Install-Package SpreadSheetTasks```
- 
- ```dotnet add package SpreadSheetTasks```
+The .NET library for fast reading and writing Excel files (.xlsx, .xlsb).
 
- 
- ## Usage
- 
- ### Read
- ```c#
- using (XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit())
- {
-    excelFile.Open("file.xlsx");
-    excelFile.ActualSheetName = "sheet1";
-    object[] row = null;
-    while (excelFile.Read())
-    {
-        row ??= new object[excelFile.FieldCount];
-        excelFile.GetValues(row);
-    }
- }
- ```
- ### Write
- ``` C#
-using (XlsbWriter xlsx = new XlsbWriter("file.xlsb"))
+
+## Installation
+
+```bash
+dotnet add package SpreadSheetTasks
+```
+
+```xml
+<PackageReference Include="SpreadSheetTasks" Version="0.6.1" />
+```
+
+## Quick Start
+
+### Write to Excel
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+
+var dt = new DataTable();
+dt.Columns.Add("Name", typeof(string));
+dt.Columns.Add("Age", typeof(int));
+dt.Rows.Add("Alice", 30);
+dt.Rows.Add("Bob", 25);
+
+using (var writer = new XlsxWriter("output.xlsx")) // or XlsbWriter
 {
-   xlsx.AddSheet("sheetName");
-   xlsx.WriteSheet(dataReader);
+    writer.AddSheet("People");
+    writer.WriteSheet(dt.CreateDataReader());
 }
- ```
- 
- ## Benchmarks
+```
+
+### Read from Excel
+
+```csharp
+using SpreadSheetTasks;
+
+using (var reader = new XlsxOrXlsbReadOrEdit())
+{
+    reader.Open("output.xlsx");
+    reader.ActualSheetName = "People";
+
+    object[]? row = null;
+    while (reader.Read())
+    {
+        row ??= new object[reader.FieldCount];
+        reader.GetValues(row);
+    }
+}
+```
+
+## Documentation
+
+Full usage guide with detailed examples:
+- [docs/index.md](docs/index.md)
+
+## Benchmarks
 
 Tested on: Windows 11, AMD Ryzen 7 7840HS, .NET 10.0.8 (10.0.8)
 
@@ -52,7 +72,6 @@ Tested on: Windows 11, AMD Ryzen 7 7840HS, .NET 10.0.8 (10.0.8)
 | 'SpreadSheetTasks - XLSB Read - v2' | 65K_R(...).xlsb [21] |  56.47 ms | 1.055 ms | 0.987 ms | 1666.6667 |         - |         - |  13.76 MB |
 | 'Sylvan.Data.Excel - XLSB Read'     | 65K_R(...).xlsb [21] |  63.22 ms | 0.469 ms | 0.415 ms | 2875.0000 |  125.0000 |         - |  23.16 MB |
 
-
 ### XLSX Read
 | Method               | Mean     | Error   | StdDev   | Gen0      | Gen1      | Gen2      | Allocated   |
 |--------------------- |---------:|--------:|---------:|----------:|----------:|----------:|------------:|
@@ -61,19 +80,19 @@ Tested on: Windows 11, AMD Ryzen 7 7840HS, .NET 10.0.8 (10.0.8)
 | SpreadSheetTasks65k  | 170.0 ms | 3.37 ms |  2.98 ms |         - |         - |         - |   593.92 KB |
 | Sylvan65K            | 166.6 ms | 2.86 ms |  2.68 ms |         - |         - |         - |   664.77 KB |
 
-
 ### XLSB Write (200k rows, mixed types)
 | Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Allocated |
 |-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|
 | 'SpreadSheetTasks - XLSB Write' | GENERAL    | 127.1 ms | 3.33 ms | 9.76 ms | 1750.0000 |  30.57 MB |
 | XlsbSylvanWrite                 | GENERAL    | 178.6 ms | 3.49 ms | 5.12 ms | 1000.0000 |  36.75 MB |
 
-
 ### XLSX Write (200k rows, mixed types)
 | Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Allocated |
 |-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|
 | 'SpreadSheetTasks - XLSX Write' | GENERAL    | 183.6 ms | 3.58 ms | 5.79 ms | 1500.0000 |  30.74 MB |
 
+## Links
 
-https://github.com/KrzysztofDusko/SpreadSheetTasks
- 
+- NuGet: https://www.nuget.org/packages/SpreadSheetTasks/
+- GitHub: https://github.com/KrzysztofDusko/SpreadSheetTasks
+- License: MIT
