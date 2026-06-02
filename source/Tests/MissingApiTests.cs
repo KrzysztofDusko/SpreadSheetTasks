@@ -54,16 +54,20 @@ public class MissingApiTests
         using (var writer = ExcelWriter.CreateWriter(fileName))
         {
             writer.AddSheet("Sheet1");
-            writer.WriteSheet(dt.CreateDataReader());
+            writer.WriteSheet(dt);
         }
 
         using (var reader = new XlsxOrXlsbReadOrEdit())
         {
             reader.Open(fileName);
             reader.ActualSheetName = "Sheet1";
+            Assert.True(reader.Read());
 
             var rowCount = reader.RowCount;
-            Assert.True(rowCount >= 25, $"Expected >= 25, got {rowCount}");
+            if (extension == ".xlsb")
+                Assert.Equal(-1, rowCount);
+            else
+                Assert.True(rowCount >= 25, $"Expected >= 25, got {rowCount}");
         }
 
         File.Delete(fileName);
@@ -437,5 +441,133 @@ public class MissingApiTests
         Assert.Equal("dd.mm.yyyy", F.DATE_SHORT);
         Assert.Equal("yyyy-mm-dd\"T\"hh:mm:ss", F.DATETIME_ISO);
         Assert.Equal("hh:mm", F.TIME_HH_MM);
+    }
+
+    [Fact]
+    public void ReplacePivotTableDim_NoPivotTable_ThrowsExpectedException()
+    {
+        var fileName = "test_no_pivot.xlsx";
+
+        DataTable dt = new DataTable();
+        dt.Columns.Add("Col1", typeof(string));
+        dt.Rows.Add("Data");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName, updateMode: true);
+            var range = reader.ReplaceSheetData("Sheet1", dt.CreateDataReader());
+
+            var ex = Assert.Throws<Exception>(() => reader.ReplacePivotTableDim("NonExistentPivot", range));
+            Assert.Contains("not found", ex.Message);
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void GetRowsOfSheet_MultipleSheets_ReturnsCorrectRowCounts(string extension)
+    {
+        var fileName = $"test_get_rows_multi{extension}";
+
+        DataTable dt1 = new DataTable();
+        dt1.Columns.Add("Col1", typeof(string));
+        dt1.Rows.Add("A1");
+        dt1.Rows.Add("A2");
+
+        DataTable dt2 = new DataTable();
+        dt2.Columns.Add("Col1", typeof(string));
+        dt2.Rows.Add("B1");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt1.CreateDataReader());
+            writer.AddSheet("Sheet2");
+            writer.WriteSheet(dt2.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+
+            var rows1 = reader.GetRowsOfSheet("Sheet1").Count();
+            Assert.Equal(3, rows1); // header + 2 data rows
+
+            var rows2 = reader.GetRowsOfSheet("Sheet2").Count();
+            Assert.Equal(2, rows2); // header + 1 data row
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void GetRowsOfSheet_InvalidSheetName_ThrowsException(string extension)
+    {
+        var fileName = $"test_get_rows_invalid{extension}";
+
+        DataTable dt = new DataTable();
+        dt.Columns.Add("Col1", typeof(string));
+        dt.Rows.Add("Data");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+            Assert.ThrowsAny<Exception>(() => reader.GetRowsOfSheet("NonExistent").Count());
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void WriteSheet_ListOverload_ReadsBackCorrectData(string extension)
+    {
+        var fileName = $"test_list_readback{extension}";
+
+        var headers = new List<string> { "Name", "Age", "Salary" };
+        var types = new List<TypeCode> { TypeCode.String, TypeCode.Int32, TypeCode.Double };
+        var rows = new List<object?[]>
+        {
+            new object?[] { "Alice", 30, 5000.0 },
+            new object?[] { "Bob", 25, 4500.0 }
+        };
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(headers, types, rows, headers: true);
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+            reader.ActualSheetName = "Sheet1";
+
+            Assert.True(reader.Read()); // header
+            Assert.Equal("Name", reader.GetValue(0));
+            Assert.True(reader.Read());
+            Assert.Equal("Alice", reader.GetValue(0));
+            Assert.True(reader.Read());
+            Assert.Equal("Bob", reader.GetValue(0));
+        }
+
+        File.Delete(fileName);
     }
 }

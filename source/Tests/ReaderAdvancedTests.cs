@@ -538,4 +538,93 @@ public class ReaderAdvancedTests
         
         File.Delete(fileName);
     }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void GetNativeValue_FieldInfoType_ReturnsCorrectExcelDataType(string extension)
+    {
+        var fileName = $"test_fieldinfo_type{extension}";
+
+        DataTable dt = new DataTable();
+        dt.Columns.Add("IntCol", typeof(int));
+        dt.Columns.Add("StringCol", typeof(string));
+        dt.Columns.Add("DoubleCol", typeof(double));
+        dt.Columns.Add("DateCol", typeof(DateTime));
+        dt.Rows.Add(42, "hello", 3.14, new DateTime(2026, 6, 2));
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+            reader.ActualSheetName = "Sheet1";
+
+            Assert.True(reader.Read()); // skip header
+            Assert.True(reader.Read());
+
+            var intType = reader.GetNativeValue(0).type;
+            Assert.True(intType == ExcelDataType.Int32 || intType == ExcelDataType.Int64 || intType == ExcelDataType.Double);
+            Assert.Equal(ExcelDataType.String, reader.GetNativeValue(1).type);
+            Assert.Equal(ExcelDataType.Double, reader.GetNativeValue(2).type);
+            var dateType = reader.GetNativeValue(3).type;
+            Assert.True(dateType == ExcelDataType.DateTime || dateType == ExcelDataType.Double);
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Theory]
+    [InlineData(".xlsx")]
+    [InlineData(".xlsb")]
+    public void GetNativeValue_FieldInfoValues_MatchTypedGetters(string extension)
+    {
+        var fileName = $"test_fieldinfo_match{extension}";
+
+        DataTable dt = new DataTable();
+        dt.Columns.Add("IntCol", typeof(int));
+        dt.Columns.Add("DoubleCol", typeof(double));
+        dt.Columns.Add("DateCol", typeof(DateTime));
+        dt.Columns.Add("StringCol", typeof(string));
+        dt.Rows.Add(42, 3.14, new DateTime(2026, 6, 2), "test_str");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName);
+            reader.ActualSheetName = "Sheet1";
+
+            Assert.True(reader.Read()); // skip header
+            Assert.True(reader.Read());
+
+            ref var fi0 = ref reader.GetNativeValue(0);
+            Assert.True(fi0.type == ExcelDataType.Int32 || fi0.type == ExcelDataType.Int64 || fi0.type == ExcelDataType.Double);
+            if (fi0.type == ExcelDataType.Int32) Assert.Equal(42, fi0.int32Value);
+            else if (fi0.type == ExcelDataType.Int64) Assert.Equal(42L, fi0.int64Value);
+            else Assert.Equal(42.0, fi0.doubleValue, 3);
+
+            ref var fi1 = ref reader.GetNativeValue(1);
+            Assert.Equal(ExcelDataType.Double, fi1.type);
+            Assert.Equal(3.14, fi1.doubleValue, 3);
+
+            ref var fi2 = ref reader.GetNativeValue(2);
+            Assert.Equal(ExcelDataType.DateTime, fi2.type);
+            Assert.Equal(new DateTime(2026, 6, 2), fi2.dtValue);
+
+            ref var fi3 = ref reader.GetNativeValue(3);
+            Assert.Equal(ExcelDataType.String, fi3.type);
+            Assert.Equal("test_str", fi3.strValue);
+        }
+
+        File.Delete(fileName);
+    }
 }

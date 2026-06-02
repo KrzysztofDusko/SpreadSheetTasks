@@ -19,8 +19,8 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     private readonly Dictionary<string, string> _worksheetIdToName = [];
     private readonly Dictionary<string, string> _worksheetNameToId = [];
     private readonly Dictionary<string, string> _worksheetIdToLocation = [];
-    private Dictionary<int, string> _pivotCacheIdtoRid;
-    private Dictionary<string, string> _pivotCachRidToLocation;
+    private Dictionary<int, string> _pivotCacheIdToRid;
+    private Dictionary<string, string> _pivotCacheRidToLocation;
     //private Dictionary<int, string> _worksheetSheetIdToId = new Dictionary<int, string>();
 
     private string[] _sharedStringArray;
@@ -100,6 +100,9 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     }
     public override void Dispose()
     {
+        _xmlReader?.Dispose();
+        _sheetStream?.Dispose();
+        _biffReader?.Dispose();
         _xlsxArchive?.Dispose();
     }
 
@@ -135,7 +138,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 }
                 else if (reader.Name == "pivotCache")
                 {
-                    _pivotCacheIdtoRid ??= new Dictionary<int, string>();
+                    _pivotCacheIdToRid ??= new Dictionary<int, string>();
 
                     if (!int.TryParse(reader.GetAttribute("cacheId"), out int cacheId))
                     {
@@ -143,7 +146,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                     }
 
                     string rId = reader.GetAttribute("r:id");
-                    _pivotCacheIdtoRid[cacheId] = rId;
+                    _pivotCacheIdToRid[cacheId] = rId;
                 }
             }
         }
@@ -222,6 +225,9 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     /// <param name="updateMode"></param>
     public override void Open(string path, bool readSharedStrings = true, bool updateMode = false, Encoding? encoding = null)
     {
+        ArgumentNullException.ThrowIfNull(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
         if (path.EndsWith("xlsb", StringComparison.OrdinalIgnoreCase))
         {
             _mode = Modes.xlsb;
@@ -230,7 +236,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         else
         {
             _mode = Modes.xlsx;
-            OpenXlsx(path,updateMode: updateMode); 
+            OpenXlsx(path, updateMode: updateMode);
         }
     }
 
@@ -258,8 +264,8 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 }
                 else if (type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/pivotCacheDefinition")
                 {
-                    _pivotCachRidToLocation ??= new Dictionary<string, string>();
-                    _pivotCachRidToLocation[rId] = target;
+                    _pivotCacheRidToLocation ??= new Dictionary<string, string>();
+                    _pivotCacheRidToLocation[rId] = target;
                 }
                 else if (type == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings")
                 {
@@ -578,7 +584,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         _stylesCellXfsArray = _stylesCellXfs.ToArray();
     }
 
-    public override string[] GetScheetNames()
+    public override string[] GetSheetNames()
     {
         return _worksheetIdToName.Values.ToArray();
     }
@@ -595,7 +601,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     private int _prevRowNum = -1;
     private bool _isFirstRow = true;
     private int _columnsCntFromFirstRow = -1;
-    private int _numberOfFirsColumnWithData = -1;
+    private int _numberOfFirstColumnWithData = -1;
     private int _numberOfLastColumnWithData = -1;
     private int _colNum = -1;
     private int _prevColNum = -1;
@@ -611,7 +617,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         _prevRowNum = -1;
         //isFirstRow = true;
         _columnsCntFromFirstRow = -1;
-        _numberOfFirsColumnWithData = -1;
+        _numberOfFirstColumnWithData = -1;
         _numberOfLastColumnWithData = -1;
         _colNum = -1;
         _prevColNum = -1;
@@ -679,11 +685,11 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         }
 
         //https://github.com/KrzysztofDusko/SpreadSheetTasks/issues/4
-        if (innerRow.Length > _numberOfLastColumnWithData - _numberOfFirsColumnWithData)
+        if (innerRow.Length > _numberOfLastColumnWithData - _numberOfFirstColumnWithData)
         {
-            for (int i = _numberOfFirsColumnWithData; i < _numberOfLastColumnWithData; i++)
+            for (int i = _numberOfFirstColumnWithData; i < _numberOfLastColumnWithData; i++)
             {
-                innerRow[i - _numberOfFirsColumnWithData].type = ExcelDataType.Null;
+                innerRow[i - _numberOfFirstColumnWithData].type = ExcelDataType.Null;
             }
         }
 
@@ -780,9 +786,9 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             }
             cellIndex++;
 
-            if (_isFirstRow && _numberOfFirsColumnWithData == -1)
+            if (_isFirstRow && _numberOfFirstColumnWithData == -1)
             {
-                _numberOfFirsColumnWithData = _colNum;
+                _numberOfFirstColumnWithData = _colNum;
             }
             if (_isFirstRow && _numberOfLastColumnWithData < _colNum)
             {
@@ -936,7 +942,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         if (_isFirstRow)
         {
             _isFirstRow = false;
-            _columnsCntFromFirstRow = _numberOfLastColumnWithData - _numberOfFirsColumnWithData + 1;
+            _columnsCntFromFirstRow = _numberOfLastColumnWithData - _numberOfFirstColumnWithData + 1;
             Array.Resize<FieldInfo>(ref innerRow, _columnsCntFromFirstRow);
             FieldCount = _columnsCntFromFirstRow;
         }
@@ -945,7 +951,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
 
     private int ResizeRowIfNeeded()
     {
-        int _tmpLen = _colNum - _numberOfFirsColumnWithData;
+        int _tmpLen = _colNum - _numberOfFirstColumnWithData;
         if (_tmpLen >= innerRow.Length)
         {
             Array.Resize(ref innerRow, _tmpLen + 1);
@@ -988,11 +994,11 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         }
 
         //last row is not complete
-        if (!_isFirstRow && _colNum > _numberOfFirsColumnWithData)
+        if (!_isFirstRow && _colNum > _numberOfFirstColumnWithData)
         {
-            for (int i = _numberOfFirsColumnWithData; i < _colNum; i++)
+            for (int i = _numberOfFirstColumnWithData; i < _colNum; i++)
             {
-                innerRow[i - _numberOfFirsColumnWithData].type = ExcelDataType.Null;
+                innerRow[i - _numberOfFirstColumnWithData].type = ExcelDataType.Null;
             }
         }
         //previous read = false
@@ -1031,12 +1037,12 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 //determine first row length
                 if (_isFirstRow)
                 {
-                    if (_numberOfFirsColumnWithData == -1)
+                    if (_numberOfFirstColumnWithData == -1)
                     {
-                        _numberOfFirsColumnWithData = _colNum;
+                        _numberOfFirstColumnWithData = _colNum;
                     }
                     _numberOfLastColumnWithData = _colNum;
-                    _columnsCntFromFirstRow = _numberOfLastColumnWithData - _numberOfFirsColumnWithData + 1;
+                    _columnsCntFromFirstRow = _numberOfLastColumnWithData - _numberOfFirstColumnWithData + 1;
                     FieldCount = _columnsCntFromFirstRow;
                 }
 
@@ -1122,26 +1128,26 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             _colNum = _biffReader._columnNum;
 
             if (!_isFirstRow)
-            {
-                if (_colNum > _prevColNum + 1 && _rowNum == _prevRowNum)
                 {
-                    //prevColNum  = prev not null
-                    //colNum = current
-                    // A B !NULL! !NULL! C
-                    for (int i = _prevColNum + 1; i < _colNum; i++)
+                    if (_colNum > _prevColNum + 1 && _rowNum == _prevRowNum)
                     {
-                        innerRow[i - _numberOfFirsColumnWithData].type = ExcelDataType.Null;
+                        //prevColNum  = prev not null
+                        //colNum = current
+                        // A B !NULL! !NULL! C
+                        for (int i = _prevColNum + 1; i < _colNum; i++)
+                        {
+                            innerRow[i - _numberOfFirstColumnWithData].type = ExcelDataType.Null;
+                        }
+                    }
+                    // A B C !NULL! !NULL!
+                    else if (_rowNum > _prevRowNum && _prevColNum < _numberOfLastColumnWithData)
+                    {
+                        for (int i = 1; i <= _numberOfLastColumnWithData - _prevColNum; i++)
+                        {
+                            innerRow[_prevColNum + i - _numberOfFirstColumnWithData].type = ExcelDataType.Null;
+                        }
                     }
                 }
-                // A B C !NULL! !NULL!
-                else if (_rowNum > _prevRowNum && _prevColNum < _numberOfLastColumnWithData)
-                {
-                    for (int i = 1; i <= _numberOfLastColumnWithData - _prevColNum; i++)
-                    {
-                        innerRow[_prevColNum + i - _numberOfFirsColumnWithData].type = ExcelDataType.Null;
-                    }
-                }
-            }
         }
 
         if (_isFirstRow)
@@ -1246,6 +1252,9 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
 
     public IEnumerable<object[]> GetRowsOfSheet(string sheetName)
     {
+        ArgumentNullException.ThrowIfNull(sheetName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sheetName);
+
         if (_mode == Modes.xlsx)
         {
             return GetRowsOfXlsx(sheetName);
@@ -1281,6 +1290,11 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     /// <returns></returns>
     public string ReplaceSheetData(string sheetName, IDataReader reader, string startingCellAdress = "A1")
     {
+        ArgumentNullException.ThrowIfNull(sheetName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sheetName);
+        ArgumentNullException.ThrowIfNull(reader);
+        ArgumentException.ThrowIfNullOrWhiteSpace(startingCellAdress);
+
         if (!_worksheetNameToId.TryGetValue(sheetName, out string id))
         {
             throw new Exception($"ReplaceSheetData - {sheetName} not found");
@@ -1371,6 +1385,11 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
     /// <param name="doRefreshOnLoad">refresh pivot table on open</param>
     public void ReplacePivotTableDim(string pivotTableName, string referention, bool doRefreshOnLoad = true)
     {
+        ArgumentNullException.ThrowIfNull(pivotTableName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(pivotTableName);
+        ArgumentNullException.ThrowIfNull(referention);
+        ArgumentException.ThrowIfNullOrWhiteSpace(referention);
+
         var pivotTableList = GetPivotTableList();
         int cacheId = GetCacheIdForPivotTable(pivotTableName, pivotTableList);
 
@@ -1379,8 +1398,8 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
             throw new Exception($"{pivotTableName} - not found");
         }
 
-        string rId = _pivotCacheIdtoRid[cacheId];
-        string tableCacheLocation = _pivotCachRidToLocation[rId];
+        string rId = _pivotCacheIdToRid[cacheId];
+        string tableCacheLocation = _pivotCacheRidToLocation[rId];
         var pivotCacheEntry = _xlsxArchive.GetEntry("xl/" + tableCacheLocation);
 
         bool addRefreshOnLoad = false;
@@ -1465,7 +1484,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
                 _isFirstRow = true;
                 _prevRowNum = -1;
                 _columnsCntFromFirstRow = -1;
-                _numberOfFirsColumnWithData = -1;
+                _numberOfFirstColumnWithData = -1;
                 _numberOfLastColumnWithData = -1;
                 _colNum = -1;
                 _prevColNum = -1;
@@ -1496,7 +1515,7 @@ public sealed class XlsxOrXlsbReadOrEdit : ExcelReaderAbstract, IDisposable
         _rowCount = -1;
         if (_actualSheetDimensions == null)
         {
-            _rowCount = 123123123;
+            _rowCount = -1;
             return _rowCount;
         }
 

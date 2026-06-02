@@ -7,14 +7,17 @@
    - [Write from DataTable](#write-from-datatable)
    - [Write from List](#write-from-list)
    - [Write from string array](#write-from-string-array)
+   - [Write from object\[\]\[\]](#write-from-object)
+   - [Write with per-cell formatting (FormattedCell\[\]\[\])](#write-with-per-cell-formatting-formattedcell)
    - [Multi-sheet write](#multi-sheet-write)
    - [Write with Autofilter](#write-with-autofilter)
    - [Write with formatted cells](#write-with-formatted-cells)
    - [Write to Stream (MemoryStream / FileStream)](#write-to-stream)
+   - [Write to Stream with custom buffer size](#write-to-stream-with-custom-buffer-size)
    - [Hidden sheets](#hidden-sheets)
    - [Events: OnCompress / On10k](#events-oncompress--on10k)
    - [Document properties](#document-properties)
-   - [SuppressSomeDate](#suppresssomedate)
+   - [SuppressYear1000Dates](#suppressyear1000dates)
 3. [Reading Excel Files](#reading-excel-files)
    - [Basic read](#basic-read)
    - [Read with typed getters](#read-with-typed-getters)
@@ -24,8 +27,13 @@
    - [TreatAllColumnsAsText](#treatallcolumnsastext)
    - [UseMemoryStreamInXlsb](#usememorystreaminxlsb)
    - [Read in update mode (XLSX)](#read-in-update-mode-xlsx)
+   - [GetExcelDataType / GetNativeValue](#getexceldatatype--getnativevalue)
 4. [Factory method](#factory-method-excelwritercreatewriter)
-5. [Format constants (F class)](#format-constants-f-class)
+5. [Write to existing XLSX (advanced)](#write-to-existing-xlsx-advanced)
+   - [XlsxWriter.WriteToExisting](#xlsxwriterwritetoexisting)
+   - [ReplaceSheetData + ReplacePivotTableDim](#replacesheetdata--replacepivottabledim)
+6. [Breaking Changes in v1.0.0](#breaking-changes-in-v100)
+7. [Format constants (F class)](#format-constants-f-class)
 
 ---
 
@@ -36,7 +44,7 @@ dotnet add package SpreadSheetTasks
 ```
 
 ```xml
-<PackageReference Include="SpreadSheetTasks" Version="0.6.1" />
+<PackageReference Include="SpreadSheetTasks" Version="1.0.0" />
 ```
 
 ---
@@ -101,6 +109,49 @@ using (var writer = new XlsxWriter("strings.xlsx"))
 {
     writer.AddSheet("Sheet1");
     writer.WriteSheet(data);
+}
+```
+
+### Write from object\[\]\[\]
+
+```csharp
+using SpreadSheetTasks;
+
+var rows = new object[][]
+{
+    new object[] { "Apple", 1.99, 100 },
+    new object[] { "Banana", 0.99, 250 },
+    new object[] { "Cherry", 3.49, 75 },
+};
+
+using (var writer = new XlsxWriter("products.xlsx"))
+{
+    writer.AddSheet("Products");
+    writer.WriteSheet(rows, headers: new[] { "Product", "Price", "Quantity" }, headers_row: true, doAutofilter: true);
+}
+```
+
+### Write with per-cell formatting (FormattedCell\[\]\[\])
+
+```csharp
+using SpreadSheetTasks;
+
+var rows = new object[][]
+{
+    new object[] { 1234567, 1234.56 },
+    new object[] { 0.25, 12345.67 },
+};
+
+var formats = new FormattedCell[][]
+{
+    new FormattedCell[] { new(1234567, F.THOUSANDS_SEP), new(1234.56, F.CURRENCY_PLN) },
+    new FormattedCell[] { new(0.25, F.PERCENTAGE), new(12345.67, F.SCIENTIFIC) },
+};
+
+using (var writer = new XlsxWriter("formatted.xlsx"))
+{
+    writer.AddSheet("Sheet1");
+    writer.WriteSheet(rows, headers: new[] { "Label", "Value" }, formats: formats);
 }
 ```
 
@@ -213,6 +264,25 @@ using (var writer = new XlsxWriter(ms))
 }
 ```
 
+### Write to Stream with custom buffer size
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+
+// Larger buffer improves write throughput on large files
+using (var writer = new XlsxWriter("large.xlsx", bufferSize: 65536))
+{
+    writer.AddSheet("Data");
+    var dt = new DataTable();
+    dt.Columns.Add("Index", typeof(int));
+    for (int i = 0; i < 100_000; i++) dt.Rows.Add(i);
+    writer.WriteSheet(dt.CreateDataReader());
+}
+```
+
+Both `XlsxWriter` and `XlsbWriter` accept `bufferSize` in their constructors (default: 4096).
+
 ### Hidden sheets
 
 ```csharp
@@ -267,15 +337,17 @@ dt.Rows.Add("Data");
 
 using (var writer = ExcelWriter.CreateWriter("docprop.xlsx"))
 {
-    writer.DocPopertyProgramName = "MyApplication";
+    writer.DocPropertyProgramName = "MyApplication";
     writer.AddSheet("Sheet1");
     writer.WriteSheet(dt.CreateDataReader());
 }
 ```
 
-### SuppressSomeDate
+> **Note:** The old name `DocPopertyProgramName` is still available with an `[Obsolete]` warning.
 
-Suppresses DateTime values where the year is 1000:
+### SuppressYear1000Dates
+
+Suppresses DateTime values where the year is 1000 (Excel serial date 0):
 
 ```csharp
 using SpreadSheetTasks;
@@ -288,11 +360,13 @@ dt.Rows.Add(new DateTime(2026, 6, 1)); // normal
 
 using (var writer = ExcelWriter.CreateWriter("suppress.xlsx"))
 {
-    writer.SuppressSomeDate = true;
+    writer.SuppressYear1000Dates = true;
     writer.AddSheet("Sheet1");
     writer.WriteSheet(dt.CreateDataReader());
 }
 ```
+
+> **Note:** The old name `SuppressSomeDate` is still available with an `[Obsolete]` warning.
 
 ---
 
@@ -362,7 +436,7 @@ using SpreadSheetTasks;
 using (var reader = new XlsxOrXlsbReadOrEdit())
 {
     reader.Open("multi.xlsx");
-    string[] sheetNames = reader.GetScheetNames();
+    string[] sheetNames = reader.GetSheetNames();
 
     foreach (string name in sheetNames)
     {
@@ -371,6 +445,8 @@ using (var reader = new XlsxOrXlsbReadOrEdit())
     }
 }
 ```
+
+> **Note:** The old name `GetScheetNames()` is still available with an `[Obsolete]` warning.
 
 ### RowCount and ResultsCount
 
@@ -442,6 +518,51 @@ using (var reader = new XlsxOrXlsbReadOrEdit())
 }
 ```
 
+### GetExcelDataType / GetNativeValue
+
+For advanced scenarios where you need raw cell type information or minimal overhead:
+
+```csharp
+using SpreadSheetTasks;
+
+using (var reader = new XlsxOrXlsbReadOrEdit())
+{
+    reader.Open("data.xlsx");
+    reader.ActualSheetName = "Sheet1";
+
+    while (reader.Read())
+    {
+        // Recommended: use typed getters
+        string name = reader.GetString(0);
+
+        // Inspect cell type at column 1
+        ExcelDataType type = reader.GetExcelDataType(1);
+
+        // High‑performance escape hatch (check type first!)
+        if (type == ExcelDataType.Double)
+        {
+            ref FieldInfo field = ref reader.GetNativeValue(1);
+            double val = field.doubleValue;
+        }
+
+        // Or get the entire row as a ref to the internal buffer
+        ref FieldInfo[] row = ref reader.GetNativeValues();
+    }
+}
+```
+
+| `ExcelDataType` | Meaning | `FieldInfo` union field |
+|---|---|---|
+| `Null` | Empty cell | — |
+| `Int32` | 32‑bit integer | `int32Value` |
+| `Int64` | 64‑bit integer | `int64Value` |
+| `Double` | Floating‑point number | `doubleValue` |
+| `DateTime` | Date/time | `dtValue` |
+| `Boolean` | True/false | `boolValue` |
+| `String` | Text | `strValue` |
+
+> **`GetNativeValue` / `GetNativeValues` are marked `[Obsolete]` and `[EditorBrowsable(Never)]`.** Use typed getters (`GetString`, `GetInt32`, etc.) for general code. Only use `GetNativeValue` in hot paths where every allocation counts. Always call `GetExcelDataType()` first to check the discriminator.
+
 ---
 
 ## Factory method (ExcelWriter.CreateWriter)
@@ -460,6 +581,79 @@ using (var writer = ExcelWriter.CreateWriter("data.xlsx"))
     writer.WriteSheet(dt.CreateDataReader());
 }
 ```
+
+---
+
+## Write to existing XLSX (advanced)
+
+### XlsxWriter.WriteToExisting
+
+Write data directly into an existing sheet's XML stream inside a `.xlsx` Zip archive:
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+using System.IO;
+using System.IO.Compression;
+
+using (var archive = ZipFile.Open("existing.xlsx", ZipArchiveMode.Update))
+{
+    var entry = archive.GetEntry("xl/worksheets/sheet1.xml");
+    using var sheetWriter = new StreamWriter(entry.Open());
+
+    var dt = new DataTable();
+    dt.Columns.Add("Name", typeof(string));
+    dt.Columns.Add("Value", typeof(int));
+    dt.Rows.Add("Alice", 100);
+
+    XlsxWriter.WriteToExisting(sheetWriter, dt.CreateDataReader());
+}
+```
+
+### ReplaceSheetData + ReplacePivotTableDim
+
+For the built‑in update mode (handles full sheet replacement and pivot table references):
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+
+using (var reader = new XlsxOrXlsbReadOrEdit())
+{
+    reader.Open("report.xlsx", updateMode: true);
+
+    var newData = new DataTable();
+    newData.Columns.Add("Product", typeof(string));
+    newData.Columns.Add("Revenue", typeof(decimal));
+    newData.Rows.Add("Widget", 50000m);
+    newData.Rows.Add("Gadget", 75000m);
+
+    // Replace sheet data and get the new cell range
+    string range = reader.ReplaceSheetData("Sheet1", newData.CreateDataReader());
+
+    // Point the pivot table to the new range
+    reader.ReplacePivotTableDim("PivotTable1", range, doRefreshOnLoad: true);
+}
+```
+
+---
+
+## Breaking Changes in v1.0.0
+
+When upgrading from v0.6.x to v1.0.0, the following renames may require updates:
+
+| Old (v0.6.1) | New (v1.0.0) | Notes |
+|---|---|---|
+| `GetScheetNames()` | `GetSheetNames()` | Typo fix |
+| `DocPopertyProgramName` | `DocPropertyProgramName` | Typo fix |
+| `SuppressSomeDate` | `SuppressYear1000Dates` | Clarifies intent |
+| `overLimit` parameter | `maxRows` parameter | Affects `WriteSheet` calls |
+| `RowCount` returns `123123123` for unknown | `RowCount` returns `-1` for unknown | Sentinel value fix |
+| `FormattingStreamWriter` (public) | `FormattingStreamWriter` (internal) | Was never intended for public use |
+| `UseMemoryStreamInXlsb` (field) | `UseMemoryStreamInXlsb` (property) | Follows .NET conventions |
+| Duplicate `F.SHORT_DATE` etc. | Marked `[Obsolete]` | Use canonical name |
+
+All old names remain available with `[Obsolete]` warnings — code compiles but produces warnings.
 
 ---
 
@@ -485,3 +679,5 @@ using (var writer = ExcelWriter.CreateWriter("data.xlsx"))
 | `F.TIME_HH_MM_SS` | `hh:mm:ss` | Time (hours:minutes:seconds) |
 | `F.TIME_12H` | `h:mm AM/PM` | 12-hour time |
 | `F.TIME_MS` | `hh:mm:ss.000` | Time with milliseconds |
+
+> **Duplicate constants:** `F.SHORT_DATE`, `F.LONG_DATE`, `F.SHORT_DATE_TIME`, `F.LONG_DATE_TIME`, `F.ISO_DATE`, `F.ISO_DATE_TIME` are `[Obsolete]` — use `F.DATE_SHORT`, `F.DATE_LONG`, `F.DATETIME_SHORT`, `F.DATETIME_LONG`, `F.DATE_ISO`, `F.DATETIME_ISO` instead.

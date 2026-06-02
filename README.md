@@ -10,7 +10,7 @@ dotnet add package SpreadSheetTasks
 ```
 
 ```xml
-<PackageReference Include="SpreadSheetTasks" Version="0.6.1" />
+<PackageReference Include="SpreadSheetTasks" Version="1.0.0" />
 ```
 
 ## Quick Start
@@ -58,38 +58,182 @@ using (var reader = new XlsxOrXlsbReadOrEdit())
 Full usage guide with detailed examples:
 - [docs/index.md](docs/index.md)
 
+### Write from object[][] (typed headers)
+
+```csharp
+using SpreadSheetTasks;
+
+using (var writer = new XlsxWriter("products.xlsx"))
+{
+    writer.AddSheet("Products");
+    writer.WriteSheet(
+        rows: new object[][]
+        {
+            new object[] { "Apple", 1.99, 100 },
+            new object[] { "Banana", 0.99, 250 },
+        },
+        headers: new[] { "Product", "Price", "Quantity" },
+        headers_row: true,
+        doAutofilter: true
+    );
+}
+```
+
+### Write with per-cell formatting (FormattedCell[][])
+
+```csharp
+using SpreadSheetTasks;
+
+using (var writer = new XlsxWriter("formatted.xlsx"))
+{
+    writer.AddSheet("Sheet1");
+    writer.WriteSheet(
+        rows: new object[][]
+        {
+            new object[] { 1234567, 1234.56 },
+            new object[] { 0.25, 12345.67 },
+        },
+        headers: new[] { "Thousands", "Scientific" },
+        formats: new FormattedCell[][]
+        {
+            new FormattedCell[] { new(1234567, F.THOUSANDS_SEP), new(1234.56, F.CURRENCY_PLN) },
+            new FormattedCell[] { new(0.25, F.PERCENTAGE), new(12345.67, F.SCIENTIFIC) },
+        }
+    );
+}
+```
+
+### GetExcelDataType / GetNativeValue
+
+```csharp
+using SpreadSheetTasks;
+
+using (var reader = new XlsxOrXlsbReadOrEdit())
+{
+    reader.Open("data.xlsx");
+    reader.ActualSheetName = "Sheet1";
+
+    while (reader.Read())
+    {
+        // Use typed getters for general use
+        string name = reader.GetString(0);
+        long value = reader.GetInt64(1);
+
+        // Use GetExcelDataType to inspect cell type
+        ExcelDataType type = reader.GetExcelDataType(2);
+
+        // High-performance escape hatch (check type first!)
+        if (type == ExcelDataType.Double)
+        {
+            double raw = reader.GetNativeValue(2).doubleValue;
+        }
+    }
+}
+```
+
+### Update existing XLSX (ReplaceSheetData + ReplacePivotTableDim)
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+
+using (var reader = new XlsxOrXlsbReadOrEdit())
+{
+    reader.Open("existing.xlsx", updateMode: true);
+
+    var newData = new DataTable();
+    newData.Columns.Add("Product", typeof(string));
+    newData.Columns.Add("Revenue", typeof(decimal));
+    newData.Rows.Add("Widget", 50000m);
+
+    // Replace data in a sheet
+    string range = reader.ReplaceSheetData("Sheet1", newData.CreateDataReader());
+
+    // Update pivot table data source reference
+    reader.ReplacePivotTableDim("PivotTable1", range);
+}
+```
+
+### Write to existing Stream (XlsxWriter.WriteToExisting)
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+using System.IO;
+using System.IO.Compression;
+
+// Open an existing xlsx as a ZipArchive and write into a sheet stream
+using (var archive = ZipFile.Open("existing.xlsx", ZipArchiveMode.Update))
+{
+    var entry = archive.GetEntry("xl/worksheets/sheet1.xml");
+    using var writer = new StreamWriter(entry.Open());
+
+    var dt = new DataTable();
+    dt.Columns.Add("Name", typeof(string));
+    dt.Rows.Add("Alice");
+
+    int rowsWritten = XlsxWriter.WriteToExisting(writer, dt.CreateDataReader());
+}
+```
+
+### Stream writer with custom buffer size
+
+```csharp
+using SpreadSheetTasks;
+using System.Data;
+
+// Larger buffer for better write throughput on large files
+using (var writer = new XlsxWriter("large.xlsx", bufferSize: 65536))
+{
+    writer.AddSheet("Data");
+    var dt = new DataTable();
+    dt.Columns.Add("Col", typeof(string));
+    for (int i = 0; i < 100_000; i++) dt.Rows.Add($"Row{i}");
+    writer.WriteSheet(dt.CreateDataReader());
+}
+```
+
+## Breaking Changes in v1.0.0
+
+| Old (v0.6.1) | New (v1.0.0) |
+|---|---|
+| `GetScheetNames()` (typo) | `GetSheetNames()` |
+| `DocPopertyProgramName` (typo) | `DocPropertyProgramName` |
+| `SuppressSomeDate` | `SuppressYear1000Dates` |
+| `overLimit` parameter | `maxRows` parameter |
+| `RowCount` returns `123123123` for unknown | `RowCount` returns `-1` for unknown |
+| `FormattingStreamWriter` (public) | `FormattingStreamWriter` (internal) |
+| `UseMemoryStreamInXlsb` (field) | `UseMemoryStreamInXlsb` (property) |
+| Duplicate `F.SHORT_DATE` etc. constants | Marked `[Obsolete]` |
+
+Old names still compile with `[Obsolete]` warnings.
+
 ## Benchmarks
 
-Tested on: Windows 11, AMD Ryzen 7 7840HS, .NET 10.0.8 (10.0.8)
+Tested on: Windows 11 (25H2), AMD Ryzen 7 7840HS, .NET 10.0.8, BenchmarkDotNet 0.15.8
 
-### XLSB Read
-| Method                              | FileName             | Mean      | Error    | StdDev   | Gen0      | Gen1      | Gen2      | Allocated |
-|------------------------------------ |--------------------- |----------:|---------:|---------:|----------:|----------:|----------:|----------:|
-| 'SpreadSheetTasks - XLSB Read - v1' | 200kFile.xlsb        | 106.01 ms | 2.088 ms | 3.922 ms | 5400.0000 | 3800.0000 | 1400.0000 |  68.59 MB |
-| 'SpreadSheetTasks - XLSB Read - v2' | 200kFile.xlsb        | 113.97 ms | 2.264 ms | 5.380 ms | 5000.0000 | 3500.0000 | 1000.0000 |  49.13 MB |
-| 'Sylvan.Data.Excel - XLSB Read'     | 200kFile.xlsb        | 129.04 ms | 2.820 ms | 8.137 ms | 5000.0000 | 2000.0000 | 1000.0000 |  50.82 MB |
-| 'SpreadSheetTasks - XLSB Read - v1' | 65K_R(...).xlsb [21] |  51.08 ms | 0.608 ms | 0.539 ms | 2400.0000 |  800.0000 |  700.0000 |  28.93 MB |
-| 'SpreadSheetTasks - XLSB Read - v2' | 65K_R(...).xlsb [21] |  56.47 ms | 1.055 ms | 0.987 ms | 1666.6667 |         - |         - |  13.76 MB |
-| 'Sylvan.Data.Excel - XLSB Read'     | 65K_R(...).xlsb [21] |  63.22 ms | 0.469 ms | 0.415 ms | 2875.0000 |  125.0000 |         - |  23.16 MB |
+### XLSB Read (65k rows)
+| Method                                      | Mean     | Error     | StdDev  | Gen0      | Gen1     | Gen2     | Allocated |
+|-------------------------------------------- |---------:|----------:|--------:|----------:|---------:|---------:|----------:|
+| 'SpreadSheetTasks - XLSB Read - v1' (quick) | 52.56 ms |  3.121 ms | 0.17 ms | 2400.0000 | 800.0000 | 700.0000 |  28.93 MB |
+| 'SpreadSheetTasks - XLSB Read - v2' (quick) | 60.61 ms | 67.866 ms | 3.72 ms | 1666.6667 |        - |        - |  13.76 MB |
 
-### XLSX Read
-| Method               | Mean     | Error   | StdDev   | Gen0      | Gen1      | Gen2      | Allocated   |
-|--------------------- |---------:|--------:|---------:|----------:|----------:|----------:|------------:|
-| SpreadSheetTasks200K | 267.5 ms | 6.57 ms | 19.18 ms | 5000.0000 | 3000.0000 | 1000.0000 | 35139.8 KB |
-| Sylvan200k           | 334.4 ms | 5.79 ms |  5.42 ms | 6000.0000 | 3000.0000 | 1000.0000 | 52327.52 KB |
-| SpreadSheetTasks65k  | 170.0 ms | 3.37 ms |  2.98 ms |         - |         - |         - |   593.92 KB |
-| Sylvan65K            | 166.6 ms | 2.86 ms |  2.68 ms |         - |         - |         - |   664.77 KB |
+### XLSX Read (65k rows, typed getters)
+| Method              | Mean     | Error    | StdDev  | Allocated |
+|-------------------- |---------:|---------:|--------:|----------:|
+| SpreadSheetTasks65k | 178.2 ms | 124.7 ms | 6.83 ms | 593.92 KB |
 
-### XLSB Write (200k rows, mixed types)
-| Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Allocated |
-|-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|
-| 'SpreadSheetTasks - XLSB Write' | GENERAL    | 127.1 ms | 3.33 ms | 9.76 ms | 1750.0000 |  30.57 MB |
-| XlsbSylvanWrite                 | GENERAL    | 178.6 ms | 3.49 ms | 5.12 ms | 1000.0000 |  36.75 MB |
+### XLSB Write (50k rows, mixed types)
+| Method                          | ReaderType | Mean     | Error     | StdDev  | Gen0      | Gen1     | Gen2     | Allocated |
+|-------------------------------- |----------- |---------:|----------:|--------:|----------:|---------:|---------:|----------:|
+| 'SpreadSheetTasks - XLSB Write' | GENERAL    | 40.40 ms | 13.952 ms | 0.77 ms |  916.6667 | 166.6667 | 83.3333 |  10.86 MB |
+| XlsbSylvanWrite                 | GENERAL    | 51.34 ms | 12.901 ms | 0.71 ms |  545.4545 | 181.8182 | 90.9091 |   8.98 MB |
 
-### XLSX Write (200k rows, mixed types)
-| Method                          | ReaderType | Mean     | Error   | StdDev  | Gen0      | Allocated |
-|-------------------------------- |----------- |---------:|--------:|--------:|----------:|----------:|
-| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 183.6 ms | 3.58 ms | 5.79 ms | 1500.0000 |  30.74 MB |
+### XLSX Write (50k rows, mixed types)
+| Method                          | ReaderType | Mean     | Error     | StdDev  | Gen0      | Gen1      | Gen2     | Allocated |
+|-------------------------------- |----------- |---------:|----------:|--------:|----------:|----------:|--------:|----------:|
+| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 58.08 ms |  8.808 ms | 0.48 ms | 1111.1111 |  111.1111 |       - |  13.31 MB |
+| XlsxSylvanWrite                 | GENERAL    | 73.63 ms | 73.330 ms | 4.02 ms |  571.4286 |  142.8571 |       - |  10.51 MB |
 
 ## Links
 

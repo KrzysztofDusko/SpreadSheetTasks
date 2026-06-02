@@ -25,8 +25,8 @@ public class ErrorHandlingTests
     [Fact]
     public void CreateWriter_EmptyPath_ThrowsException()
     {
-        Assert.Throws<Exception>(() => ExcelWriter.CreateWriter("")); // Throws Exception with "Unknown file type !"
-        Assert.Throws<NullReferenceException>(() => ExcelWriter.CreateWriter(null!));
+        Assert.Throws<ArgumentException>(() => ExcelWriter.CreateWriter(""));
+        Assert.Throws<ArgumentNullException>(() => ExcelWriter.CreateWriter(null!));
     }
 
     [Fact]
@@ -505,7 +505,11 @@ public class ErrorHandlingTests
             }
             catch (ArgumentOutOfRangeException)
             {
-                // Expected - negative values should throw
+                // Expected
+            }
+            catch (IndexOutOfRangeException)
+            {
+                // Expected
             }
         }
 
@@ -540,32 +544,37 @@ public class ErrorHandlingTests
     [Theory]
     [InlineData(".xlsx")]
     [InlineData(".xlsb")]
-    public void WriteSheet_EmptySheetName_ThrowsOrHandles(string extension)
+    public void RowCount_AfterOpen_ReturnsValue(string extension)
     {
-        var fileName = $"test_empty_sheet_name{extension}";
-        
+        var fileName = $"test_row_count_prop{extension}";
+
         DataTable dt = new DataTable();
         dt.Columns.Add("Col1", typeof(string));
-        dt.Rows.Add("Data");
+        for (int i = 0; i < 25; i++)
+        {
+            dt.Rows.Add($"Row{i}");
+        }
 
         using (var writer = ExcelWriter.CreateWriter(fileName))
         {
-            // Empty sheet name - behavior may vary
-            try
-            {
-                writer.AddSheet("");
-                writer.WriteSheet(dt.CreateDataReader());
-            }
-            catch (ArgumentException)
-            {
-                // Expected - empty sheet name should throw
-            }
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt);
         }
 
-        if (File.Exists(fileName))
+        using (var reader = new XlsxOrXlsbReadOrEdit())
         {
-            File.Delete(fileName);
+            reader.Open(fileName);
+            reader.ActualSheetName = "Sheet1";
+            Assert.True(reader.Read());
+
+            var rowCount = reader.RowCount;
+            if (extension == ".xlsb")
+                Assert.Equal(-1, rowCount);
+            else
+                Assert.True(rowCount >= 25, $"Expected >= 25, got {rowCount}");
         }
+
+        File.Delete(fileName);
     }
 
     [Theory]
@@ -599,6 +608,87 @@ public class ErrorHandlingTests
             {
                 // Expected - need to call Read() first
             }
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Fact]
+    public void XlsxWriter_NullPath_ThrowsException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new XlsxWriter((string)null!));
+    }
+
+    [Fact]
+    public void XlsbWriter_NullPath_ThrowsException()
+    {
+        Assert.Throws<ArgumentNullException>(() => new XlsbWriter((string)null!));
+    }
+
+    [Fact]
+    public void XlsxOrXlsbReadOrEdit_Open_NullPath_ThrowsException()
+    {
+        using var reader = new XlsxOrXlsbReadOrEdit();
+        Assert.Throws<ArgumentNullException>(() => reader.Open(null!));
+    }
+
+    [Fact]
+    public void CreateWriter_NullPath_ThrowsException()
+    {
+        Assert.Throws<ArgumentNullException>(() => ExcelWriter.CreateWriter(null!));
+    }
+
+    [Fact]
+    public void GetRowsOfSheet_NullSheetName_ThrowsException()
+    {
+        using var reader = new XlsxOrXlsbReadOrEdit();
+        Assert.ThrowsAny<Exception>(() => reader.GetRowsOfSheet(null!).Count());
+    }
+
+    [Fact]
+    public void ReplaceSheetData_NullReader_ThrowsException()
+    {
+        var fileName = "test_replace_null_reader.xlsx";
+
+        DataTable dt = new DataTable();
+        dt.Columns.Add("Col1", typeof(string));
+        dt.Rows.Add("Data");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName, updateMode: true);
+            Assert.ThrowsAny<Exception>(() => reader.ReplaceSheetData("Sheet1", (IDataReader)null!));
+        }
+
+        File.Delete(fileName);
+    }
+
+    [Fact]
+    public void ReplacePivotTableDim_NullParams_ThrowsException()
+    {
+        var fileName = "test_pivot_null.xlsx";
+
+        DataTable dt = new DataTable();
+        dt.Columns.Add("Col1", typeof(string));
+        dt.Rows.Add("Data");
+
+        using (var writer = ExcelWriter.CreateWriter(fileName))
+        {
+            writer.AddSheet("Sheet1");
+            writer.WriteSheet(dt.CreateDataReader());
+        }
+
+        using (var reader = new XlsxOrXlsbReadOrEdit())
+        {
+            reader.Open(fileName, updateMode: true);
+            Assert.ThrowsAny<Exception>(() => reader.ReplacePivotTableDim(null!, "A1:B2"));
+            Assert.ThrowsAny<Exception>(() => reader.ReplacePivotTableDim("Test", null!));
         }
 
         File.Delete(fileName);

@@ -690,12 +690,12 @@ namespace SpreadSheetTasks
 
         internal string[] _databaseTypes;
 
-        public DataColReader(IDataReader reader, Boolean headers = false, int overLimit = -1)
+        public DataColReader(IDataReader reader, Boolean headers = false, int maxRows = -1)
         {
             this._dataReader = reader;
             this._headers = headers;
             this._isDataReader = true;
-            this._overLimit = overLimit;
+            this._overLimit = maxRows;
 
             _databaseTypes = new string[_dataReader.FieldCount];
             for (int i = 0; i < _databaseTypes.Length; i++)
@@ -704,12 +704,12 @@ namespace SpreadSheetTasks
             }
         }
 
-        public DataColReader(DataTable dataTable, Boolean headers = false, int overLimit = -1)
+        public DataColReader(DataTable dataTable, Boolean headers = false, int maxRows = -1)
         {
             this._dataTable = dataTable;
             this._headers = headers;
             this._isDataTable = true;
-            this._overLimit = overLimit;
+            this._overLimit = maxRows;
             this._dataTableRowsCount = dataTable.Rows.Count;
 
             _databaseTypes = new string[_dataTable.Columns.Count];
@@ -782,12 +782,14 @@ namespace SpreadSheetTasks
             }
             else if (_isDataTable)
             {
-                if (_rowNum >= 2 && _rowNum < _dataTableRowsCount + 2)
+                int dataStartRow = _headers ? 2 : 1;
+                int maxDataRow = _dataTableRowsCount + dataStartRow;
+                if (_rowNum >= dataStartRow && _rowNum < maxDataRow)
                 {
-                    _dataTableRow = _dataTable.Rows[_rowNum - 2].ItemArray;
+                    _dataTableRow = _dataTable.Rows[_rowNum - dataStartRow].ItemArray;
                     return true;
                 }
-                else if (_rowNum == 1)
+                else if (_headers && _rowNum == 1)
                 {
                     return true;
                 }

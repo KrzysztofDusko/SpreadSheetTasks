@@ -73,7 +73,7 @@ public class ReadBenchXlsx
 
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
-        var sheetNames = excelFile.GetScheetNames();
+        var sheetNames = excelFile.GetSheetNames();
         excelFile.ActualSheetName = sheetNames[0];
         object[] row = null;
         int rowNum = 0;
@@ -111,7 +111,7 @@ public class ReadBenchXlsx
 
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
-        var sheetNames = excelFile.GetScheetNames();
+        var sheetNames = excelFile.GetSheetNames();
         excelFile.ActualSheetName = sheetNames[0];
 
         excelFile.Read(); // = skip header
@@ -357,6 +357,15 @@ public class WriteBenchExcel
         edw.Write(dr, "sheetName");
     }
 
+    [Benchmark(Description = "SpreadSheetTasks - XLSX Sylvan Write")]
+    public void XlsxSylvanWrite()
+    {
+        using var edw = ExcelDataWriter.Create("fileSylvan.xlsx", new ExcelDataWriterOptions() { CompressionLevel = _cLvl });
+        DbDataReader dr;
+        dr = Dt.CreateDataReader();
+        edw.Write(dr, "sheetName");
+    }
+
     [Benchmark(Description = "SpreadSheetTasks - XLSX Write")]
     public void XlsxWrite()
     {
@@ -379,7 +388,7 @@ public class ReadBenchXlsxQuick
 
         using XlsxOrXlsbReadOrEdit excelFile = new XlsxOrXlsbReadOrEdit();
         excelFile.Open(path);
-        var sheetNames = excelFile.GetScheetNames();
+        var sheetNames = excelFile.GetSheetNames();
         excelFile.ActualSheetName = sheetNames[0];
 
         excelFile.Read();

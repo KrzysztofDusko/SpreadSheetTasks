@@ -198,26 +198,58 @@ namespace SpreadSheetTasks
         private const int _rRkIntegerUpperLimit = (1 << 29) - 1;
 
         private readonly CompressionLevel _compressionLevel = CompressionLevel.Fastest;
-        public XlsbWriter(string path, CompressionLevel compressionLevel = CompressionLevel.Fastest) 
-            : this(new FileStream(path, FileMode.Create), compressionLevel, leaveExcelArchiveOpen: false)
+
+        /// <summary>cellXfs index for general/numeric style.</summary>
+        internal const int XfStyleGeneral = 0;
+        /// <summary>cellXfs index for datetime style.</summary>
+        internal const int XfStyleDateTime = 1;
+        /// <summary>cellXfs index for date style.</summary>
+        internal const int XfStyleDate = 2;
+        /// <summary>cellXfs index for bold header (font 1).</summary>
+        internal const int XfStyleBoldHeader = 3;
+
+        /// <summary>
+        /// Creates a new XLSB writer that will write to a file at <paramref name="path"/>.
+        /// The file is overwritten if it already exists.
+        /// </summary>
+        /// <param name="path">Path of the .xlsb file to create.</param>
+        /// <param name="compressionLevel">Compression level for the zip archive.</param>
+        public XlsbWriter(string path, CompressionLevel compressionLevel = CompressionLevel.Fastest)
         {
-            _excelStreamWasProvided = false;
+            ArgumentNullException.ThrowIfNull(path);
+            ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+            FileStream fs = null!;
+            try
+            {
+                fs = new FileStream(path, FileMode.Create);
+                sheetCnt = 0;
+                _compressionLevel = compressionLevel;
+                _newExcelFileStream = fs;
+                _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create, false);
+                _excelStreamWasProvided = false;
+            }
+            catch
+            {
+                fs?.Dispose();
+                throw;
+            }
         }
 
+        /// <summary>
+        /// Creates a new XLSB writer that writes to the supplied <see cref="Stream"/>.
+        /// </summary>
+        /// <param name="stream">Destination stream. The writer takes ownership of the stream position but does not close it unless <paramref name="leaveExcelArchiveOpen"/> is false.</param>
+        /// <param name="compressionLevel">Compression level for the zip archive.</param>
+        /// <param name="leaveExcelArchiveOpen">If true, the underlying <see cref="ZipArchive"/> is left open when <see cref="Save"/> runs. Defaults to true for the stream ctor; the file-path ctor always sets it to false.</param>
         public XlsbWriter(Stream stream, CompressionLevel compressionLevel = CompressionLevel.Fastest, bool leaveExcelArchiveOpen = true)
         {
+            ArgumentNullException.ThrowIfNull(stream);
             _excelStreamWasProvided = true;
             sheetCnt = 0;
             _compressionLevel = compressionLevel;
-            try
-            {
-                _newExcelFileStream = stream;
-                _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create, leaveExcelArchiveOpen);
-            }
-            catch (Exception)
-            {
-                throw new Exception("creation file error");
-            }
+            _newExcelFileStream = stream;
+            _excelArchiveFile = new ZipArchive(_newExcelFileStream, ZipArchiveMode.Create, leaveExcelArchiveOpen);
         }
 
         public override void AddSheet(string sheetName, bool hidden = false)
@@ -237,7 +269,7 @@ namespace SpreadSheetTasks
 
         private List<FilterData> _filteredDict;
 
-        public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int overLimit = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
+        public override void WriteSheet(IDataReader dataReader, Boolean headers = true, int maxRows = -1, int startingRow = 0, int startingColumn = 0, bool doAutofilter = false)
         {
             if (doAutofilter)
             {
@@ -245,7 +277,7 @@ namespace SpreadSheetTasks
                 _filteredDict ??= new();
             }
             this._areHeaders = headers;
-            _dataColReader = new DataColReader(dataReader, headers, overLimit);
+            _dataColReader = new DataColReader(dataReader, headers, maxRows);
 
             int rowNum = 0;
             _columnCount = _dataColReader.FieldCount;
@@ -253,13 +285,13 @@ namespace SpreadSheetTasks
             _startCol = (uint)startingColumn;
             _endCol = (uint)(_startCol + _columnCount);
 
-            _colWidesArray = new double[_columnCount];
-            Array.Fill<double>(_colWidesArray, -1.0);
+            _colWidthsArray = new double[_columnCount];
+            Array.Fill<double>(_colWidthsArray, -1.0);
 
             typesArray = new int[_columnCount];
             _newTypes = new TypeCode[_columnCount];
 
-            var rdr = _dataColReader._dataReader;
+            var rdr = _dataColReader._dataReader ?? throw new InvalidOperationException("No IDataReader available. This overload requires an IDataReader source.");
             for (int l = 1; l <= _columnCount; l++)
             {
                 int lenn = rdr.GetName(l - 1).Length + (doAutofilter?2:0);
@@ -268,9 +300,9 @@ namespace SpreadSheetTasks
                 {
                     tempWidth = _MAX_WIDTH;
                 }
-                if (_colWidesArray[l - 1] < tempWidth)
+                if (_colWidthsArray[l - 1] < tempWidth)
                 {
-                    _colWidesArray[l - 1] = tempWidth;
+                    _colWidthsArray[l - 1] = tempWidth;
                 }
             }
 
@@ -300,7 +332,7 @@ namespace SpreadSheetTasks
 
                 _dataColReader.top100.Add(arr);
                 nr++;
-                SetColsLengtth(_columnCount, arr);
+                SetColsLength(_columnCount, arr);
             }
             areNextRows = rdr.Read();
             _dataColReader.AreNextRows = areNextRows;
@@ -329,7 +361,7 @@ namespace SpreadSheetTasks
                         }
                         else
                         {
-                            ExcelWriter.SetTypes(_dataColReader, typesArray, _newTypes, _columnCount, detectBoolenaType: true);
+                            ExcelWriter.SetTypes(_dataColReader, typesArray, _newTypes, _columnCount, detectBooleanType: true);
                         }
                     }
 
@@ -486,7 +518,7 @@ namespace SpreadSheetTasks
                 else if (typesArray[column] == 3) //dateTime
                 {
                     DateTime dtVal = _dataColReader.GetDateTime(column);
-                    if (SuppressSomeDate && (dtVal as DateTime?).Value.Year == 1000)//1000-xx-xx
+                    if (SuppressYear1000Dates && (dtVal as DateTime?).Value.Year == 1000)//1000-xx-xx
                     {
                         continue;
                     }
@@ -588,7 +620,7 @@ namespace SpreadSheetTasks
                 _stream.Write(BitConverter.GetBytes(i));
                 //width
                 _stream.WriteByte(0);
-                _stream.WriteByte((byte)(_colWidesArray[l])); // .. x 7 = pixels
+                _stream.WriteByte((byte)(_colWidthsArray[l])); // .. x 7 = pixels
                 _stream.WriteByte(0);
                 _stream.WriteByte(0);
 
@@ -981,10 +1013,10 @@ namespace SpreadSheetTasks
                 sw.Write(@"<Override PartName=""/xl/styles.bin"" ContentType=""application/vnd.ms-excel.styles""/>");
                 sw.Write(@"<Override PartName=""/xl/sharedStrings.bin"" ContentType=""application/vnd.ms-excel.sharedStrings""/>");
 
-                if (!String.IsNullOrWhiteSpace(DocPopertyProgramName))
+                if (!String.IsNullOrWhiteSpace(DocPropertyProgramName))
                 {
-                    sw.Write(@"<Override PartName=""/docProps/core.xml"" ContentType=""application/vnd.openxmlformats-package.core-properties+xml""/>");
-                    sw.Write(@"<Override PartName=""/docProps/app.xml"" ContentType=""application/vnd.openxmlformats-officedocument.extended-properties+xml""/>");
+                    sw.Write("<Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/>");
+                    sw.Write("<Override PartName=\"/docProps/core.xml\" ContentType=\"application/vnd.openxmlformats-package.core-properties+xml\"/>");
                 }
                 sw.Write(@"</Types>");
             }
@@ -1014,24 +1046,29 @@ namespace SpreadSheetTasks
                 using var sw = new StreamWriter(str, Encoding.UTF8);
                 sw.WriteLine(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
                 sw.Write(@"<Relationships xmlns=""http://schemas.openxmlformats.org/package/2006/relationships"">");
-                if (!String.IsNullOrWhiteSpace(DocPopertyProgramName))
+                if (!String.IsNullOrWhiteSpace(DocPropertyProgramName))
                 {
-                    sw.Write(@"<Relationship Id=""rId3"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties"" Target=""docProps/app.xml""/>");
-                    sw.Write(@"<Relationship Id=""rId2"" Type=""http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"" Target=""docProps/core.xml""/>");
+                    sw.Write("<Relationship Id=\"rId2\" ");
+                    sw.Write("Type=\"http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties\" ");
+                    sw.Write("Target=\"docProps/core.xml\"/>");
+                    sw.Write("<Relationship Id=\"rId3\" ");
+                    sw.Write("Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties\" ");
+                    sw.Write("Target=\"docProps/app.xml\"/>");
                 }
                 sw.Write(@"<Relationship Id=""rId1"" Type=""http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"" Target=""xl/workbook.bin""/>");
                 sw.Write(@"</Relationships>");
             }
 
-            if (!String.IsNullOrWhiteSpace(DocPopertyProgramName))
+            if (!String.IsNullOrWhiteSpace(DocPropertyProgramName))
             {
-                newEntry = _excelArchiveFile.CreateEntry($"docProps/app.xml", _compressionLevel);
-                using (var str = newEntry.Open())
+                var e2 = _excelArchiveFile.CreateEntry("docProps/app.xml", _compressionLevel);
+                using (var str = e2.Open())
+                using (var sw = new StreamWriter(str, Encoding.UTF8))
                 {
-                    using var sw = new StreamWriter(str, Encoding.UTF8);
-                    sw.WriteLine(@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
-                    sw.Write(@"<Properties xmlns=""http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"" xmlns:vt=""http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"">");
-                    sw.Write($"<Application>{DocPopertyProgramName}</Application>");
+                    sw.Write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Properties ");
+                    sw.Write("xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\" ");
+                    sw.Write("xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\">");
+                    sw.Write($"<Application>{DocPropertyProgramName}</Application>");
                     sw.Write(@"<DocSecurity>0</DocSecurity>");
                     sw.Write(@"<ScaleCrop>false</ScaleCrop>");
                     sw.Write(@"<HeadingPairs><vt:vector size=""2"" baseType=""variant""><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant>");
@@ -1055,14 +1092,14 @@ namespace SpreadSheetTasks
                 newEntry = _excelArchiveFile.CreateEntry($"docProps/core.xml", _compressionLevel);
                 using (var str = newEntry.Open())
                 {
-                    using var sw = new StreamWriter(str, Encoding.UTF8);
-                    sw.WriteLine($@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
-                    sw.Write($@"<cp:coreProperties xmlns:cp=""http://schemas.openxmlformats.org/package/2006/metadata/core-properties"" xmlns:dc=""http://purl.org/dc/elements/1.1/"" xmlns:dcterms=""http://purl.org/dc/terms/"" xmlns:dcmitype=""http://purl.org/dc/dcmitype/"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">");
-                    sw.Write($@"<dc:creator>{DocPopertyProgramName} - used by {Environment.UserName}</dc:creator>");
-                    sw.Write($@"<cp:lastModifiedBy>{DocPopertyProgramName} - used by {Environment.UserName}</cp:lastModifiedBy>");
-                    sw.Write($@"<dcterms:created xsi:type=""dcterms:W3CDTF"">2015-06-05T18:19:34Z</dcterms:created>");
-                    sw.Write($@"<dcterms:modified xsi:type=""dcterms:W3CDTF"">2021-09-05T11:11:46Z</dcterms:modified>");
-                    sw.Write($@"</cp:coreProperties>");
+                    using var coreSw = new StreamWriter(str, Encoding.UTF8);
+                    coreSw.WriteLine($@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>");
+                    coreSw.Write($@"<cp:coreProperties xmlns:cp=""http://schemas.openxmlformats.org/package/2006/metadata/core-properties"" xmlns:dc=""http://purl.org/dc/elements/1.1/"" xmlns:dcterms=""http://purl.org/dc/terms/"" xmlns:dcmitype=""http://purl.org/dc/dcmitype/"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">");
+                    coreSw.Write($@"<dc:creator>{DocPropertyProgramName} - used by {Environment.UserName}</dc:creator>");
+                    coreSw.Write($@"<cp:lastModifiedBy>{DocPropertyProgramName} - used by {Environment.UserName}</cp:lastModifiedBy>");
+                    coreSw.Write($@"<dcterms:created xsi:type=""dcterms:W3CDTF"">2015-06-05T18:19:34Z</dcterms:created>");
+                    coreSw.Write($@"<dcterms:modified xsi:type=""dcterms:W3CDTF"">2021-09-05T11:11:46Z</dcterms:modified>");
+                    coreSw.Write($@"</cp:coreProperties>");
                 }
             }
 

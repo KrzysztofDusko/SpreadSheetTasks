@@ -613,13 +613,14 @@ public class DocsExamplesTests
             using (var writer = ExcelWriter.CreateWriter(path))
             {
                 writer.AddSheet("Sheet1");
-                writer.WriteSheet(dt.CreateDataReader());
+                writer.WriteSheet(dt);
             }
 
             using (var reader = new XlsxOrXlsbReadOrEdit())
             {
                 reader.Open(path);
                 reader.ActualSheetName = "Sheet1";
+                Assert.True(reader.Read());
                 int rowCount = reader.RowCount;
                 int sheetCount = reader.ResultsCount;
                 Assert.True(rowCount >= 10);
