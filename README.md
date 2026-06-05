@@ -210,30 +210,55 @@ Old names still compile with `[Obsolete]` warnings.
 
 ## Benchmarks
 
-Tested on: Windows 11 (25H2), AMD Ryzen 7 7840HS, .NET 10.0.8, BenchmarkDotNet 0.15.8
+### Windows 11 (25H2), AMD Ryzen 7 7840HS, .NET 10.0.8, BenchmarkDotNet 0.15.8
 
-### XLSB Read (65k rows)
+#### XLSB Read (65k rows)
 | Method                                      | Mean     | Error     | StdDev  | Gen0      | Gen1     | Gen2     | Allocated |
 |-------------------------------------------- |---------:|----------:|--------:|----------:|---------:|---------:|----------:|
-| 'SpreadSheetTasks - XLSB Read - v1' (quick) | 52.56 ms |  3.121 ms | 0.17 ms | 2400.0000 | 800.0000 | 700.0000 |  28.93 MB |
-| 'SpreadSheetTasks - XLSB Read - v2' (quick) | 60.61 ms | 67.866 ms | 3.72 ms | 1666.6667 |        - |        - |  13.76 MB |
+| 'SpreadSheetTasks - XLSB Read - v1' (quick)   | 52.56 ms |  3.121 ms | 0.17 ms | 2400.0000 | 800.0000 | 700.0000 | 28.93 MB |
+| 'SpreadSheetTasks - XLSB Read - v2' (quick)   | 60.61 ms | 67.866 ms | 3.72 ms | 1666.6667 |        - |        - | 13.76 MB |
 
-### XLSX Read (65k rows, typed getters)
+#### XLSX Read (65k rows, typed getters)
 | Method              | Mean     | Error    | StdDev  | Allocated |
 |-------------------- |---------:|---------:|--------:|----------:|
 | SpreadSheetTasks65k | 178.2 ms | 124.7 ms | 6.83 ms | 593.92 KB |
 
-### XLSB Write (50k rows, mixed types)
+#### XLSB Write (50k rows, mixed types)
 | Method                          | ReaderType | Mean     | Error     | StdDev  | Gen0      | Gen1     | Gen2     | Allocated |
 |-------------------------------- |----------- |---------:|----------:|--------:|----------:|---------:|---------:|----------:|
-| 'SpreadSheetTasks - XLSB Write' | GENERAL    | 40.40 ms | 13.952 ms | 0.77 ms |  916.6667 | 166.6667 | 83.3333 |  10.86 MB |
-| XlsbSylvanWrite                 | GENERAL    | 51.34 ms | 12.901 ms | 0.71 ms |  545.4545 | 181.8182 | 90.9091 |   8.98 MB |
+| 'SpreadSheetTasks - XLSB Write' | GENERAL    | 40.40 ms | 13.952 ms | 0.77 ms |  916.6667 | 166.6667 | 83.3333 | 10.86 MB |
+| XlsbSylvanWrite                 | GENERAL    | 51.34 ms | 12.901 ms | 0.71 ms |  545.4545 | 181.8182 | 90.9091 |  8.98 MB |
 
-### XLSX Write (50k rows, mixed types)
+#### XLSX Write (50k rows, mixed types)
 | Method                          | ReaderType | Mean     | Error     | StdDev  | Gen0      | Gen1      | Gen2     | Allocated |
 |-------------------------------- |----------- |---------:|----------:|--------:|----------:|----------:|--------:|----------:|
-| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 58.08 ms |  8.808 ms | 0.48 ms | 1111.1111 |  111.1111 |       - |  13.31 MB |
-| XlsxSylvanWrite                 | GENERAL    | 73.63 ms | 73.330 ms | 4.02 ms |  571.4286 |  142.8571 |       - |  10.51 MB |
+| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 58.08 ms |  8.808 ms | 0.48 ms | 1111.1111 |  111.1111 |       - | 13.31 MB |
+| XlsxSylvanWrite                 | GENERAL    | 73.63 ms | 73.330 ms | 4.02 ms |  571.4286 |  142.8571 |       - | 10.51 MB |
+
+### macOS Tahoe 26.5.1 (Apple M4), .NET 10.0.8, BenchmarkDotNet 0.15.8
+
+#### XLSB Read (65k rows)
+| Method                                      | Mean     | Error     | StdDev  | Gen0      | Gen1     | Gen2     | Allocated |
+|-------------------------------------------- |---------:|----------:|--------:|----------:|---------:|---------:|----------:|
+| 'SpreadSheetTasks - XLSB Read - v1' (quick)   | 40.56 ms |  2.895 ms | 1.59 ms | 2461.5385 | 846.1538 | 769.2308 |  28.93 MB |
+| 'SpreadSheetTasks - XLSB Read - v2' (quick)   | 47.62 ms |  3.617 ms | 1.98 ms | 1666.6667 |        - |        - |  13.76 MB |
+
+#### XLSX Read (65k rows, typed getters)
+| Method              | Mean     | Error    | StdDev  | Allocated |
+|-------------------- |---------:|---------:|--------:|----------:|
+| SpreadSheetTasks65k | 152.3 ms |  1.29 ms | 1.01 ms |  593.88 KB |
+
+#### XLSB Write (50k rows, mixed types)
+| Method                          | ReaderType | Mean     | Error     | StdDev  | Gen0      | Gen1     | Gen2     | Allocated |
+|-------------------------------- |----------- |---------:|----------:|--------:|----------:|---------:|---------:|----------:|
+| 'SpreadSheetTasks - XLSB Write'  | GENERAL    | 23.97 ms |  0.178 ms | 0.166 ms |  968.7500 | 187.5000 | 93.7500 |  10.86 MB |
+| XlsbSylvanWrite                 | GENERAL    | 32.48 ms |  0.509 ms | 0.425 ms |  562.5000 | 187.5000 | 125.0000 |   8.98 MB |
+
+#### XLSX Write (50k rows, mixed types)
+| Method                          | ReaderType | Mean     | Error     | StdDev  | Gen0      | Gen1      | Gen2     | Allocated |
+|-------------------------------- |----------- |---------:|----------:|--------:|----------:|----------:|--------:|----------:|
+| 'SpreadSheetTasks - XLSX Write' | GENERAL    | 41.43 ms |  0.781 ms | 0.731 ms | 1230.7692 | 230.7692 |        - |  13.31 MB |
+| XlsxSylvanWrite                 | GENERAL    | 41.18 ms |  0.495 ms | 0.386 ms |  750.0000 | 250.0000 | 83.3333 |  10.51 MB |
 
 ## Links
 
